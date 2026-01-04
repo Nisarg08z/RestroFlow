@@ -1,0 +1,134 @@
+import { useState, useRef } from "react"
+import { Play, X } from "lucide-react"
+
+const VideoSection = () => {
+  const [isPlaying, setIsPlaying] = useState(false)
+  const videoRef = useRef(null)
+
+  const handlePlay = () => {
+    setIsPlaying(true)
+    if (videoRef.current) {
+      videoRef.current.play()
+    }
+  }
+
+  const handleClose = () => {
+    setIsPlaying(false)
+    if (videoRef.current) {
+      videoRef.current.pause()
+      videoRef.current.currentTime = 0
+    }
+  }
+
+  return (
+    <section 
+    id="video"
+    className="py-24 px-4 sm:px-6 lg:px-8 bg-[oklch(0.17_0.005_260)]">
+      <div className="max-w-5xl mx-auto">
+
+        <div className="text-center mb-12">
+          <p className="text-[oklch(0.7_0.18_45)] font-medium mb-4">
+            See It In Action
+          </p>
+
+          <h2 className="text-3xl sm:text-4xl font-bold text-[oklch(0.98_0_0)] mb-4">
+            Watch how RestroFlow transforms restaurants
+          </h2>
+
+          <p className="text-[oklch(0.65_0_0)] max-w-2xl mx-auto">
+            A quick 2-minute overview of how our platform works
+          </p>
+        </div>
+
+        <div className="relative aspect-video bg-[oklch(0.22_0.005_260)] rounded-2xl overflow-hidden border border-[oklch(0.28_0.005_260)]">
+          {!isPlaying ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <img
+                src="/video-thumbnail.jpg"
+                alt="Video thumbnail"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+
+              <div className="absolute inset-0 bg-[oklch(0.13_0.005_260)]/40" />
+
+              <button
+                onClick={handlePlay}
+                className="
+                  relative z-10
+                  w-20 h-20
+                  rounded-full
+                  bg-[oklch(0.7_0.18_45)]
+                  hover:bg-[oklch(0.7_0.18_45)]/90
+                  flex items-center justify-center
+                  transition
+                "
+              >
+                <Play className="w-8 h-8 ml-1 text-[oklch(0.13_0.005_260)]" />
+              </button>
+            </div>
+          ) : (
+            <div className="relative w-full h-full">
+              <button
+                onClick={handleClose}
+                className="
+                  absolute top-4 right-4 z-10
+                  w-10 h-10
+                  bg-[oklch(0.13_0.005_260)]/80
+                  rounded-full
+                  flex items-center justify-center
+                  hover:bg-[oklch(0.13_0.005_260)]
+                  transition
+                "
+              >
+                <X className="w-5 h-5 text-[oklch(0.98_0_0)]" />
+              </button>
+
+              <video
+                ref={videoRef}
+                src="/video-demo.mp4"
+                className="w-full h-full object-cover"
+                controls
+                autoPlay
+                playsInline
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8 grid sm:grid-cols-3 gap-6 text-center">
+          <div>
+            <div className="text-2xl font-bold text-[oklch(0.98_0_0)]">
+              2 min
+            </div>
+            <div className="text-[oklch(0.65_0_0)] text-sm">
+              Quick overview
+            </div>
+          </div>
+
+          <div>
+            <div className="text-2xl font-bold text-[oklch(0.98_0_0)]">
+              Live Demo
+            </div>
+            <div className="text-[oklch(0.65_0_0)] text-sm">
+              Real restaurant footage
+            </div>
+          </div>
+
+          <div>
+            <div className="text-2xl font-bold text-[oklch(0.98_0_0)]">
+              All Features
+            </div>
+            <div className="text-[oklch(0.65_0_0)] text-sm">
+              Complete walkthrough
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  )
+}
+
+export default VideoSection;

@@ -1,0 +1,161 @@
+import mongoose, { Schema } from "mongoose"
+import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
+
+const restaurantSchema = new Schema(
+  {
+    restaurantName: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
+    },
+
+    ownerName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    address: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    totalTables: {
+      type: Number,
+      required: true,
+    },
+
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+    },
+
+    refreshToken: {
+      type: String,
+    },
+
+    role: {
+      type: String,
+      enum: ["RESTAURANT"],
+      default: "RESTAURANT",
+    },
+
+    status: {
+      type: String,
+      enum: ["PENDING", "APPROVED", "REJECTED"],
+      default: "PENDING",
+      index: true,
+    },
+
+    approvedByAdmin: {
+      type: Boolean,
+      default: false,
+    },
+
+    approvedAt: {
+      type: Date,
+    },
+
+    adminNotes: {
+      type: String,
+      trim: true,
+    },
+
+    subscription: {
+      plan: {
+        type: String,
+        enum: ["BASIC", "PRO", "ENTERPRISE"],
+        required: true,
+      },
+
+      pricePerMonth: {
+        type: Number,
+        required: true,
+      },
+
+      startDate: {
+        type: Date,
+      },
+
+      endDate: {
+        type: Date,
+      },
+
+      isActive: {
+        type: Boolean,
+        default: false,
+      },
+    },
+
+    qrCodesGenerated: {
+      type: Boolean,
+      default: false,
+    },
+
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    timestamps: true,
+  }
+)
+
+restaurantSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next()
+  this.password = await bcrypt.hash(this.password, 10)
+  next()
+})
+
+restaurantSchema.methods.isPasswordCorrect = async function (password) {
+  return await bcrypt.compare(password, this.password)
+}
+
+restaurantSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      restaurantName: this.restaurantName,
+      role: this.role,
+      status: this.status,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  )
+}
+
+restaurantSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    }
+  )
+}
+
+export const Restaurant = mongoose.model("Restaurant", restaurantSchema)

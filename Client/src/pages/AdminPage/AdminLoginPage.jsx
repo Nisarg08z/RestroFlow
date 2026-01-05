@@ -6,66 +6,50 @@ import {
   ArrowLeft,
   Check,
 } from "lucide-react"
-import { Link, useNavigate, useLocation } from "react-router-dom"
-import { restaurantLogin } from "../../utils/api" 
+import { Link, useNavigate } from "react-router-dom"
+import { adminLogin } from "../../utils/api" // ✅ ADMIN API
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-  const location = useLocation()
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   })
 
+  // ✅ ADMIN LOGIN API
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      await restaurantLogin({
+      await adminLogin({
         email: formData.email,
         password: formData.password,
       })
 
-      navigate("/dashboard")
+      // ✅ redirect to admin dashboard
+      navigate("/admin/dashboard")
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed")
+      alert(error.response?.data?.message || "Admin login failed")
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleContactClick = (e) => {
-    e.preventDefault()
-    if (location.pathname !== "/") {
-      navigate("/#contact")
-    } else {
-      const element = document.getElementById("contact")
-      if (element) {
-        const offset = 80
-        const elementPosition = element.getBoundingClientRect().top
-        const offsetPosition = elementPosition + window.pageYOffset - offset
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth",
-        })
-      }
-    }
-  }
-
   const features = [
-    "QR code ordering system for all tables",
-    "Real-time kitchen display for chefs",
-    "Complete billing & reporting dashboard",
-    "24/7 support and regular updates",
+    "Manage all restaurants from one dashboard",
+    "Approve or reject restaurant requests",
+    "Control subscriptions & payments",
+    "View platform-wide analytics",
   ]
 
   return (
     <div className="min-h-screen flex bg-[oklch(0.13_0.005_260)]">
 
+      {/* LEFT SIDE */}
       <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-24">
         <div className="max-w-md w-full mx-auto">
 
@@ -82,19 +66,20 @@ export default function LoginPage() {
               <UtensilsCrossed className="w-6 h-6 text-[oklch(0.13_0.005_260)]" />
             </div>
             <span className="text-2xl font-bold text-[oklch(0.98_0_0)]">
-              RestroFlow
+              RestroFlow Admin
             </span>
           </div>
 
           <h1 className="text-3xl font-bold text-[oklch(0.98_0_0)] mb-2">
-            Welcome back
+            Admin Login
           </h1>
           <p className="text-[oklch(0.65_0_0)] mb-8">
-            Sign in to access your restaurant dashboard
+            Sign in to manage restaurants and platform settings
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
 
+            {/* EMAIL */}
             <div>
               <label className="block text-sm font-medium text-[oklch(0.98_0_0)] mb-2">
                 Email Address
@@ -105,7 +90,7 @@ export default function LoginPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                placeholder="you@restaurant.com"
+                placeholder="admin@restroflow.com"
                 required
                 className="
                   w-full px-4 py-3 rounded-lg
@@ -119,18 +104,11 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* PASSWORD */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-[oklch(0.98_0_0)]">
-                  Password
-                </label>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-[oklch(0.7_0.18_45)] hover:text-[oklch(0.7_0.18_45)]/80 transition"
-                >
-                  Forgot password?
-                </Link>
-              </div>
+              <label className="block text-sm font-medium text-[oklch(0.98_0_0)] mb-2">
+                Password
+              </label>
 
               <div className="relative">
                 <input
@@ -165,6 +143,7 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* SUBMIT */}
             <button
               type="submit"
               disabled={isLoading}
@@ -177,32 +156,22 @@ export default function LoginPage() {
                 disabled:opacity-60
               "
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? "Signing in..." : "Sign in as Admin"}
             </button>
           </form>
-
-          <p className="text-center text-[oklch(0.65_0_0)] text-sm mt-8">
-            Don&apos;t have an account?{" "}
-            <a
-              href="#contact"
-              onClick={handleContactClick}
-              className="text-[oklch(0.7_0.18_45)] hover:text-[oklch(0.7_0.18_45)]/80 transition cursor-pointer"
-            >
-              Contact us to get started
-            </a>
-          </p>
         </div>
       </div>
 
+      {/* RIGHT SIDE (SAME LAYOUT, ADMIN CONTENT) */}
       <div className="hidden lg:flex flex-1 bg-[oklch(0.17_0.005_260)] border-l border-[oklch(0.28_0.005_260)] items-center justify-center p-16">
         <div className="max-w-md">
+
           <h2 className="text-2xl font-bold text-[oklch(0.98_0_0)] mb-4">
-            Your complete restaurant management solution
+            Platform Administration Panel
           </h2>
 
           <p className="text-[oklch(0.65_0_0)] mb-8">
-            Access all dashboards, manage orders, generate reports, and grow your
-            business with RestroFlow.
+            Control restaurants, subscriptions, analytics, and platform operations from one place.
           </p>
 
           <ul className="space-y-4">
@@ -217,9 +186,9 @@ export default function LoginPage() {
               </li>
             ))}
           </ul>
+
         </div>
       </div>
-
     </div>
   )
 }

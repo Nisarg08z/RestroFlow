@@ -1,0 +1,28 @@
+import jwt from "jsonwebtoken"
+import { ApiError } from "../utils/ApiError.js"
+import { Admin } from "../models/admin.model.js"
+import { Restaurant } from "../models/restaurant.model.js"
+
+export const verifyAdminJWT = async (req, _, next) => {
+  const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
+  if (!token) throw new ApiError(401, "Unauthorized")
+
+  const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+  const admin = await Admin.findById(decoded._id).select("-password -refreshToken")
+  if (!admin) throw new ApiError(401, "Invalid admin token")
+
+  req.user = admin
+  next()
+}
+
+export const verifyRestaurantJWT = async (req, _, next) => {
+  const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
+  if (!token) throw new ApiError(401, "Unauthorized")
+
+  const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+  const restaurant = await Restaurant.findById(decoded._id).select("-password -refreshToken")
+  if (!restaurant) throw new ApiError(401, "Invalid restaurant token")
+
+  req.user = restaurant
+  next()
+}

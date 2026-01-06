@@ -7,7 +7,7 @@ import {
   Check,
 } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
-import { adminLogin } from "../../utils/api" // ✅ ADMIN API
+import { adminLogin } from "../../utils/api"
 
 export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -19,7 +19,6 @@ export default function AdminLoginPage() {
     password: "",
   })
 
-  // ✅ ADMIN LOGIN API
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
@@ -30,8 +29,9 @@ export default function AdminLoginPage() {
         password: formData.password,
       })
 
-      // ✅ redirect to admin dashboard
+      localStorage.setItem("role", "ADMIN")
       navigate("/admin/dashboard")
+
     } catch (error) {
       alert(error.response?.data?.message || "Admin login failed")
     } finally {
@@ -49,7 +49,6 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex bg-[oklch(0.13_0.005_260)]">
 
-      {/* LEFT SIDE */}
       <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-24">
         <div className="max-w-md w-full mx-auto">
 
@@ -79,7 +78,6 @@ export default function AdminLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* EMAIL */}
             <div>
               <label className="block text-sm font-medium text-[oklch(0.98_0_0)] mb-2">
                 Email Address
@@ -104,7 +102,6 @@ export default function AdminLoginPage() {
               />
             </div>
 
-            {/* PASSWORD */}
             <div>
               <label className="block text-sm font-medium text-[oklch(0.98_0_0)] mb-2">
                 Password
@@ -143,7 +140,6 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            {/* SUBMIT */}
             <button
               type="submit"
               disabled={isLoading}
@@ -162,7 +158,6 @@ export default function AdminLoginPage() {
         </div>
       </div>
 
-      {/* RIGHT SIDE (SAME LAYOUT, ADMIN CONTENT) */}
       <div className="hidden lg:flex flex-1 bg-[oklch(0.17_0.005_260)] border-l border-[oklch(0.28_0.005_260)] items-center justify-center p-16">
         <div className="max-w-md">
 

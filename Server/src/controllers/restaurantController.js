@@ -1,11 +1,11 @@
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
-import { Restaurant } from "../models/restaurant.model.js"
+import { Restaurant } from "../models/restaurantModel.js"
 import jwt from "jsonwebtoken"
 import { generateAccessAndRefreshTokens } from "../utils/generateTokens.js"
 
-const loginRestaurant = asyncHandler(async (req, res) => {
+const restaurantLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body
 
   if (!email || !password) {
@@ -47,7 +47,7 @@ const loginRestaurant = asyncHandler(async (req, res) => {
   )
 })
 
-const logoutRestaurant = asyncHandler(async (req, res) => {
+const restaurantLogout = asyncHandler(async (req, res) => {
   await Restaurant.findByIdAndUpdate(req.user._id, {
     $unset: { refreshToken: 1 },
   })
@@ -95,8 +95,8 @@ const getCurrentRestaurant = asyncHandler(async (req, res) => {
 })
 
 export {
-  loginRestaurant,
-  logoutRestaurant,
+  restaurantLogin,
+  restaurantLogout,
   refreshRestaurantToken,
   getCurrentRestaurant,
 }

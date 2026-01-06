@@ -7,7 +7,7 @@ import {
   Check,
 } from "lucide-react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { restaurantLogin } from "../../utils/api" 
+import { restaurantLogin } from "../../utils/api"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -30,7 +30,9 @@ export default function LoginPage() {
         password: formData.password,
       })
 
+      localStorage.setItem("role", "RESTAURANT")
       navigate("/dashboard")
+
     } catch (error) {
       alert(error.response?.data?.message || "Login failed")
     } finally {

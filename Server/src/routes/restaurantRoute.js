@@ -1,17 +1,17 @@
 import { Router } from "express"
 import {
-  loginRestaurant,
-  logoutRestaurant,
-  refreshRestaurantToken,
+  restaurantLogin,
+  restaurantLogout,
   getCurrentRestaurant,
-} from "../controllers/restaurant.controller.js"
-import { verifyRestaurantJWT } from "../middlewares/auth.middleware.js"
+  refreshRestaurantToken,
+} from "../controllers/restaurantController.js"
+import { verifyRestaurantJWT } from "../middlewares/authMiddleware.js"
 
 const router = Router()
 
-router.route("/login").post(loginRestaurant)
-router.route("/logout").post(verifyRestaurantJWT, logoutRestaurant)
-router.route("/refresh-token").post(refreshRestaurantToken)
-router.route("/current-restaurant").get(verifyRestaurantJWT, getCurrentRestaurant)
+router.post("/login", restaurantLogin)
+router.post("/refresh-token", refreshRestaurantToken)
+router.post("/logout", verifyRestaurantJWT, restaurantLogout)
+router.get("/me", verifyRestaurantJWT, getCurrentRestaurant)
 
 export default router

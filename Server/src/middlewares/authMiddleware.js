@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken"
 import { ApiError } from "../utils/ApiError.js"
-import { Admin } from "../models/admin.model.js"
-import { Restaurant } from "../models/restaurant.model.js"
+import { Admin } from "../models/adminModel.js"
+import { Restaurant } from "../models/restaurantModel.js"
 
 export const verifyAdminJWT = async (req, _, next) => {
   const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")

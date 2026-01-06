@@ -21,10 +21,10 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-import adminRouter from "./routes/admin.routes.js";
-import restaurantRouter from "./routes/restaurant.routes.js";
+import adminRouter from "./routes/adminRoute.js"
+import restaurantRouter from "./routes/restaurantRoute.js"
 
-app.use("/api/v1/admin", adminRouter);
-app.use("/api/v1/restaurant", restaurantRouter);
+app.use("/api/v1/admin", adminRouter)
+app.use("/api/v1/restaurant", restaurantRouter)
 
 export { app };

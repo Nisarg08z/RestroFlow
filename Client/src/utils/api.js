@@ -5,45 +5,62 @@ const api = axios.create({
   withCredentials: true,
 })
 
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config
-
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry
-    ) {
-      originalRequest._retry = true
-      try {
-        await api.post("/restaurant/refresh-token")
-        return api(originalRequest)
-      } catch (err) {
-        window.location.href = "/login"
-        return Promise.reject(err)
-      }
-    }
-    return Promise.reject(error)
-  }
-)
+/* ================= RESTAURANT ================= */
 
 export const restaurantLogin = (data) =>
   api.post("/restaurant/login", data)
 
+export const getCurrentRestaurant = () =>
+  api.get("/restaurant/me")
+
+export const refreshRestaurantToken = () =>
+  api.post("/restaurant/refresh-token")
+
 export const restaurantLogout = () =>
   api.post("/restaurant/logout")
 
-export const getCurrentRestaurant = () =>
-  api.get("/restaurant/current-restaurant")
-
+/* ================= ADMIN ================= */
 
 export const adminLogin = (data) =>
   api.post("/admin/login", data)
 
-export const getAllRestaurants = () =>
-  api.get("/admin/restaurants")
+export const getCurrentAdmin = () =>
+  api.get("/admin/me")
 
-export const approveRestaurant = (id, data) =>
-  api.patch(`/admin/approve/${id}`, data)
+export const refreshAdminToken = () =>
+  api.post("/admin/refresh-token")
+
+export const adminLogout = () =>
+  api.post("/admin/logout")
+
+/* ================= INTERCEPTOR ================= */
+
+api.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const original = error.config
+
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true
+
+      try {
+        const role = localStorage.getItem("role")
+
+        if (role === "ADMIN") {
+          await refreshAdminToken()
+        } else if (role === "RESTAURANT") {
+          await refreshRestaurantToken()
+        }
+
+        return api(original)
+      } catch {
+        localStorage.removeItem("role")
+        window.location.href = "/login"
+      }
+    }
+
+    return Promise.reject(error)
+  }
+)
 
 export default api

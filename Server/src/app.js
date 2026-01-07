@@ -23,8 +23,10 @@ app.use(cookieParser());
 
 import adminRouter from "./routes/adminRoute.js"
 import restaurantRouter from "./routes/restaurantRoute.js"
+import restaurantRequestRouter from "./routes/restaurantRequestRoute.js"
 
 app.use("/api/v1/admin", adminRouter)
 app.use("/api/v1/restaurant", restaurantRouter)
+app.use("/api/v1/requests", restaurantRequestRouter)
 
 export { app };

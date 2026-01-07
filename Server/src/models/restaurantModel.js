@@ -32,16 +32,57 @@ const restaurantSchema = new Schema(
       trim: true,
     },
 
-    address: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    totalTables: {
-      type: Number,
-      required: true,
-    },
+    locations: [
+      {
+        locationName: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        address: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        city: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        state: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        zipCode: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        country: {
+          type: String,
+          required: true,
+          trim: true,
+          default: "USA",
+        },
+        phone: {
+          type: String,
+          trim: true,
+        },
+        totalTables: {
+          type: Number,
+          required: true,
+        },
+        isActive: {
+          type: Boolean,
+          default: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
 
     password: {
       type: String,

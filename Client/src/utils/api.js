@@ -1,9 +1,23 @@
 import axios from "axios"
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/api/v1",
+  baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
 })
+
+// Add token to requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 /* ================= RESTAURANT ================= */
 
@@ -33,6 +47,23 @@ export const refreshAdminToken = () =>
 export const adminLogout = () =>
   api.post("/admin/logout")
 
+/* ================= RESTAURANT REQUESTS ================= */
+
+export const submitRestaurantRequest = (data) =>
+  api.post("/requests/submit", data)
+
+export const getAllRestaurantRequests = (params = {}) =>
+  api.get("/requests", { params })
+
+export const getRestaurantRequestById = (id) =>
+  api.get(`/requests/${id}`)
+
+export const updateRequestStatus = (id, data) =>
+  api.patch(`/requests/${id}/status`, data)
+
+export const deleteRestaurantRequest = (id) =>
+  api.delete(`/requests/${id}`)
+
 /* ================= INTERCEPTOR ================= */
 
 api.interceptors.response.use(
@@ -48,14 +79,20 @@ api.interceptors.response.use(
 
         if (role === "ADMIN") {
           await refreshAdminToken()
+          return api(original)
         } else if (role === "RESTAURANT") {
           await refreshRestaurantToken()
+          return api(original)
         }
-
-        return api(original)
       } catch {
         localStorage.removeItem("role")
-        window.location.href = "/login"
+        localStorage.removeItem("accessToken")
+        const currentPath = window.location.pathname
+        if (currentPath.startsWith("/admin")) {
+          window.location.href = "/admin/login"
+        } else {
+          window.location.href = "/login"
+        }
       }
     }
 

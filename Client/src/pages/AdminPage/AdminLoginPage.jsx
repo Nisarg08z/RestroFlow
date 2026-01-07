@@ -24,14 +24,18 @@ export default function AdminLoginPage() {
     setIsLoading(true)
 
     try {
-      await adminLogin({
+      const response = await adminLogin({
         email: formData.email,
         password: formData.password,
       })
 
-      localStorage.setItem("role", "ADMIN")
-      navigate("/admin/dashboard")
-
+      if (response.data?.data) {
+        localStorage.setItem("role", "ADMIN")
+        if (response.data.data.accessToken) {
+          localStorage.setItem("accessToken", response.data.data.accessToken)
+        }
+        navigate("/admin/dashboard")
+      }
     } catch (error) {
       alert(error.response?.data?.message || "Admin login failed")
     } finally {

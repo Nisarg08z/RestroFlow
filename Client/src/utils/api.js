@@ -5,7 +5,6 @@ const api = axios.create({
   withCredentials: true,
 })
 
-// Add token to requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
@@ -47,6 +46,9 @@ export const refreshAdminToken = () =>
 export const adminLogout = () =>
   api.post("/admin/logout")
 
+export const getAllRestaurants = () =>
+  api.get("/admin/restaurants")
+
 /* ================= RESTAURANT REQUESTS ================= */
 
 export const submitRestaurantRequest = (data) =>
@@ -63,6 +65,15 @@ export const updateRequestStatus = (id, data) =>
 
 export const deleteRestaurantRequest = (id) =>
   api.delete(`/requests/${id}`)
+
+export const verifySignupToken = (token) =>
+  api.get(`/requests/verify-token/${token}`)
+
+export const createPaymentOrder = (data) =>
+  api.post("/requests/create-payment-order", data)
+
+export const completeSignup = (data) =>
+  api.post("/requests/complete-signup", data)
 
 /* ================= INTERCEPTOR ================= */
 

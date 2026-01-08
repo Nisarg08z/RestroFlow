@@ -11,7 +11,6 @@ const sectionTitles = {
   "/admin/dashboard/status": "Restaurant Status",
   "/admin/dashboard/subscriptions": "Subscription Management",
   "/admin/dashboard/support": "Support Tickets",
-  "/admin/dashboard/add-restaurant": "Add New Restaurant",
 };
 
 const AdminHeader = ({ onMenuClick }) => {

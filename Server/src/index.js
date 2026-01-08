@@ -3,6 +3,7 @@ import { createServer } from "http"
 import { Server } from "socket.io"
 import connectDB from "./db/index.js";
 import {app} from './app.js'
+import { setIO } from "./utils/socket.js";
 
 dotenv.config({
     path: './.env'
@@ -17,10 +18,7 @@ const io = new Server(httpServer, {
     }
 });
 
-app.use((req, res, next) => {
-    req.io = io;
-    next();
-});
+setIO(io);
 
 io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);

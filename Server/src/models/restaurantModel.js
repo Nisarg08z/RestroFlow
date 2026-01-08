@@ -32,6 +32,11 @@ const restaurantSchema = new Schema(
       trim: true,
     },
 
+    gstNumber: {
+      type: String,
+      trim: true,
+    },
+
     locations: [
       {
         locationName: {

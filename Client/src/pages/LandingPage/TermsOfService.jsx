@@ -1,9 +1,20 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 const TermsOfService = () => {
   return (
     <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[oklch(0.13_0.005_260)] min-h-screen">
       <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </Link>
+        </div>
         <h1 className="text-4xl sm:text-5xl font-bold text-[oklch(0.98_0_0)] mb-8">
           Terms of Service
         </h1>

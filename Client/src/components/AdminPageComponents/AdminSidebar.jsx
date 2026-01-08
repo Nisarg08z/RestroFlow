@@ -7,7 +7,6 @@ import {
   Activity,
   CreditCard,
   HeadphonesIcon,
-  UserPlus,
   X,
   LogOut,
 } from "lucide-react";
@@ -20,7 +19,6 @@ const menuItems = [
   { id: "status", label: "Restaurant Status", icon: <Activity className="w-5 h-5" />, path: "/admin/dashboard/status" },
   { id: "subscriptions", label: "Subscriptions", icon: <CreditCard className="w-5 h-5" />, path: "/admin/dashboard/subscriptions" },
   { id: "support", label: "Support Tickets", icon: <HeadphonesIcon className="w-5 h-5" />, path: "/admin/dashboard/support" },
-  { id: "add-restaurant", label: "Add Restaurant", icon: <UserPlus className="w-5 h-5" />, path: "/admin/dashboard/add-restaurant" },
 ];
 
 const AdminSidebar = ({ isOpen, onClose }) => {

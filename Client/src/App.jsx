@@ -3,16 +3,17 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import LandingPageLayout from './LandingPageLayout';
 import AdminPageLayout from './AdminPageLayout'
 import LandingPage from './pages/LandingPage/LandingPage';
-import PrivacyPolicy from './pages/LandingPage/PrivacyPolicy';
+import PrivacyPage from './pages/LandingPage/PrivacyPage';
 import TermsOfService from './pages/LandingPage/TermsOfService';
-import CookiePolicy from './pages/LandingPage/CookiePolicy';
+import CookiePage from './pages/LandingPage/CookiePage';
 import AboutUs from './pages/LandingPage/AboutUs';
 import LoginPage from './pages/LandingPage/LoginPage';
 import ForgotPassword from './pages/LandingPage/ForgotPassword';
+import CompleteSignup from './pages/LandingPage/CompleteSignup';
 import AdminLoginPage from './pages/AdminPage/AdminLoginPage'
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AdminDashboard, RestaurantRequests, AddRestaurant} from './components/AdminPageComponents'
+import { AdminDashboard, RestaurantRequests } from './components/AdminPageComponents'
 import { Toaster } from 'react-hot-toast';
 
 const App = () => {
@@ -35,15 +36,17 @@ const App = () => {
 
           <Route path="/" element={<LandingPageLayout />}>
             <Route path="" element={<LandingPage />} />
-            <Route path="privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="privacy-policy" element={<PrivacyPage />} />
             <Route path="terms-of-service" element={<TermsOfService />} />
-            <Route path="cookie-policy" element={<CookiePolicy />} />
+            <Route path="cookie-policy" element={<CookiePage />} />
             <Route path="about-us" element={<AboutUs />} />
           </Route>
 
           <Route path="login" element={<LoginPage />} />
 
           <Route path="forgot-password" element={<ForgotPassword />} />
+          
+          <Route path="complete-signup" element={<CompleteSignup />} />
           
           <Route path="admin/login" element={<AdminLoginPage />} />
           
@@ -60,7 +63,6 @@ const App = () => {
             {/* <Route path="status" element={<RestaurantStatus />} />
             <Route path="subscriptions" element={<Subscriptions />} />
             <Route path="support" element={<SupportTickets />} /> */}
-            <Route path="add-restaurant" element={<AddRestaurant />} />
           </Route>
 
         </Routes>

@@ -31,7 +31,7 @@ const restaurantRequestSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "approved", "rejected", "completed"],
       default: "pending",
       index: true,
     },
@@ -43,6 +43,17 @@ const restaurantRequestSchema = new Schema(
       type: Date,
     },
     rejectedAt: {
+      type: Date,
+    },
+    signupToken: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+    tokenExpiry: {
+      type: Date,
+    },
+    completedAt: {
       type: Date,
     },
   },

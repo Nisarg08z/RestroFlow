@@ -22,10 +22,6 @@ const restaurantLogin = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Account not approved by admin")
   }
 
-  if (!restaurant.subscription?.isActive) {
-    throw new ApiError(403, "Subscription inactive")
-  }
-
   const isPasswordValid = await restaurant.isPasswordCorrect(password)
 
   if (!isPasswordValid) {

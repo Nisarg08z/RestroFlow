@@ -1,87 +1,13 @@
-import nodemailer from "nodemailer";
-
-const createTransporter = () => {
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.SMTP_PORT || "587"),
-    secure: process.env.SMTP_SECURE === "true",
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    connectionTimeout: 60000,
-    greetingTimeout: 30000,
-    socketTimeout: 60000,
-    pool: true,
-    maxConnections: 1,
-    maxMessages: 3,
-    rateDelta: 1000,
-    rateLimit: 5,
-    tls: {
-      rejectUnauthorized: false,
-      ciphers: 'SSLv3'
-    },
-    debug: process.env.NODE_ENV === 'development',
-    logger: process.env.NODE_ENV === 'development'
-  });
-
-  transporter.verify((error, success) => {
-    if (error) {
-      console.error('SMTP connection verification failed:', error);
-    } else {
-      console.log('SMTP server is ready to send emails');
-    }
-  });
-
-  return transporter;
-};
-
-const sendEmailWithRetry = async (transporter, mailOptions, maxRetries = 3) => {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`Attempting to send email (attempt ${attempt}/${maxRetries})...`);
-      const info = await transporter.sendMail(mailOptions);
-      console.log("Email sent successfully:", info.messageId);
-      return { success: true, messageId: info.messageId };
-    } catch (error) {
-      console.error(`Email send attempt ${attempt} failed:`, error.message);
-      
-      if (attempt === maxRetries) {
-        throw error;
-      }
-      
-      const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
-      console.log(`Retrying in ${waitTime}ms...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-    }
-  }
-};
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_API_URL = "https://api.resend.com/emails";
 
 export const sendSignupEmail = async (email, restaurantName, signupLink) => {
-  let transporter;
-  
   try {
-    if (process.env.RESEND_API_KEY) {
-      try {
-        console.log("Using Resend API for email delivery (better for cloud platforms)");
-        const { sendSignupEmail: sendViaResend } = await import("./emailServiceResend.js");
-        return await sendViaResend(email, restaurantName, signupLink);
-      } catch (importError) {
-        console.error("Failed to import Resend service, falling back to SMTP:", importError);
-      }
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY environment variable is required");
     }
 
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      throw new Error("SMTP_USER and SMTP_PASS environment variables are required. Alternatively, set RESEND_API_KEY to use Resend API.");
-    }
-
-    transporter = createTransporter();
-
-    const mailOptions = {
-      from: `"RestroFlow" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: "Complete Your RestroFlow Registration",
-      html: `
+    const emailHtml = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
@@ -231,13 +157,13 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
               </div>
       
               <div class="link-box">
-                If the button doesn’t work, copy and paste this link:
+                If the button doesn't work, copy and paste this link:
                 <br />
                 <a href="${signupLink}">${signupLink}</a>
               </div>
       
               <p style="margin-top: 30px;">
-                If you didn’t request this email, you can safely ignore it.
+                If you didn't request this email, you can safely ignore it.
               </p>
       
               <p>
@@ -254,61 +180,52 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
         </div>
       </body>
       </html>
-      `
-      ,
-      text: `
-        Hi ${restaurantName},
-        
-        Great news! Your restaurant request has been approved by our admin team.
-        
-        You're just one step away from getting started with RestroFlow. Click the link below to complete your registration:
-        
-        ${signupLink}
-        
-        This link is valid for 48 hours.
-        
-        If you didn't request this, please ignore this email.
-        
-        Best regards,
-        The RestroFlow Team
-      `,
-    };
+    `;
 
-    return await sendEmailWithRetry(transporter, mailOptions, 3);
-  } catch (error) {
-    console.error("Error sending email via SMTP:", error);
-    console.error("Error details:", {
-      code: error.code,
-      command: error.command,
-      response: error.response,
-      responseCode: error.responseCode,
+    const emailText = `
+      Hi ${restaurantName},
+      
+      Great news! Your restaurant request has been approved by our admin team.
+      
+      You're just one step away from getting started with RestroFlow. Click the link below to complete your registration:
+      
+      ${signupLink}
+      
+      This link is valid for 48 hours.
+      
+      If you didn't request this, please ignore this email.
+      
+      Best regards,
+      The RestroFlow Team
+    `;
+
+    const response = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: `RestroFlow <${process.env.RESEND_FROM_EMAIL || process.env.SMTP_USER || "onboarding@resend.dev"}>`,
+        to: [email],
+        subject: "Complete Your RestroFlow Registration",
+        html: emailHtml,
+        text: emailText,
+      }),
     });
-    
-    if (transporter) {
-      transporter.close();
-    }
 
-    if (process.env.RESEND_API_KEY) {
-      console.log("SMTP failed, attempting to use Resend API as fallback...");
-      try {
-        const { sendSignupEmail: sendViaResend } = await import("./emailServiceResend.js");
-        return await sendViaResend(email, restaurantName, signupLink);
-      } catch (resendError) {
-        console.error("Resend fallback also failed:", resendError);
-        throw new Error(`Failed to send email via SMTP and Resend: ${error.message}`);
-      }
-    }
-    
-    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        `Failed to send email: ${error.message}. ` +
-        `This is likely because Render's free tier blocks SMTP connections. ` +
-        `Solution: Use Resend API by setting RESEND_API_KEY environment variable. ` +
-        `Sign up at https://resend.com (free tier available).`
+        `Resend API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
       );
     }
-    
+
+    const data = await response.json();
+    console.log("Email sent successfully via Resend:", data.id);
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error("Error sending email via Resend:", error);
     throw new Error(`Failed to send email: ${error.message}`);
   }
 };
-

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import LandingPageLayout from './LandingPageLayout';
-import AdminPageLayout from './AdminPageLayout'
+import LandingPageLayout from './Layouts/LandingPageLayout';
+import AdminPageLayout from './Layouts/AdminPageLayout'
 import LandingPage from './pages/LandingPage/LandingPage';
 import PrivacyPage from './pages/LandingPage/PrivacyPage';
 import TermsOfService from './pages/LandingPage/TermsOfService';

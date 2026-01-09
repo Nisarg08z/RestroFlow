@@ -17,6 +17,7 @@ import {
   getAllRestaurantRequests,
   updateRequestStatus,
   deleteRestaurantRequest,
+  sendRestaurantRequestReply,
 } from "../../utils/api";
 import toast from "react-hot-toast";
 
@@ -27,6 +28,7 @@ const RestaurantRequests = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [showReply, setShowReply] = useState(false);
   const [replyMessage, setReplyMessage] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
   const [filter, setFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [processingRequestId, setProcessingRequestId] = useState(null);
@@ -35,7 +37,12 @@ const RestaurantRequests = () => {
   useEffect(() => {
     fetchRequests();
 
-    socketRef.current = io(import.meta.env.VITE_SOCKET_URL, {
+    const apiUrl = import.meta.env.VITE_API_URL || "";
+    const socketUrl =
+      import.meta.env.VITE_SOCKET_URL ||
+      apiUrl.replace(/\/api\/v1\/?$/, "");
+
+    socketRef.current = io(socketUrl, {
       withCredentials: true,
     });
 
@@ -425,14 +432,45 @@ const RestaurantRequests = () => {
               />
               <div className="flex gap-3">
                 <button
-                  className="flex-1 bg-[oklch(0.7_0.18_45)] text-[oklch(0.13_0.005_260)] px-4 py-3 rounded-lg font-medium hover:bg-[oklch(0.7_0.18_45)]/90 transition"
-                  onClick={() => setShowReply(false)}
+                  className="flex-1 bg-[oklch(0.7_0.18_45)] text-[oklch(0.13_0.005_260)] px-4 py-3 rounded-lg font-medium hover:bg-[oklch(0.7_0.18_45)]/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  disabled={isSendingReply || !replyMessage.trim()}
+                  onClick={async () => {
+                    if (!replyMessage.trim()) {
+                      toast.error("Please type a reply message first");
+                      return;
+                    }
+
+                    try {
+                      setIsSendingReply(true);
+                      await sendRestaurantRequestReply(selectedRequest._id, {
+                        message: replyMessage.trim(),
+                      });
+                      toast.success(`Reply email sent to ${selectedRequest.email}`);
+                      setShowReply(false);
+                      setReplyMessage("");
+                    } catch (error) {
+                      console.error(error);
+                      toast.error(
+                        error.response?.data?.message ||
+                          "Failed to send reply email"
+                      );
+                    } finally {
+                      setIsSendingReply(false);
+                    }
+                  }}
                 >
-                  Send Reply
+                  {isSendingReply && (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  <span>{isSendingReply ? "Sending..." : "Send Reply"}</span>
                 </button>
                 <button
                   className="px-4 py-3 rounded-lg border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] transition"
-                  onClick={() => setShowReply(false)}
+                  onClick={() => {
+                    if (!isSendingReply) {
+                      setShowReply(false);
+                    }
+                  }}
                 >
                   Cancel
                 </button>

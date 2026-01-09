@@ -1,6 +1,66 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_API_URL = "https://api.resend.com/emails";
 
+export const sendGenericEmail = async (email, subject, html, text) => {
+  try {
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY environment variable is required");
+    }
+
+    const emailHtml = html;
+    const emailText = text;
+
+    let fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+    
+    if (!process.env.RESEND_FROM_EMAIL) {
+      const smtpUser = process.env.SMTP_USER || "";
+      if (smtpUser && !smtpUser.includes("@gmail.com") && smtpUser.includes("@")) {
+        fromEmail = smtpUser;
+      } else {
+        fromEmail = "onboarding@resend.dev";
+      }
+    }
+    
+    console.log(`Sending email via Resend from: ${fromEmail}`);
+
+    const response = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: `RestroFlow <${fromEmail}>`,
+        to: [email],
+        subject,
+        html: emailHtml,
+        text: emailText,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      let errorMessage = `Resend API error: ${response.status} ${response.statusText}`;
+      
+      if (response.status === 403 && errorData.message?.includes("domain is not verified")) {
+        errorMessage = `Resend API error: Domain verification required. ` +
+          `The email address "${fromEmail}" uses a domain that needs to be verified in Resend. ` +
+          `Please either: 1) Set RESEND_FROM_EMAIL to a verified domain, or 2) Use "onboarding@resend.dev" (Resend's default domain). ` +
+          `Visit https://resend.com/domains to verify your domain.`;
+      }
+      
+      throw new Error(`${errorMessage} - ${JSON.stringify(errorData)}`);
+    }
+
+    const data = await response.json();
+    console.log("Email sent successfully via Resend:", data.id);
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error("Error sending email via Resend:", error);
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+};
+
 export const sendSignupEmail = async (email, restaurantName, signupLink) => {
   try {
     if (!RESEND_API_KEY) {
@@ -200,51 +260,12 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
     `;
 
 
-    let fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-    
-    if (!process.env.RESEND_FROM_EMAIL) {
-      const smtpUser = process.env.SMTP_USER || "";
-      if (smtpUser && !smtpUser.includes("@gmail.com") && smtpUser.includes("@")) {
-        fromEmail = smtpUser;
-      } else {
-        fromEmail = "onboarding@resend.dev";
-      }
-    }
-    
-    console.log(`Sending email via Resend from: ${fromEmail}`);
-
-    const response = await fetch(RESEND_API_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: `RestroFlow <${fromEmail}>`,
-        to: [email],
-        subject: "Complete Your RestroFlow Registration",
-        html: emailHtml,
-        text: emailText,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      let errorMessage = `Resend API error: ${response.status} ${response.statusText}`;
-      
-      if (response.status === 403 && errorData.message?.includes("domain is not verified")) {
-        errorMessage = `Resend API error: Domain verification required. ` +
-          `The email address "${fromEmail}" uses a domain that needs to be verified in Resend. ` +
-          `Please either: 1) Set RESEND_FROM_EMAIL to a verified domain, or 2) Use "onboarding@resend.dev" (Resend's default domain). ` +
-          `Visit https://resend.com/domains to verify your domain.`;
-      }
-      
-      throw new Error(`${errorMessage} - ${JSON.stringify(errorData)}`);
-    }
-
-    const data = await response.json();
-    console.log("Email sent successfully via Resend:", data.id);
-    return { success: true, messageId: data.id };
+    return sendGenericEmail(
+      email,
+      "Complete Your RestroFlow Registration",
+      emailHtml,
+      emailText
+    );
   } catch (error) {
     console.error("Error sending email via Resend:", error);
     throw new Error(`Failed to send email: ${error.message}`);

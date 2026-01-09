@@ -57,7 +57,7 @@ const sendEmailWithRetry = async (transporter, mailOptions, maxRetries = 3) => {
   }
 };
 
-export const sendSignupEmail = async (email, restaurantName, signupLink) => {
+const sendGenericEmail = async (email, subject, html, text) => {
   let transporter;
   
   try {
@@ -80,8 +80,51 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
     const mailOptions = {
       from: `"RestroFlow" <${process.env.SMTP_USER}>`,
       to: email,
-      subject: "Complete Your RestroFlow Registration",
-      html: `
+      subject,
+      html,
+      text,
+    };
+
+    return await sendEmailWithRetry(transporter, mailOptions, 3);
+  } catch (error) {
+    console.error("Error sending email via SMTP:", error);
+    console.error("Error details:", {
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+    });
+    
+    if (transporter) {
+      transporter.close();
+    }
+
+    if (process.env.RESEND_API_KEY) {
+      console.log("SMTP failed, attempting to use Resend API as fallback...");
+      try {
+        const { sendGenericEmail: sendViaResendGeneric } = await import("./emailServiceResend.js");
+        return await sendViaResendGeneric(email, subject, html, text);
+      } catch (resendError) {
+        console.error("Resend fallback also failed:", resendError);
+        throw new Error(`Failed to send email via SMTP and Resend: ${error.message}`);
+      }
+    }
+    
+    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
+      throw new Error(
+        `Failed to send email: ${error.message}. ` +
+        `This is likely because Render's free tier blocks SMTP connections. ` +
+        `Solution: Use Resend API by setting RESEND_API_KEY environment variable. ` +
+        `Sign up at https://resend.com (free tier available).`
+      );
+    }
+    
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+};
+
+export const sendSignupEmail = async (email, restaurantName, signupLink) => {
+  const html = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
@@ -254,9 +297,9 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
         </div>
       </body>
       </html>
-      `
-      ,
-      text: `
+      `;
+
+  const text = `
         Hi ${restaurantName},
         
         Great news! Your restaurant request has been approved by our admin team.
@@ -271,44 +314,49 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
         
         Best regards,
         The RestroFlow Team
-      `,
-    };
+      `;
 
-    return await sendEmailWithRetry(transporter, mailOptions, 3);
-  } catch (error) {
-    console.error("Error sending email via SMTP:", error);
-    console.error("Error details:", {
-      code: error.code,
-      command: error.command,
-      response: error.response,
-      responseCode: error.responseCode,
-    });
-    
-    if (transporter) {
-      transporter.close();
-    }
+  return sendGenericEmail(
+    email,
+    "Complete Your RestroFlow Registration",
+    html,
+    text
+  );
+};
 
-    if (process.env.RESEND_API_KEY) {
-      console.log("SMTP failed, attempting to use Resend API as fallback...");
-      try {
-        const { sendSignupEmail: sendViaResend } = await import("./emailServiceResend.js");
-        return await sendViaResend(email, restaurantName, signupLink);
-      } catch (resendError) {
-        console.error("Resend fallback also failed:", resendError);
-        throw new Error(`Failed to send email via SMTP and Resend: ${error.message}`);
-      }
-    }
-    
-    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
-      throw new Error(
-        `Failed to send email: ${error.message}. ` +
-        `This is likely because Render's free tier blocks SMTP connections. ` +
-        `Solution: Use Resend API by setting RESEND_API_KEY environment variable. ` +
-        `Sign up at https://resend.com (free tier available).`
-      );
-    }
-    
-    throw new Error(`Failed to send email: ${error.message}`);
-  }
+export const sendRequestReplyEmail = async (email, restaurantName, message) => {
+  const subject = `Reply from RestroFlow about your request`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>RestroFlow Reply</title>
+    </head>
+    <body style="background-color:#0f1115;color:#e5e7eb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:24px;">
+      <div style="max-width:600px;margin:0 auto;background-color:#161a20;border-radius:16px;padding:24px;">
+        <h2 style="margin-top:0;margin-bottom:16px;color:#ffffff;">Hello ${restaurantName || "there"},</h2>
+        <p style="white-space:pre-line;line-height:1.6;color:#cbd5e1;">${message}</p>
+        <p style="margin-top:24px;color:#cbd5e1;">
+          Best regards,<br />
+          <strong style="color:#f7931e;">The RestroFlow Team</strong>
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+Hello ${restaurantName || "there"},
+
+${message}
+
+Best regards,
+The RestroFlow Team
+  `;
+
+  return sendGenericEmail(email, subject, html, text);
 };
 

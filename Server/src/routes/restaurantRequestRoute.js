@@ -5,6 +5,7 @@ import {
   getRestaurantRequestById,
   updateRequestStatus,
   deleteRestaurantRequest,
+  sendRestaurantRequestReply,
   verifySignupToken,
   createPaymentOrder,
   completeSignup,
@@ -22,6 +23,7 @@ router.get("/", verifyAdminJWT, getAllRestaurantRequests);
 router.get("/:id", verifyAdminJWT, getRestaurantRequestById);
 router.patch("/:id/status", verifyAdminJWT, updateRequestStatus);
 router.delete("/:id", verifyAdminJWT, deleteRestaurantRequest);
+router.post("/:id/reply", verifyAdminJWT, sendRestaurantRequestReply);
 
 export default router;
 

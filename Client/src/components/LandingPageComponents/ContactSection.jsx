@@ -77,10 +77,10 @@ const ContactSection = () => {
                 <div>
                   <div className="text-[oklch(0.98_0_0)] font-medium">Email Us</div>
                   <a
-                    href="mailto:contact@restroflow.com"
+                    href="mailto:contact.restroflow@gmail.com"
                     className="text-[oklch(0.65_0_0)] hover:text-[oklch(0.7_0.18_45)] transition"
                   >
-                    contact@restroflow.com
+                    contact.restroflow@gmail.com
                   </a>
                 </div>
               </div>
@@ -91,7 +91,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <div className="text-[oklch(0.98_0_0)] font-medium">Call Us</div>
-                  <span className="text-[oklch(0.65_0_0)]">+1 (234) 567-890</span>
+                  <span className="text-[oklch(0.65_0_0)]">+91 9876543210</span>
                 </div>
               </div>
 
@@ -102,7 +102,7 @@ const ContactSection = () => {
                 <div>
                   <div className="text-[oklch(0.98_0_0)] font-medium">Location</div>
                   <span className="text-[oklch(0.65_0_0)]">
-                    123 Tech Street, San Francisco, CA
+                    Ahmedabad, Gujarat, India
                   </span>
                 </div>
               </div>

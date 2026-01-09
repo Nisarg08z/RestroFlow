@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { RestaurantRequest } from "../models/restaurantRequestModel.js";
 import { Restaurant } from "../models/restaurantModel.js";
-import { sendSignupEmail } from "../utils/emailService.js";
+import { sendSignupEmail, sendRequestReplyEmail } from "../utils/emailService.js";
 import { calculatePrice, getPlanName } from "../utils/pricing.js";
 import { createOrder, verifyPayment } from "../utils/razorpay.js";
 import crypto from "crypto";
@@ -148,6 +148,27 @@ const deleteRestaurantRequest = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, {}, "Request deleted successfully"));
+});
+
+const sendRestaurantRequestReply = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { message } = req.body;
+
+  if (!message || !message.trim()) {
+    throw new ApiError(400, "Reply message is required");
+  }
+
+  const request = await RestaurantRequest.findById(id);
+
+  if (!request) {
+    throw new ApiError(404, "Request not found");
+  }
+
+  await sendRequestReplyEmail(request.email, request.restaurantName, message);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Reply email sent successfully"));
 });
 
 const verifySignupToken = asyncHandler(async (req, res) => {
@@ -334,6 +355,7 @@ export {
   getRestaurantRequestById,
   updateRequestStatus,
   deleteRestaurantRequest,
+  sendRestaurantRequestReply,
   verifySignupToken,
   createPaymentOrder,
   completeSignup,

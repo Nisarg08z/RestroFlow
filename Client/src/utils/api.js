@@ -66,6 +66,9 @@ export const updateRequestStatus = (id, data) =>
 export const deleteRestaurantRequest = (id) =>
   api.delete(`/requests/${id}`)
 
+export const sendRestaurantRequestReply = (id, data) =>
+  api.post(`/requests/${id}/reply`, data)
+
 export const verifySignupToken = (token) =>
   api.get(`/requests/verify-token/${token}`)
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Menu, Bell, Search, Building2, X } from "lucide-react";
+import { Menu, Bell, Building2, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import { getAllRestaurantRequests } from "../../utils/api";
@@ -127,23 +127,6 @@ const AdminHeader = ({ onMenuClick }) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[oklch(0.65_0_0)]" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="
-                pl-9 w-64 px-3 py-2 rounded-lg
-                bg-[oklch(0.22_0.005_260)]
-                border border-[oklch(0.28_0.005_260)]
-                text-[oklch(0.98_0_0)]
-                placeholder:text-[oklch(0.65_0_0)]
-                focus:outline-none focus:ring-2
-                focus:ring-[oklch(0.7_0.18_45)]
-              "
-            />
-          </div>
-
           <div className="relative" ref={notificationRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}

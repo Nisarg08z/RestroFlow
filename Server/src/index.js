@@ -27,19 +27,13 @@ const io = new Server(httpServer, {
 setIO(io);
 
 io.on("connection", (socket) => {
-    console.log("Client connected:", socket.id);
-
-    socket.on("disconnect", () => {
-        console.log("Client disconnected:", socket.id);
-    });
+    socket.on("disconnect", () => {});
 });
 
 connectDB()
 .then(() => {
-    httpServer.listen(process.env.PORT || 8000, () => {
-        console.log(`Server is running at port : ${process.env.PORT}`);
-    })
+    httpServer.listen(process.env.PORT || 8000, () => {})
 })
 .catch((err) => {
-    console.log("MONGO db connection failed !!! ", err);
+    console.error("MONGO db connection failed !!! ", err);
 })

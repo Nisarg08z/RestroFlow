@@ -13,7 +13,7 @@ import CompleteSignup from './pages/LandingPage/CompleteSignup';
 import AdminLoginPage from './pages/AdminPage/AdminLoginPage'
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AdminDashboard, RestaurantRequests } from './components/AdminPageComponents'
+import { AdminDashboard, RestaurantRequests, SubscriptionManagement } from './components/AdminPageComponents'
 import { Toaster } from 'react-hot-toast';
 import { AuthContext } from './context/AuthContext';
 import NotFound from './pages/NotFound';
@@ -52,7 +52,7 @@ const App = () => {
 
         <ScrollToTop />
         
-        <Routes> 
+        <Routes>
           <Route path="/" element={<LandingPageLayout />}>
             <Route
               path=""
@@ -86,8 +86,8 @@ const App = () => {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="requests" element={<RestaurantRequests />} />
+            <Route path="subscriptions" element={<SubscriptionManagement />} />
             {/* <Route path="status" element={<RestaurantStatus />} />
-            <Route path="subscriptions" element={<Subscriptions />} />
             <Route path="support" element={<SupportTickets />} /> */}
           </Route>
 

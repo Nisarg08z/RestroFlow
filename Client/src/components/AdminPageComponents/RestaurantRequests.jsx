@@ -33,6 +33,7 @@ const RestaurantRequests = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [processingRequestId, setProcessingRequestId] = useState(null);
   const socketRef = useRef(null);
+  const PROCESSING_KEY = "restroflow_request_processing";
 
   useEffect(() => {
     fetchRequests();
@@ -70,6 +71,26 @@ const RestaurantRequests = () => {
     };
   }, []);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(PROCESSING_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      if (!parsed?.id) {
+        localStorage.removeItem(PROCESSING_KEY);
+        return;
+      }
+      const maxAgeMs = 2 * 60 * 1000;
+      if (parsed.startedAt && Date.now() - parsed.startedAt > maxAgeMs) {
+        localStorage.removeItem(PROCESSING_KEY);
+        return;
+      }
+      setProcessingRequestId(parsed.id);
+    } catch {
+      localStorage.removeItem(PROCESSING_KEY);
+    }
+  }, []);
+
   const fetchRequests = async () => {
     try {
       setIsLoading(true);
@@ -102,6 +123,10 @@ const RestaurantRequests = () => {
 
   const handleApprove = async (id) => {
     setProcessingRequestId(id);
+    localStorage.setItem(
+      PROCESSING_KEY,
+      JSON.stringify({ id, action: "approved", startedAt: Date.now() })
+    );
     try {
       const response = await updateRequestStatus(id, { status: "approved" });
       setRequests((prev) =>
@@ -113,11 +138,16 @@ const RestaurantRequests = () => {
       toast.error(error.response?.data?.message || "Failed to approve request");
     } finally {
       setProcessingRequestId(null);
+      localStorage.removeItem(PROCESSING_KEY);
     }
   };
 
   const handleReject = async (id) => {
     setProcessingRequestId(id);
+    localStorage.setItem(
+      PROCESSING_KEY,
+      JSON.stringify({ id, action: "rejected", startedAt: Date.now() })
+    );
     try {
       const response = await updateRequestStatus(id, { status: "rejected" });
       setRequests((prev) =>
@@ -129,8 +159,10 @@ const RestaurantRequests = () => {
       toast.error(error.response?.data?.message || "Failed to reject request");
     } finally {
       setProcessingRequestId(null);
+      localStorage.removeItem(PROCESSING_KEY);
     }
   };
+
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this request?")) {
@@ -190,8 +222,8 @@ const RestaurantRequests = () => {
       </div>
 
       <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
+        <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[oklch(0.65_0_0)]" />
             <input
               placeholder="Search restaurants or emails..."
@@ -200,7 +232,7 @@ const RestaurantRequests = () => {
               className="w-full pl-9 pr-4 py-2 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 md:justify-end">
             {["all", "pending", "approved", "rejected"].map((status) => (
               <button
                 key={status}
@@ -218,10 +250,10 @@ const RestaurantRequests = () => {
       </div>
 
       <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl">
-        <div className="p-6 border-b border-[oklch(0.28_0.005_260)]">
-          <h2 className="text-xl font-bold text-[oklch(0.98_0_0)]">Contact Form Submissions</h2>
+        <div className="px-4 py-4 md:px-6 md:py-6 border-b border-[oklch(0.28_0.005_260)]">
+          <h2 className="text-lg md:text-xl font-bold text-[oklch(0.98_0_0)]">Contact Form Submissions</h2>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="px-4 pb-4 pt-4 md:p-6 space-y-4 overflow-x-auto">
           {isLoading ? (
             <div className="text-center py-12">
               <Loader2 className="w-12 h-12 text-[oklch(0.7_0.18_45)] mx-auto mb-3 animate-spin" />
@@ -236,23 +268,23 @@ const RestaurantRequests = () => {
             filteredRequests.map((request) => (
               <div
                 key={request._id}
-                className={`p-4 bg-[oklch(0.22_0.005_260)] rounded-lg border transition-colors ${
+                className={`p-4 md:p-5 bg-[oklch(0.22_0.005_260)] rounded-lg border transition-colors ${
                   processingRequestId === request._id
                     ? "border-blue-500/50 bg-blue-500/5"
                     : "border-[oklch(0.28_0.005_260)] hover:border-[oklch(0.7_0.18_45)]/50"
                 }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       processingRequestId === request._id
                         ? "bg-blue-500/10"
                         : "bg-[oklch(0.7_0.18_45)]/10"
                     }`}>
                       {processingRequestId === request._id ? (
-                        <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                        <Loader2 className="w-5 h-5 md:w-6 md:h-6 text-blue-500 animate-spin" />
                       ) : (
-                        <Building2 className="w-6 h-6 text-[oklch(0.7_0.18_45)]" />
+                        <Building2 className="w-5 h-5 md:w-6 md:h-6 text-[oklch(0.7_0.18_45)]" />
                       )}
                     </div>
                     <div className="space-y-1">
@@ -292,7 +324,7 @@ const RestaurantRequests = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 lg:flex-shrink-0">
+                  <div className="flex items-center gap-2 lg:flex-shrink-0 flex-wrap justify-start lg:justify-end">
                     <button
                       onClick={() => {
                         setSelectedRequest(request);
@@ -309,7 +341,9 @@ const RestaurantRequests = () => {
                         {processingRequestId === request._id ? (
                           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/50">
                             <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
-                            <span className="text-xs text-blue-500 font-medium">Sending Email...</span>
+                            <span className="text-xs text-blue-500 font-medium whitespace-nowrap">
+                              Sending Email...
+                            </span>
                           </div>
                         ) : (
                           <>
@@ -340,14 +374,20 @@ const RestaurantRequests = () => {
       </div>
 
       {showDetails && selectedRequest && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDetails(false)}>
-          <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-[oklch(0.28_0.005_260)]">
-              <h2 className="text-xl font-bold text-[oklch(0.98_0_0)]">Request Details</h2>
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start md:items-center justify-center z-50 p-3 md:p-4 overflow-y-auto"
+          onClick={() => setShowDetails(false)}
+        >
+          <div
+            className="mt-10 md:mt-0 bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl max-w-2xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 md:p-6 border-b border-[oklch(0.28_0.005_260)]">
+              <h2 className="text-lg md:text-xl font-bold text-[oklch(0.98_0_0)]">Request Details</h2>
               <p className="text-sm text-[oklch(0.65_0_0)] mt-1">Review the restaurant request details</p>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 md:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs text-[oklch(0.65_0_0)]">Restaurant Name</p>
                   <p className="text-sm font-medium text-[oklch(0.98_0_0)]">{selectedRequest.restaurantName}</p>
@@ -375,25 +415,27 @@ const RestaurantRequests = () => {
                   {processingRequestId === selectedRequest._id ? (
                     <div className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-blue-500/10 border border-blue-500/50">
                       <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                      <span className="text-blue-500 font-medium">Sending email to {selectedRequest.email}...</span>
+                      <span className="text-blue-500 font-medium text-sm md:text-base text-center">
+                        Sending email to {selectedRequest.email}...
+                      </span>
                     </div>
                   ) : (
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <button
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                         onClick={() => handleApprove(selectedRequest._id)}
                         disabled={processingRequestId !== null}
                       >
                         <Check className="w-4 h-4" />
-                        Approve & Add to System
+                        <span>Approve & Add to System</span>
                       </button>
                       <button
-                        className="flex-1 border border-red-500/50 text-red-500 hover:bg-red-500/10 px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 border border-red-500/50 text-red-500 hover:bg-red-500/10 px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                         onClick={() => handleReject(selectedRequest._id)}
                         disabled={processingRequestId !== null}
                       >
                         <X className="w-4 h-4" />
-                        Reject
+                        <span>Reject</span>
                       </button>
                     </div>
                   )}
@@ -401,14 +443,14 @@ const RestaurantRequests = () => {
               )}
 
               <button
-                className="w-full border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2"
+                className="w-full border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm md:text-base mt-2"
                 onClick={() => {
                   setShowReply(true);
                   setShowDetails(false);
                 }}
               >
                 <MessageSquare className="w-4 h-4" />
-                Send Reply Email
+                <span>Send Reply Email</span>
               </button>
             </div>
           </div>
@@ -416,13 +458,19 @@ const RestaurantRequests = () => {
       )}
 
       {showReply && selectedRequest && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowReply(false)}>
-          <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-[oklch(0.28_0.005_260)]">
-              <h2 className="text-xl font-bold text-[oklch(0.98_0_0)]">Reply to {selectedRequest.restaurantName}</h2>
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start md:items-center justify-center z-50 p-3 md:p-4 overflow-y-auto"
+          onClick={() => setShowReply(false)}
+        >
+          <div
+            className="mt-10 md:mt-0 bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl max-w-lg w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 md:p-6 border-b border-[oklch(0.28_0.005_260)]">
+              <h2 className="text-lg md:text-xl font-bold text-[oklch(0.98_0_0)]">Reply to {selectedRequest.restaurantName}</h2>
               <p className="text-sm text-[oklch(0.65_0_0)] mt-1">Send an email response to {selectedRequest.email}</p>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-4 md:p-6 space-y-4">
               <textarea
                 placeholder="Type your reply message..."
                 value={replyMessage}
@@ -430,9 +478,9 @@ const RestaurantRequests = () => {
                 rows={6}
                 className="w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] resize-none"
               />
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
-                  className="flex-1 bg-[oklch(0.7_0.18_45)] text-[oklch(0.13_0.005_260)] px-4 py-3 rounded-lg font-medium hover:bg-[oklch(0.7_0.18_45)]/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 bg-[oklch(0.7_0.18_45)] text-[oklch(0.13_0.005_260)] px-4 py-3 rounded-lg font-medium hover:bg-[oklch(0.7_0.18_45)]/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
                   disabled={isSendingReply || !replyMessage.trim()}
                   onClick={async () => {
                     if (!replyMessage.trim()) {
@@ -465,7 +513,7 @@ const RestaurantRequests = () => {
                   <span>{isSendingReply ? "Sending..." : "Send Reply"}</span>
                 </button>
                 <button
-                  className="px-4 py-3 rounded-lg border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] transition"
+                  className="px-4 py-3 rounded-lg border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] transition text-sm md:text-base"
                   onClick={() => {
                     if (!isSendingReply) {
                       setShowReply(false);

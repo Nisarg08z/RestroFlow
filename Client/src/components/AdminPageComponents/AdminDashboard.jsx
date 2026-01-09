@@ -97,7 +97,7 @@ const AdminDashboard = () => {
     {
       label: "Active Subscriptions",
       value: stats.activeSubscriptions,
-      change: "Coming Soon",
+      change: "",
       icon: CreditCard,
       color: "text-blue-500",
       comingSoon: true,

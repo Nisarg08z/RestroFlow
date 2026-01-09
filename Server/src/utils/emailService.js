@@ -25,11 +25,9 @@ const createTransporter = () => {
     logger: process.env.NODE_ENV === 'development'
   });
 
-  transporter.verify((error, success) => {
+  transporter.verify((error) => {
     if (error) {
       console.error('SMTP connection verification failed:', error);
-    } else {
-      console.log('SMTP server is ready to send emails');
     }
   });
 
@@ -39,40 +37,27 @@ const createTransporter = () => {
 const sendEmailWithRetry = async (transporter, mailOptions, maxRetries = 3) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`Attempting to send email (attempt ${attempt}/${maxRetries})...`);
       const info = await transporter.sendMail(mailOptions);
-      console.log("Email sent successfully:", info.messageId);
       return { success: true, messageId: info.messageId };
     } catch (error) {
       console.error(`Email send attempt ${attempt} failed:`, error.message);
-      
+
       if (attempt === maxRetries) {
         throw error;
       }
-      
+
       const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
-      console.log(`Retrying in ${waitTime}ms...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
   }
 };
 
 const sendGenericEmail = async (email, subject, html, text) => {
   let transporter;
-  
-  try {
-    if (process.env.RESEND_API_KEY) {
-      try {
-        console.log("Using Resend API for email delivery (better for cloud platforms)");
-        const { sendSignupEmail: sendViaResend } = await import("./emailServiceResend.js");
-        return await sendViaResend(email, restaurantName, signupLink);
-      } catch (importError) {
-        console.error("Failed to import Resend service, falling back to SMTP:", importError);
-      }
-    }
 
+  try {
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      throw new Error("SMTP_USER and SMTP_PASS environment variables are required. Alternatively, set RESEND_API_KEY to use Resend API.");
+      throw new Error("SMTP_USER and SMTP_PASS environment variables are required for sending emails.");
     }
 
     transporter = createTransporter();
@@ -94,31 +79,11 @@ const sendGenericEmail = async (email, subject, html, text) => {
       response: error.response,
       responseCode: error.responseCode,
     });
-    
+
     if (transporter) {
       transporter.close();
     }
 
-    if (process.env.RESEND_API_KEY) {
-      console.log("SMTP failed, attempting to use Resend API as fallback...");
-      try {
-        const { sendGenericEmail: sendViaResendGeneric } = await import("./emailServiceResend.js");
-        return await sendViaResendGeneric(email, subject, html, text);
-      } catch (resendError) {
-        console.error("Resend fallback also failed:", resendError);
-        throw new Error(`Failed to send email via SMTP and Resend: ${error.message}`);
-      }
-    }
-    
-    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
-      throw new Error(
-        `Failed to send email: ${error.message}. ` +
-        `This is likely because Render's free tier blocks SMTP connections. ` +
-        `Solution: Use Resend API by setting RESEND_API_KEY environment variable. ` +
-        `Sign up at https://resend.com (free tier available).`
-      );
-    }
-    
     throw new Error(`Failed to send email: ${error.message}`);
   }
 };
@@ -360,3 +325,53 @@ The RestroFlow Team
   return sendGenericEmail(email, subject, html, text);
 };
 
+export const sendRequestRejectedEmail = async (email, restaurantName, adminNotes) => {
+  const subject = "Your RestroFlow request has been rejected";
+
+  const reasonBlock = adminNotes && adminNotes.trim()
+    ? `<p style="margin-top:16px;color:#cbd5e1;">Reason from our team:</p>
+       <p style="white-space:pre-line;line-height:1.6;color:#f97373;">${adminNotes.trim()}</p>`
+    : "";
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>RestroFlow Request Status</title>
+    </head>
+    <body style="background-color:#0f1115;color:#e5e7eb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:24px;">
+      <div style="max-width:600px;margin:0 auto;background-color:#161a20;border-radius:16px;padding:24px;">
+        <h2 style="margin-top:0;margin-bottom:16px;color:#ffffff;">Hello ${restaurantName || "there"},</h2>
+        <p style="line-height:1.6;color:#cbd5e1;">
+          Thank you for your interest in RestroFlow. After reviewing your request, we’re not able to approve it at this time.
+        </p>
+        ${reasonBlock}
+        <p style="margin-top:24px;color:#cbd5e1;">
+          You can reply to this email if you have questions or want to share more details about your restaurant.
+        </p>
+        <p style="margin-top:24px;color:#cbd5e1;">
+          Best regards,<br />
+          <strong style="color:#f7931e;">The RestroFlow Team</strong>
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+Hello ${restaurantName || "there"},
+
+Thank you for your interest in RestroFlow. After reviewing your request, we’re not able to approve it at this time.
+
+${adminNotes && adminNotes.trim() ? `Reason from our team:\n${adminNotes.trim()}\n` : ""}
+
+You can reply to this email if you have questions or want to share more details about your restaurant.
+
+Best regards,
+The RestroFlow Team
+  `;
+
+  return sendGenericEmail(email, subject, html, text);
+};

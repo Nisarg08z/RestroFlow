@@ -69,7 +69,7 @@ const logoutAdmin = asyncHandler(async (req, res) => {
 
 const approveRestaurant = asyncHandler(async (req, res) => {
   const { restaurantId } = req.params
-  const { plan, pricePerMonth } = req.body
+  const { pricePerMonth } = req.body
 
   const restaurant = await Restaurant.findById(restaurantId)
 
@@ -81,7 +81,6 @@ const approveRestaurant = asyncHandler(async (req, res) => {
   restaurant.approvedByAdmin = true
   restaurant.approvedAt = new Date()
   restaurant.subscription = {
-    plan,
     pricePerMonth,
     startDate: new Date(),
     endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),

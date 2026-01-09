@@ -27,9 +27,11 @@ app.use(socketMiddleware);
 import adminRouter from "./routes/adminRoute.js"
 import restaurantRouter from "./routes/restaurantRoute.js"
 import restaurantRequestRouter from "./routes/restaurantRequestRoute.js"
+import subscriptionRouter from "./routes/subscriptionRoute.js"
 
 app.use("/api/v1/admin", adminRouter)
 app.use("/api/v1/restaurant", restaurantRouter)
 app.use("/api/v1/requests", restaurantRequestRouter)
+app.use("/api/v1/subscriptions", subscriptionRouter)
 
 export { app };

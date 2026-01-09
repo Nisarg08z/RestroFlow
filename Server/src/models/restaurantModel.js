@@ -126,12 +126,6 @@ const restaurantSchema = new Schema(
     },
 
     subscription: {
-      plan: {
-        type: String,
-        enum: ["BASIC", "PRO", "ENTERPRISE"],
-        required: true,
-      },
-
       pricePerMonth: {
         type: Number,
         required: true,

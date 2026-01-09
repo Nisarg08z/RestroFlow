@@ -78,6 +78,26 @@ export const createPaymentOrder = (data) =>
 export const completeSignup = (data) =>
   api.post("/requests/complete-signup", data)
 
+/* ================= SUBSCRIPTIONS ================= */
+
+export const getAllSubscriptions = (params = {}) =>
+  api.get("/subscriptions", { params })
+
+export const getSubscriptionById = (restaurantId) =>
+  api.get(`/subscriptions/${restaurantId}`)
+
+export const updateSubscription = (restaurantId, data) =>
+  api.patch(`/subscriptions/${restaurantId}`, data)
+
+export const renewSubscription = (restaurantId, data) =>
+  api.post(`/subscriptions/${restaurantId}/renew`, data)
+
+export const cancelSubscription = (restaurantId) =>
+  api.post(`/subscriptions/${restaurantId}/cancel`)
+
+export const getSubscriptionStats = () =>
+  api.get("/subscriptions/stats")
+
 /* ================= INTERCEPTOR ================= */
 
 api.interceptors.response.use(

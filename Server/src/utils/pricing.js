@@ -20,9 +20,4 @@ export const calculatePrice = (totalTables) => {
   };
 };
 
-export const getPlanName = (totalTables) => {
-  if (totalTables <= 10) return "BASIC";
-  if (totalTables <= 50) return "PRO";
-  return "ENTERPRISE";
-};
 

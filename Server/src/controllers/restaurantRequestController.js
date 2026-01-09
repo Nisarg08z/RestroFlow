@@ -3,8 +3,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { RestaurantRequest } from "../models/restaurantRequestModel.js";
 import { Restaurant } from "../models/restaurantModel.js";
-import { sendSignupEmail, sendRequestReplyEmail } from "../utils/emailService.js";
-import { calculatePrice, getPlanName } from "../utils/pricing.js";
+import { sendSignupEmail, sendRequestReplyEmail, sendRequestRejectedEmail } from "../utils/emailService.js";
+import { calculatePrice } from "../utils/pricing.js";
 import { createOrder, verifyPayment } from "../utils/razorpay.js";
 import crypto from "crypto";
 
@@ -117,6 +117,12 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
     updateData.rejectedAt = new Date();
     updateData.signupToken = undefined;
     updateData.tokenExpiry = undefined;
+
+    try {
+      await sendRequestRejectedEmail(request.email, request.restaurantName, adminNotes);
+    } catch (emailError) {
+      console.error("Failed to send rejection email:", emailError);
+    }
   }
 
   const updatedRequest = await RestaurantRequest.findByIdAndUpdate(id, updateData, {
@@ -226,7 +232,6 @@ const createPaymentOrder = asyncHandler(async (req, res) => {
   }
 
   const pricing = calculatePrice(totalTables);
-  const plan = getPlanName(totalTables);
 
   const receipt = `restro_${Date.now()}_${token.substring(0, 8)}`;
   const order = await createOrder(pricing.monthlyPrice, "INR", receipt);
@@ -237,7 +242,6 @@ const createPaymentOrder = asyncHandler(async (req, res) => {
       amount: pricing.monthlyPrice,
       currency: "INR",
       pricing,
-      plan,
       totalTables,
     }, "Payment order created successfully")
   );
@@ -299,7 +303,6 @@ const completeSignup = asyncHandler(async (req, res) => {
   }, 0);
 
   const pricing = calculatePrice(totalTables);
-  const plan = getPlanName(totalTables);
 
   const locationsData = locations.map((loc) => ({
     locationName: loc.locationName || "Main Location",
@@ -324,7 +327,6 @@ const completeSignup = asyncHandler(async (req, res) => {
     approvedByAdmin: true,
     approvedAt: new Date(),
     subscription: {
-      plan: plan,
       pricePerMonth: pricing.monthlyPrice,
       startDate: new Date(),
       endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),

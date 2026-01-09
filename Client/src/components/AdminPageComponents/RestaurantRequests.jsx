@@ -11,6 +11,7 @@ import {
   Eye,
   MessageSquare,
   Loader2,
+  Send,
 } from "lucide-react";
 import {
   getAllRestaurantRequests,
@@ -28,6 +29,7 @@ const RestaurantRequests = () => {
   const [replyMessage, setReplyMessage] = useState("");
   const [filter, setFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [processingRequestId, setProcessingRequestId] = useState(null);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -92,19 +94,23 @@ const RestaurantRequests = () => {
   const filteredRequests = requests;
 
   const handleApprove = async (id) => {
+    setProcessingRequestId(id);
     try {
       const response = await updateRequestStatus(id, { status: "approved" });
       setRequests((prev) =>
         prev.map((req) => (req._id === id ? response.data.data : req))
       );
       setShowDetails(false);
-      toast.success("Request approved");
+      toast.success("Request approved and email sent successfully");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to approve request");
+    } finally {
+      setProcessingRequestId(null);
     }
   };
 
   const handleReject = async (id) => {
+    setProcessingRequestId(id);
     try {
       const response = await updateRequestStatus(id, { status: "rejected" });
       setRequests((prev) =>
@@ -114,6 +120,8 @@ const RestaurantRequests = () => {
       toast.success("Request rejected");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to reject request");
+    } finally {
+      setProcessingRequestId(null);
     }
   };
 
@@ -221,26 +229,45 @@ const RestaurantRequests = () => {
             filteredRequests.map((request) => (
               <div
                 key={request._id}
-                className="p-4 bg-[oklch(0.22_0.005_260)] rounded-lg border border-[oklch(0.28_0.005_260)] hover:border-[oklch(0.7_0.18_45)]/50 transition-colors"
+                className={`p-4 bg-[oklch(0.22_0.005_260)] rounded-lg border transition-colors ${
+                  processingRequestId === request._id
+                    ? "border-blue-500/50 bg-blue-500/5"
+                    : "border-[oklch(0.28_0.005_260)] hover:border-[oklch(0.7_0.18_45)]/50"
+                }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-[oklch(0.7_0.18_45)]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-6 h-6 text-[oklch(0.7_0.18_45)]" />
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      processingRequestId === request._id
+                        ? "bg-blue-500/10"
+                        : "bg-[oklch(0.7_0.18_45)]/10"
+                    }`}>
+                      {processingRequestId === request._id ? (
+                        <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                      ) : (
+                        <Building2 className="w-6 h-6 text-[oklch(0.7_0.18_45)]" />
+                      )}
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-[oklch(0.98_0_0)]">{request.restaurantName}</h3>
-                        <span
-                          className={`px-2 py-0.5 text-xs font-medium rounded-full ${request.status === "pending"
-                            ? "bg-yellow-500/10 text-yellow-500"
-                            : request.status === "approved"
-                              ? "bg-green-500/10 text-green-500"
-                              : "bg-red-500/10 text-red-500"
-                            }`}
-                        >
-                          {request.status}
-                        </span>
+                        {processingRequestId === request._id ? (
+                          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-500 flex items-center gap-1">
+                            <Send className="w-3 h-3" />
+                            Processing...
+                          </span>
+                        ) : (
+                          <span
+                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${request.status === "pending"
+                              ? "bg-yellow-500/10 text-yellow-500"
+                              : request.status === "approved"
+                                ? "bg-green-500/10 text-green-500"
+                                : "bg-red-500/10 text-red-500"
+                              }`}
+                          >
+                            {request.status}
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-[oklch(0.65_0_0)]">{request.ownerName}</p>
                       <div className="flex flex-wrap gap-3 text-xs text-[oklch(0.65_0_0)]">
@@ -264,25 +291,37 @@ const RestaurantRequests = () => {
                         setSelectedRequest(request);
                         setShowDetails(true);
                       }}
-                      className="px-4 py-2 rounded-lg border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] transition flex items-center gap-2 text-sm"
+                      disabled={processingRequestId === request._id}
+                      className="px-4 py-2 rounded-lg border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] transition flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Eye className="w-4 h-4" />
                       View
                     </button>
                     {request.status === "pending" && (
                       <>
-                        <button
-                          onClick={() => handleApprove(request._id)}
-                          className="p-2 rounded-lg border border-green-500/50 text-green-500 hover:text-green-400 hover:bg-green-500/10 transition"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleReject(request._id)}
-                          className="p-2 rounded-lg border border-red-500/50 text-red-500 hover:text-red-400 hover:bg-red-500/10 transition"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                        {processingRequestId === request._id ? (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/50">
+                            <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                            <span className="text-xs text-blue-500 font-medium">Sending Email...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleApprove(request._id)}
+                              disabled={processingRequestId !== null}
+                              className="p-2 rounded-lg border border-green-500/50 text-green-500 hover:text-green-400 hover:bg-green-500/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleReject(request._id)}
+                              disabled={processingRequestId !== null}
+                              className="p-2 rounded-lg border border-red-500/50 text-red-500 hover:text-red-400 hover:bg-red-500/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
@@ -325,21 +364,32 @@ const RestaurantRequests = () => {
               </div>
 
               {selectedRequest.status === "pending" && (
-                <div className="flex gap-3 pt-4">
-                  <button
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2"
-                    onClick={() => handleApprove(selectedRequest._id)}
-                  >
-                    <Check className="w-4 h-4" />
-                    Approve & Add to System
-                  </button>
-                  <button
-                    className="flex-1 border border-red-500/50 text-red-500 hover:bg-red-500/10 px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2"
-                    onClick={() => handleReject(selectedRequest._id)}
-                  >
-                    <X className="w-4 h-4" />
-                    Reject
-                  </button>
+                <div className="pt-4">
+                  {processingRequestId === selectedRequest._id ? (
+                    <div className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-blue-500/10 border border-blue-500/50">
+                      <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                      <span className="text-blue-500 font-medium">Sending email to {selectedRequest.email}...</span>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3">
+                      <button
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => handleApprove(selectedRequest._id)}
+                        disabled={processingRequestId !== null}
+                      >
+                        <Check className="w-4 h-4" />
+                        Approve & Add to System
+                      </button>
+                      <button
+                        className="flex-1 border border-red-500/50 text-red-500 hover:bg-red-500/10 px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => handleReject(selectedRequest._id)}
+                        disabled={processingRequestId !== null}
+                      >
+                        <X className="w-4 h-4" />
+                        Reject
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

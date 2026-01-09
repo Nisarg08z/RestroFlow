@@ -199,6 +199,20 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
       The RestroFlow Team
     `;
 
+
+    let fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+    
+    if (!process.env.RESEND_FROM_EMAIL) {
+      const smtpUser = process.env.SMTP_USER || "";
+      if (smtpUser && !smtpUser.includes("@gmail.com") && smtpUser.includes("@")) {
+        fromEmail = smtpUser;
+      } else {
+        fromEmail = "onboarding@resend.dev";
+      }
+    }
+    
+    console.log(`Sending email via Resend from: ${fromEmail}`);
+
     const response = await fetch(RESEND_API_URL, {
       method: "POST",
       headers: {
@@ -206,7 +220,7 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: `RestroFlow <${process.env.RESEND_FROM_EMAIL || process.env.SMTP_USER || "onboarding@resend.dev"}>`,
+        from: `RestroFlow <${fromEmail}>`,
         to: [email],
         subject: "Complete Your RestroFlow Registration",
         html: emailHtml,
@@ -216,9 +230,16 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Resend API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
-      );
+      let errorMessage = `Resend API error: ${response.status} ${response.statusText}`;
+      
+      if (response.status === 403 && errorData.message?.includes("domain is not verified")) {
+        errorMessage = `Resend API error: Domain verification required. ` +
+          `The email address "${fromEmail}" uses a domain that needs to be verified in Resend. ` +
+          `Please either: 1) Set RESEND_FROM_EMAIL to a verified domain, or 2) Use "onboarding@resend.dev" (Resend's default domain). ` +
+          `Visit https://resend.com/domains to verify your domain.`;
+      }
+      
+      throw new Error(`${errorMessage} - ${JSON.stringify(errorData)}`);
     }
 
     const data = await response.json();

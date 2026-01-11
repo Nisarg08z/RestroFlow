@@ -233,7 +233,9 @@ const createPaymentOrder = asyncHandler(async (req, res) => {
 
   const pricing = calculatePrice(totalTables);
 
-  const receipt = `restro_${Date.now()}_${token.substring(0, 8)}`;
+  const timestamp = Date.now().toString().slice(-8);
+  const shortToken = token.substring(0, 8);
+  const receipt = `restro_${timestamp}_${shortToken}`.substring(0, 40);
   const order = await createOrder(pricing.monthlyPrice, "INR", receipt);
 
   return res.status(200).json(

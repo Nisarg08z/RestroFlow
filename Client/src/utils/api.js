@@ -98,6 +98,23 @@ export const cancelSubscription = (restaurantId) =>
 export const getSubscriptionStats = () =>
   api.get("/subscriptions/stats")
 
+/* ================= INVOICES ================= */
+
+export const getInvoiceByToken = (token) =>
+  api.get(`/invoices/payment/${token}`)
+
+export const createInvoicePaymentOrder = (data) =>
+  api.post("/invoices/payment/create-order", data)
+
+export const verifyInvoicePayment = (data) =>
+  api.post("/invoices/payment/verify", data)
+
+export const getAllInvoices = (params = {}) =>
+  api.get("/invoices", { params })
+
+export const getInvoiceById = (invoiceId) =>
+  api.get(`/invoices/${invoiceId}`)
+
 /* ================= INTERCEPTOR ================= */
 
 api.interceptors.response.use(

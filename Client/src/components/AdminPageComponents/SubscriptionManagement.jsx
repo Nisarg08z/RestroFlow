@@ -55,8 +55,13 @@ const SubscriptionManagement = () => {
   const [showEdit, setShowEdit] = useState(false);
   const [editEndDate, setEditEndDate] = useState("");
   const [editTotalTables, setEditTotalTables] = useState(0);
+  const [editMonthsToAdd, setEditMonthsToAdd] = useState(0);
+  const [editAutoRenew, setEditAutoRenew] = useState(false);
+  const [sendPaymentEmail, setSendPaymentEmail] = useState(true);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
+  const [calculatedExtensionPrice, setCalculatedExtensionPrice] = useState(0);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   
   useEffect(() => {
@@ -104,7 +109,13 @@ const SubscriptionManagement = () => {
     setSelectedSub(sub);
     setEditEndDate(sub.endDate || "");
     setEditTotalTables(sub.totalTables || 0);
+    setEditMonthsToAdd(0);
+    setEditAutoRenew(sub.autoRenew || false);
+    setSendPaymentEmail(true); 
     setCalculatedPrice(calculatePrice(sub.totalTables || 0));
+    setCalculatedExtensionPrice(0);
+    setError(null);
+    setSuccessMessage(null);
     setShowEdit(true);
   };
 
@@ -112,6 +123,17 @@ const SubscriptionManagement = () => {
     const numTables = parseInt(tables) || 0;
     setEditTotalTables(numTables);
     setCalculatedPrice(calculatePrice(numTables));
+  };
+
+  const handleMonthsChange = (months) => {
+    const numMonths = parseInt(months) || 0;
+    setEditMonthsToAdd(numMonths);
+    if (numMonths > 0 && selectedSub) {
+      const extensionPrice = calculatePrice(selectedSub.totalTables || 0) * numMonths;
+      setCalculatedExtensionPrice(extensionPrice);
+    } else {
+      setCalculatedExtensionPrice(0);
+    }
   };
 
   const handleSaveChanges = async () => {
@@ -127,21 +149,51 @@ const SubscriptionManagement = () => {
         updateData.totalTables = editTotalTables;
       }
       
-      if (editEndDate && editEndDate !== selectedSub.endDate) {
+      if (editMonthsToAdd > 0) {
+        updateData.monthsToAdd = editMonthsToAdd;
+      }
+      
+      if (editEndDate && editEndDate !== selectedSub.endDate && !updateData.monthsToAdd) {
         updateData.endDate = editEndDate;
       }
+
+      if (editAutoRenew !== selectedSub.autoRenew) {
+        updateData.autoRenew = editAutoRenew;
+      }
+
+
+      updateData.sendPaymentEmail = sendPaymentEmail;
 
       const response = await updateSubscription(selectedSub.restaurantId, updateData);
 
       if (response.data?.success) {
-        setSubscriptions((prev) =>
-          prev.map((sub) =>
-            sub.id === selectedSub.id
-              ? { ...sub, ...response.data.data }
-              : sub
-          )
-        );
-        setShowEdit(false);
+        if (response.data.data.invoice) {
+          const emailStatus = sendPaymentEmail 
+            ? `Payment link sent to ${selectedSub.restaurantName}`
+            : `Payment email not sent (as per your preference)`;
+          setSuccessMessage(
+            `Invoice created! Amount: ₹${response.data.data.invoice.amount}. ${emailStatus}`
+          );
+          if (response.data.data.subscription) {
+            setSubscriptions((prev) =>
+              prev.map((sub) =>
+                sub.id === selectedSub.id
+                  ? { ...sub, ...response.data.data.subscription }
+                  : sub
+              )
+            );
+          }
+        } else {
+          setSubscriptions((prev) =>
+            prev.map((sub) =>
+              sub.id === selectedSub.id
+                ? { ...sub, ...response.data.data.subscription }
+                : sub
+            )
+          );
+          setShowEdit(false);
+          setSuccessMessage(null);
+        }
         fetchData();
       }
     } catch (err) {
@@ -162,11 +214,17 @@ const SubscriptionManagement = () => {
       const response = await renewSubscription(sub.restaurantId, { months: 1 });
 
       if (response.data?.success) {
-        setSubscriptions((prev) =>
-          prev.map((s) =>
-            s.id === sub.id ? { ...s, ...response.data.data } : s
-          )
-        );
+        if (response.data.data.invoice) {
+          setSuccessMessage(
+            `Renewal invoice created! Payment link sent to ${sub.restaurantName}. Amount: ₹${response.data.data.invoice.amount}`
+          );
+        } else {
+          setSubscriptions((prev) =>
+            prev.map((s) =>
+              s.id === sub.id ? { ...s, ...response.data.data } : s
+            )
+          );
+        }
         fetchData();
       }
     } catch (err) {
@@ -186,125 +244,214 @@ const SubscriptionManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 p-3 sm:p-4 md:p-0">
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
-          <p className="text-red-500 text-sm">{error}</p>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 sm:p-4">
+          <p className="text-red-500 text-xs sm:text-sm break-words">{error}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-green-500" />
+      {successMessage && (
+        <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 sm:p-4">
+          <p className="text-green-500 text-xs sm:text-sm break-words">{successMessage}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-3 md:p-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-green-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-[oklch(0.98_0_0)]">${stats.totalMRR || 0}</p>
-              <p className="text-sm text-[oklch(0.65_0_0)]">Monthly Revenue</p>
+            <div className="min-w-0">
+              <p className="text-xl md:text-2xl font-bold text-[oklch(0.98_0_0)]">₹{stats.totalMRR || 0}</p>
+              <p className="text-xs md:text-sm text-[oklch(0.65_0_0)]">Monthly Revenue</p>
             </div>
           </div>
         </div>
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-[oklch(0.7_0.18_45)]/10 rounded-xl flex items-center justify-center">
-              <CreditCard className="w-6 h-6 text-[oklch(0.7_0.18_45)]" />
+        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-3 md:p-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-[oklch(0.7_0.18_45)]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <CreditCard className="w-5 h-5 md:w-6 md:h-6 text-[oklch(0.7_0.18_45)]" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-[oklch(0.98_0_0)]">
+            <div className="min-w-0">
+              <p className="text-xl md:text-2xl font-bold text-[oklch(0.98_0_0)]">
                 {stats.activeSubscriptions || 0}
               </p>
-              <p className="text-sm text-[oklch(0.65_0_0)]">Active Subscriptions</p>
+              <p className="text-xs md:text-sm text-[oklch(0.65_0_0)]">Active Subscriptions</p>
             </div>
           </div>
         </div>
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center">
-              <AlertCircle className="w-6 h-6 text-yellow-500" />
+        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-3 md:p-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-[oklch(0.98_0_0)]">
+            <div className="min-w-0">
+              <p className="text-xl md:text-2xl font-bold text-[oklch(0.98_0_0)]">
                 {stats.expiringSoon || 0}
               </p>
-              <p className="text-sm text-[oklch(0.65_0_0)]">Expiring Soon</p>
+              <p className="text-xs md:text-sm text-[oklch(0.65_0_0)]">Expiring Soon</p>
             </div>
           </div>
         </div>
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-blue-500" />
+        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-3 md:p-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-[oklch(0.98_0_0)]">{stats.growthRate || "+12%"}</p>
-              <p className="text-sm text-[oklch(0.65_0_0)]">Growth Rate</p>
+            <div className="min-w-0">
+              <p className="text-xl md:text-2xl font-bold text-[oklch(0.98_0_0)]">{stats.growthRate || "+12%"}</p>
+              <p className="text-xs md:text-sm text-[oklch(0.65_0_0)]">Growth Rate</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-[oklch(0.98_0_0)] flex items-center justify-between mb-2">
-            All Features Included
-            <span className="text-[oklch(0.7_0.18_45)] text-sm font-normal">
-              ${PRICE_PER_TABLE} per table/month
+      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4 md:p-6">
+        <div className="mb-3 md:mb-4">
+          <h3 className="text-base md:text-lg font-semibold text-[oklch(0.98_0_0)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+            <span>All Features Included</span>
+            <span className="text-[oklch(0.7_0.18_45)] text-xs md:text-sm font-normal">
+              ₹{PRICE_PER_TABLE} per table/month
             </span>
           </h3>
-          <p className="text-sm text-[oklch(0.65_0_0)]">
+          <p className="text-xs md:text-sm text-[oklch(0.65_0_0)]">
             Every subscription includes all features. Pricing is based on the number of tables.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
           {allFeatures.map((feature, i) => (
             <div key={i} className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 bg-[oklch(0.7_0.18_45)] rounded-full flex-shrink-0" />
-              <span className="text-sm text-[oklch(0.65_0_0)]">{feature}</span>
+              <span className="text-xs md:text-sm text-[oklch(0.65_0_0)]">{feature}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4">
+      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-3 md:p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[oklch(0.65_0_0)]" />
           <input
             placeholder="Search subscriptions..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)]"
+            className="w-full pl-9 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm md:text-base"
           />
         </div>
       </div>
 
-      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl">
-        <div className="p-4 border-b border-[oklch(0.28_0.005_260)]">
-          <h3 className="text-lg font-semibold text-[oklch(0.98_0_0)]">All Subscriptions</h3>
+      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl overflow-hidden">
+        <div className="p-3 md:p-4 border-b border-[oklch(0.28_0.005_260)]">
+          <h3 className="text-base md:text-lg font-semibold text-[oklch(0.98_0_0)]">All Subscriptions</h3>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        
+        {/* Mobile Card View */}
+        <div className="block md:hidden divide-y divide-[oklch(0.28_0.005_260)]">
+          {filteredSubs.length === 0 ? (
+            <div className="py-8 text-center px-4">
+              <p className="text-[oklch(0.65_0_0)] text-sm">
+                {searchQuery
+                  ? "No subscriptions found matching your search."
+                  : "No subscriptions found."}
+              </p>
+            </div>
+          ) : (
+            filteredSubs.map((sub) => (
+              <div
+                key={sub.id}
+                className="p-4 space-y-3 hover:bg-[oklch(0.22_0.005_260)]/30"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 bg-[oklch(0.7_0.18_45)]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-5 h-5 text-[oklch(0.7_0.18_45)]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-[oklch(0.98_0_0)] text-sm truncate">{sub.restaurantName}</p>
+                      <p className="text-xs text-[oklch(0.65_0_0)] truncate">{sub.id}</p>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-1 text-xs rounded-full capitalize flex-shrink-0 ${statusColor(sub.status)}`}>
+                    {sub.status}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-xs text-[oklch(0.65_0_0)] mb-1">Tables</p>
+                    <p className="font-medium text-[oklch(0.98_0_0)]">
+                      {sub.totalTables || 0} {sub.locations > 1 && `(${sub.locations} locs)`}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[oklch(0.65_0_0)] mb-1">Price</p>
+                    <p className="font-medium text-[oklch(0.98_0_0)]">₹{sub.price}/mo</p>
+                    <p className="text-xs text-[oklch(0.65_0_0)]">₹{sub.pricePerTable || PRICE_PER_TABLE}/table</p>
+                  </div>
+                </div>
+
+                {sub.endDate && (
+                  <div className="flex items-center gap-2 text-xs text-[oklch(0.65_0_0)]">
+                    <Calendar className="w-3 h-3" />
+                    <span>Ends: {new Date(sub.endDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    onClick={() => handleEditClick(sub)}
+                    className="flex-1 px-3 py-1.5 text-xs border border-[oklch(0.28_0.005_260)] rounded-lg hover:bg-[oklch(0.22_0.005_260)] text-[oklch(0.98_0_0)] flex items-center justify-center gap-1.5"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                  {(sub.status === "expired" || sub.status === "expiring") && (
+                    <button
+                      onClick={() => handleRenew(sub)}
+                      disabled={updating}
+                      className="flex-1 px-3 py-1.5 text-xs bg-[oklch(0.7_0.18_45)] text-black rounded-lg hover:bg-[oklch(0.7_0.18_45)]/90 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {updating ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      )}
+                      Renew
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto -mx-4 md:mx-0">
+          <div className="inline-block min-w-full align-middle">
+            <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-[oklch(0.28_0.005_260)]">
-                <th className="text-left py-3 px-4 text-sm font-medium text-[oklch(0.65_0_0)]">
+                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)]">
                   Restaurant
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-[oklch(0.65_0_0)]">
+                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)]">
                   Tables
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-[oklch(0.65_0_0)]">
+                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)]">
                   Price
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-[oklch(0.65_0_0)]">
+                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)]">
                   Status
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-[oklch(0.65_0_0)]">
+                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)] hidden md:table-cell">
                   End Date
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-[oklch(0.65_0_0)]">
+                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)] hidden lg:table-cell">
                   Auto Renew
                 </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-[oklch(0.65_0_0)]">
+                <th className="text-right py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)]">
                   Actions
                 </th>
               </tr>
@@ -312,8 +459,8 @@ const SubscriptionManagement = () => {
             <tbody>
               {filteredSubs.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-12 text-center">
-                    <p className="text-[oklch(0.65_0_0)]">
+                  <td colSpan="7" className="py-8 md:py-12 text-center px-4">
+                    <p className="text-[oklch(0.65_0_0)] text-sm md:text-base">
                       {searchQuery
                         ? "No subscriptions found matching your search."
                         : "No subscriptions found."}
@@ -326,20 +473,20 @@ const SubscriptionManagement = () => {
                   key={sub.id}
                   className="border-b border-[oklch(0.28_0.005_260)]/50 hover:bg-[oklch(0.22_0.005_260)]/30"
                 >
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[oklch(0.7_0.18_45)]/10 rounded-lg flex items-center justify-center">
-                        <Building2 className="w-5 h-5 text-[oklch(0.7_0.18_45)]" />
+                  <td className="py-3 md:py-4 px-2 md:px-4">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="w-8 h-8 md:w-10 md:h-10 bg-[oklch(0.7_0.18_45)]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-4 h-4 md:w-5 md:h-5 text-[oklch(0.7_0.18_45)]" />
                       </div>
-                      <div>
-                        <p className="font-medium text-[oklch(0.98_0_0)]">{sub.restaurantName}</p>
-                        <p className="text-xs text-[oklch(0.65_0_0)]">{sub.id}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-[oklch(0.98_0_0)] text-sm md:text-base truncate">{sub.restaurantName}</p>
+                        <p className="text-xs text-[oklch(0.65_0_0)] truncate">{sub.id}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-[oklch(0.98_0_0)]">
+                  <td className="py-3 md:py-4 px-2 md:px-4 text-[oklch(0.98_0_0)]">
                     <div className="flex flex-col">
-                      <span className="font-medium">{sub.totalTables || 0} tables</span>
+                      <span className="font-medium text-sm md:text-base">{sub.totalTables || 0} tables</span>
                       {sub.locations > 1 && (
                         <span className="text-xs text-[oklch(0.65_0_0)]">
                           {sub.locations} locations
@@ -347,20 +494,20 @@ const SubscriptionManagement = () => {
                       )}
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-[oklch(0.98_0_0)] font-medium">
+                  <td className="py-3 md:py-4 px-2 md:px-4 text-[oklch(0.98_0_0)] font-medium">
                     <div className="flex flex-col">
-                      <span>${sub.price}/mo</span>
+                      <span className="text-sm md:text-base">₹{sub.price}/mo</span>
                       <span className="text-xs text-[oklch(0.65_0_0)] font-normal">
-                        ${sub.pricePerTable || PRICE_PER_TABLE}/table
+                        ₹{sub.pricePerTable || PRICE_PER_TABLE}/table
                       </span>
                     </div>
                   </td>
-                  <td className="py-4 px-4">
+                  <td className="py-3 md:py-4 px-2 md:px-4">
                     <span className={`px-2 py-1 text-xs rounded-full capitalize ${statusColor(sub.status)}`}>
                       {sub.status}
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-[oklch(0.65_0_0)] text-sm">
+                  <td className="py-3 md:py-4 px-2 md:px-4 text-[oklch(0.65_0_0)] text-xs md:text-sm hidden md:table-cell">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {sub.endDate
@@ -368,7 +515,7 @@ const SubscriptionManagement = () => {
                         : "N/A"}
                     </span>
                   </td>
-                  <td className="py-4 px-4">
+                  <td className="py-3 md:py-4 px-2 md:px-4 hidden lg:table-cell">
                     {sub.autoRenew ? (
                       <span className="px-2 py-1 text-xs rounded-full bg-green-500/10 text-green-500">
                         Yes
@@ -379,27 +526,27 @@ const SubscriptionManagement = () => {
                       </span>
                     )}
                   </td>
-                  <td className="py-4 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="py-3 md:py-4 px-2 md:px-4 text-right">
+                    <div className="flex items-center justify-end gap-1 md:gap-2 flex-wrap">
                       <button
                         onClick={() => handleEditClick(sub)}
-                        className="px-3 py-1 text-sm border border-[oklch(0.28_0.005_260)] rounded-lg hover:bg-[oklch(0.22_0.005_260)] text-[oklch(0.98_0_0)] flex items-center gap-1"
+                        className="px-2 md:px-3 py-1 text-xs md:text-sm border border-[oklch(0.28_0.005_260)] rounded-lg hover:bg-[oklch(0.22_0.005_260)] text-[oklch(0.98_0_0)] flex items-center gap-1"
                       >
-                        <Edit className="w-4 h-4" />
-                        Edit
+                        <Edit className="w-3 h-3 md:w-4 md:h-4" />
+                        <span className="hidden sm:inline">Edit</span>
                       </button>
                       {(sub.status === "expired" || sub.status === "expiring") && (
                         <button
                           onClick={() => handleRenew(sub)}
                           disabled={updating}
-                          className="px-3 py-1 text-sm bg-[oklch(0.7_0.18_45)] text-black rounded-lg hover:bg-[oklch(0.7_0.18_45)]/90 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-2 md:px-3 py-1 text-xs md:text-sm bg-[oklch(0.7_0.18_45)] text-black rounded-lg hover:bg-[oklch(0.7_0.18_45)]/90 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {updating ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
                           ) : (
-                            <RefreshCw className="w-4 h-4" />
+                            <RefreshCw className="w-3 h-3 md:w-4 md:h-4" />
                           )}
-                          Renew
+                          <span className="hidden sm:inline">Renew</span>
                         </button>
                       )}
                     </div>
@@ -409,31 +556,44 @@ const SubscriptionManagement = () => {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
       {showEdit && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowEdit(false)}>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3 sm:p-4" onClick={() => {
+          setShowEdit(false);
+          setError(null);
+          setSuccessMessage(null);
+        }}>
           <div
-            className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-6 w-full max-w-md"
+            className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4 sm:p-5 md:p-6 w-full max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-semibold text-[oklch(0.98_0_0)]">Edit Subscription</h3>
-                <X
-                  className="w-5 h-5 cursor-pointer text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)]"
-                  onClick={() => setShowEdit(false)}
-                />
+            <div className="mb-4 sm:mb-5">
+              <div className="flex justify-between items-start gap-2 mb-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-[oklch(0.98_0_0)]">Edit Subscription</h3>
+                  <p className="text-xs sm:text-sm text-[oklch(0.65_0_0)] mt-1 truncate">
+                    {selectedSub?.restaurantName}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowEdit(false);
+                    setError(null);
+                    setSuccessMessage(null);
+                  }}
+                  className="flex-shrink-0 p-1 hover:bg-[oklch(0.22_0.005_260)] rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)]" />
+                </button>
               </div>
-              <p className="text-sm text-[oklch(0.65_0_0)]">
-                Update subscription details for {selectedSub?.restaurantName}
-              </p>
             </div>
             {selectedSub && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-[oklch(0.98_0_0)]">
+                  <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)]">
                     Total Tables
                   </label>
                   <input
@@ -442,41 +602,121 @@ const SubscriptionManagement = () => {
                     max="1000"
                     value={editTotalTables}
                     onChange={(e) => handleTablesChange(e.target.value)}
-                    className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)]"
+                    className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm sm:text-base"
                   />
-                  <p className="text-xs text-[oklch(0.65_0_0)]">
-                    Price: ${calculatedPrice}/mo (${PRICE_PER_TABLE} per table)
+                  <p className="text-xs text-[oklch(0.65_0_0)] leading-relaxed">
+                    Price: ₹{calculatedPrice}/mo (₹{PRICE_PER_TABLE} per table)
+                    {editTotalTables > selectedSub.totalTables && (
+                      <span className="block mt-1 text-yellow-500">
+                        Prorated invoice will be created for extra tables
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-[oklch(0.98_0_0)]">End Date</label>
+                  <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)]">
+                    Add Months (Extension)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="12"
+                    value={editMonthsToAdd}
+                    onChange={(e) => handleMonthsChange(e.target.value)}
+                    className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm sm:text-base"
+                    placeholder="0"
+                  />
+                  {editMonthsToAdd > 0 && (
+                    <p className="text-xs text-[oklch(0.65_0_0)] leading-relaxed">
+                      Extension Price: ₹{calculatedExtensionPrice} for {editMonthsToAdd} month(s)
+                      <span className="block mt-1 text-yellow-500">
+                        Payment invoice will be sent to restaurant
+                      </span>
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)]">
+                    End Date {editMonthsToAdd > 0 && <span className="text-[oklch(0.65_0_0)] font-normal text-xs">(calculated after payment)</span>}
+                  </label>
                   <input
                     type="date"
                     value={editEndDate}
                     onChange={(e) => setEditEndDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)]"
+                    disabled={editMonthsToAdd > 0}
+                    className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
-                <div className="flex gap-3 pt-4">
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)] flex items-center justify-between">
+                    <span>Auto Renew</span>
+                    <button
+                      type="button"
+                      onClick={() => setEditAutoRenew(!editAutoRenew)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] focus:ring-offset-2 focus:ring-offset-[oklch(0.17_0.005_260)] ${
+                        editAutoRenew ? "bg-[oklch(0.7_0.18_45)]" : "bg-[oklch(0.28_0.005_260)]"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          editAutoRenew ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                  </label>
+                  <p className="text-xs text-[oklch(0.65_0_0)]">
+                    {editAutoRenew 
+                      ? "Enabled: Renewal reminders will be sent automatically before subscription expires"
+                      : "Disabled: No automatic renewal reminders will be sent"}
+                  </p>
+                </div>
+                {(editTotalTables > selectedSub.totalTables || editMonthsToAdd > 0) && (
+                  <div className="space-y-2">
+                    <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)] flex items-center justify-between">
+                      <span>Send Payment Email</span>
+                      <button
+                        type="button"
+                        onClick={() => setSendPaymentEmail(!sendPaymentEmail)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] focus:ring-offset-2 focus:ring-offset-[oklch(0.17_0.005_260)] ${
+                          sendPaymentEmail ? "bg-[oklch(0.7_0.18_45)]" : "bg-[oklch(0.28_0.005_260)]"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            sendPaymentEmail ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </label>
+                    <p className="text-xs text-[oklch(0.65_0_0)]">
+                      {sendPaymentEmail 
+                        ? "Payment email will be sent to restaurant with payment link"
+                        : "Invoice will be created but no email will be sent (useful for family members or special cases)"}
+                    </p>
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                   <button
-                    className="flex-1 bg-[oklch(0.7_0.18_45)] text-black py-2 rounded-lg hover:bg-[oklch(0.7_0.18_45)]/90 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 bg-[oklch(0.7_0.18_45)] text-black py-2.5 sm:py-2 rounded-lg hover:bg-[oklch(0.7_0.18_45)]/90 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
                     onClick={handleSaveChanges}
                     disabled={updating}
                   >
                     {updating ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Saving...
+                        <span className="hidden sm:inline">Saving...</span>
+                        <span className="sm:hidden">Saving</span>
                       </>
                     ) : (
                       "Save Changes"
                     )}
                   </button>
                   <button
-                    className="px-4 py-2 border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] disabled:opacity-50"
+                    className="px-4 py-2.5 sm:py-2 border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] disabled:opacity-50 text-sm sm:text-base"
                     onClick={() => {
                       setShowEdit(false);
                       setError(null);
+                      setSuccessMessage(null);
                     }}
                     disabled={updating}
                   >

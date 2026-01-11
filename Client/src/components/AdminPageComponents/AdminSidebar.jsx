@@ -9,6 +9,7 @@ import {
   HeadphonesIcon,
   X,
   LogOut,
+  MessageCircle,
 } from "lucide-react";
 import { adminLogout } from "../../utils/api";
 import toast from "react-hot-toast";
@@ -19,6 +20,7 @@ const menuItems = [
   { id: "status", label: "Restaurant Status", icon: <Activity className="w-5 h-5" />, path: "/admin/dashboard/status" },
   { id: "subscriptions", label: "Subscriptions", icon: <CreditCard className="w-5 h-5" />, path: "/admin/dashboard/subscriptions" },
   { id: "support", label: "Support Tickets", icon: <HeadphonesIcon className="w-5 h-5" />, path: "/admin/dashboard/support" },
+  { id: "messages", label: "Messages", icon: <MessageCircle className="w-5 h-5" />, path: "/admin/dashboard/messages" },
 ];
 
 const AdminSidebar = ({ isOpen, onClose }) => {

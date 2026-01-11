@@ -10,6 +10,7 @@ import AboutUs from './pages/LandingPage/AboutUs';
 import LoginPage from './pages/LandingPage/LoginPage';
 import ForgotPassword from './pages/LandingPage/ForgotPassword';
 import CompleteSignup from './pages/LandingPage/CompleteSignup';
+import PaymentPage from './pages/LandingPage/PaymentPage';
 import AdminLoginPage from './pages/AdminPage/AdminLoginPage'
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -73,6 +74,8 @@ const App = () => {
           <Route path="forgot-password" element={<ForgotPassword />} />
           
           <Route path="complete-signup" element={<CompleteSignup />} />
+          
+          <Route path="payment" element={<PaymentPage />} />
           
           <Route path="admin/login" element={<AdminLoginPage />} />
           

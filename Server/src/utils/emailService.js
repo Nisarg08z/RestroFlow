@@ -52,7 +52,7 @@ const sendEmailWithRetry = async (transporter, mailOptions, maxRetries = 3) => {
   }
 };
 
-const sendGenericEmail = async (email, subject, html, text) => {
+export const sendGenericEmail = async (email, subject, html, text) => {
   let transporter;
 
   try {

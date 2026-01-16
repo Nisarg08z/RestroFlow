@@ -142,6 +142,8 @@ const CompleteSignup = () => {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password = "Password must contain uppercase, lowercase & number";
     }
 
     if (!formData.confirmPassword) {
@@ -151,20 +153,25 @@ const CompleteSignup = () => {
     }
 
     formData.locations.forEach((loc, index) => {
-      if (!loc.locationName) {
+      if (!loc.locationName.trim()) {
         newErrors[`location_${index}_name`] = "Location name is required";
       }
-      if (!loc.address) {
+      if (!loc.address.trim()) {
         newErrors[`location_${index}_address`] = "Address is required";
       }
-      if (!loc.city) {
+      if (!loc.city.trim()) {
         newErrors[`location_${index}_city`] = "City is required";
       }
-      if (!loc.state) {
+      if (!loc.state.trim()) {
         newErrors[`location_${index}_state`] = "State is required";
       }
-      if (!loc.zipCode) {
+      if (!loc.zipCode.trim()) {
         newErrors[`location_${index}_zipCode`] = "Zip code is required";
+      } else if (!/^\d{5,6}$/.test(loc.zipCode)) {
+        newErrors[`location_${index}_zipCode`] = "Invalid zip code";
+      }
+      if (loc.phone && !/^[0-9]{10}$/.test(loc.phone)) {
+        newErrors[`location_${index}_phone`] = "Phone must be 10 digits";
       }
       if (!loc.totalTables || parseInt(loc.totalTables) <= 0) {
         newErrors[`location_${index}_tables`] = "Number of tables is required";
@@ -347,7 +354,7 @@ const CompleteSignup = () => {
 
         {step === "form" && (
           <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-8">
-            <form onSubmit={handleFormSubmit} className="space-y-6">    
+            <form onSubmit={handleFormSubmit} className="space-y-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-[oklch(0.98_0_0)]">
                   Set Password
@@ -365,8 +372,7 @@ const CompleteSignup = () => {
                           setFormData({ ...formData, password: e.target.value })
                         }
                         placeholder="Enter your password"
-                        required
-                        className="w-full px-4 py-3 pr-10 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                        className={`w-full px-4 py-3 pr-10 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.password ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
                       />
                       <button
                         type="button"
@@ -393,8 +399,7 @@ const CompleteSignup = () => {
                           setFormData({ ...formData, confirmPassword: e.target.value })
                         }
                         placeholder="Confirm your password"
-                        required
-                        className="w-full px-4 py-3 pr-10 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                        className={`w-full px-4 py-3 pr-10 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.confirmPassword ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
                       />
                       <button
                         type="button"
@@ -459,9 +464,9 @@ const CompleteSignup = () => {
                           onChange={(e) =>
                             handleLocationChange(index, "locationName", e.target.value)
                           }
-                          required
-                          className="w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_name`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
                         />
+                        {errors[`location_${index}_name`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_name`]}</p>}
                       </div>
 
                       <div className="md:col-span-2">
@@ -476,10 +481,10 @@ const CompleteSignup = () => {
                             onChange={(e) =>
                               handleLocationChange(index, "address", e.target.value)
                             }
-                            required
-                            className="w-full pl-9 pr-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                            className={`w-full pl-9 pr-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_address`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
                           />
                         </div>
+                        {errors[`location_${index}_address`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_address`]}</p>}
                       </div>
 
                       <div>
@@ -490,9 +495,9 @@ const CompleteSignup = () => {
                           onChange={(e) =>
                             handleLocationChange(index, "city", e.target.value)
                           }
-                          required
-                          className="w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_city`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
                         />
+                        {errors[`location_${index}_city`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_city`]}</p>}
                       </div>
 
                       <div>
@@ -503,9 +508,9 @@ const CompleteSignup = () => {
                           onChange={(e) =>
                             handleLocationChange(index, "state", e.target.value)
                           }
-                          required
-                          className="w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_state`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
                         />
+                        {errors[`location_${index}_state`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_state`]}</p>}
                       </div>
 
                       <div>
@@ -518,9 +523,9 @@ const CompleteSignup = () => {
                           onChange={(e) =>
                             handleLocationChange(index, "zipCode", e.target.value)
                           }
-                          required
-                          className="w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_zipCode`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
                         />
+                        {errors[`location_${index}_zipCode`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_zipCode`]}</p>}
                       </div>
 
                       <div>
@@ -531,8 +536,7 @@ const CompleteSignup = () => {
                           onChange={(e) =>
                             handleLocationChange(index, "country", e.target.value)
                           }
-                          required
-                          className="w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
                         />
                       </div>
 
@@ -549,9 +553,10 @@ const CompleteSignup = () => {
                             onChange={(e) =>
                               handleLocationChange(index, "phone", e.target.value)
                             }
-                            className="w-full pl-9 pr-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                            className={`w-full pl-9 pr-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_phone`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
                           />
                         </div>
+                        {errors[`location_${index}_phone`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_phone`]}</p>}
                       </div>
 
                       <div>
@@ -565,9 +570,8 @@ const CompleteSignup = () => {
                           onChange={(e) =>
                             handleLocationChange(index, "totalTables", e.target.value)
                           }
-                          required
                           min="1"
-                          className="w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_tables`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
                         />
                         {errors[`location_${index}_tables`] && (
                           <p className="text-red-500 text-sm mt-1">

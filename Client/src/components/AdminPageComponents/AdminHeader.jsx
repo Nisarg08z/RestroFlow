@@ -68,6 +68,12 @@ const AdminHeader = ({ onMenuClick }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (location.pathname === "/admin/dashboard/requests") {
+      markAllAsRead();
+    }
+  }, [location.pathname]);
+
   const fetchNotifications = async () => {
     try {
       const response = await getAllRestaurantRequests({
@@ -83,10 +89,12 @@ const AdminHeader = ({ onMenuClick }) => {
         ownerName: req.ownerName,
         email: req.email,
         createdAt: req.createdAt,
-        read: false,
+        read: location.pathname === "/admin/dashboard/requests", // Mark as read if already on page
       }));
       setNotifications(notificationList);
-      setUnreadCount(notificationList.length);
+      setUnreadCount(
+        location.pathname === "/admin/dashboard/requests" ? 0 : notificationList.length
+      );
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     }
@@ -101,10 +109,24 @@ const AdminHeader = ({ onMenuClick }) => {
     setUnreadCount((prev) => Math.max(0, prev - 1));
   };
 
+  const markAllAsRead = () => {
+    setNotifications((prev) =>
+      prev.map((notif) => ({ ...notif, read: true }))
+    );
+    setUnreadCount(0);
+  };
+
   const handleNotificationClick = (notification) => {
     markAsRead(notification.id);
     navigate("/admin/dashboard/requests");
     setShowNotifications(false);
+  };
+
+  const handleBellClick = () => {
+    setShowNotifications(!showNotifications);
+    if (!showNotifications) {
+      setUnreadCount(0);
+    }
   };
 
   const unreadNotifications = notifications.filter((n) => !n.read);
@@ -129,7 +151,7 @@ const AdminHeader = ({ onMenuClick }) => {
         <div className="flex items-center gap-3">
           <div className="relative" ref={notificationRef}>
             <button
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={handleBellClick}
               className="relative p-2 rounded-lg hover:bg-[oklch(0.22_0.005_260)] transition"
             >
               <Bell className="w-5 h-5 text-[oklch(0.98_0_0)]" />
@@ -141,7 +163,7 @@ const AdminHeader = ({ onMenuClick }) => {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg shadow-xl max-h-96 overflow-y-auto">
+              <div className="absolute -right-[3.5rem] sm:right-0 top-full mt-2 w-[92vw] sm:w-80 md:w-96 bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg shadow-xl max-h-[80vh] overflow-y-auto z-50">
                 <div className="p-4 border-b border-[oklch(0.28_0.005_260)] flex items-center justify-between">
                   <h3 className="font-semibold text-[oklch(0.98_0_0)]">
                     Notifications
@@ -200,12 +222,6 @@ const AdminHeader = ({ onMenuClick }) => {
                 )}
               </div>
             )}
-          </div>
-          
-          <div className="w-9 h-9 bg-[oklch(0.7_0.18_45)] rounded-full flex items-center justify-center">
-            <span className="text-sm font-semibold text-[oklch(0.13_0.005_260)]">
-              AD
-            </span>
           </div>
         </div>
       </div>

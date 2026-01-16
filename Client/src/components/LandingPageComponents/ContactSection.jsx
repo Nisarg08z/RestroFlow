@@ -14,8 +14,34 @@ const ContactSection = () => {
     message: "",
   })
 
+  const [errors, setErrors] = useState({})
+
+  const validateForm = () => {
+    const newErrors = {}
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const phoneRegex = /^[0-9]{10}$/
+
+    if (!formData.ownerName.trim()) newErrors.ownerName = "Owner name is required"
+    if (!formData.restaurantName.trim()) newErrors.restaurantName = "Restaurant name is required"
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required"
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Invalid email format"
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required"
+    } else if (!phoneRegex.test(formData.phone)) {
+      newErrors.phone = "Phone number must be 10 digits"
+    }
+    if (!formData.message.trim()) newErrors.message = "Message is required"
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!validateForm()) return
     setIsLoading(true)
 
     try {
@@ -38,6 +64,7 @@ const ContactSection = () => {
           phone: "",
           message: "",
         })
+        setErrors({})
       }, 5000)
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to submit request")
@@ -54,7 +81,7 @@ const ContactSection = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16">
 
-      
+
           <div>
             <p className="text-[oklch(0.7_0.18_45)] font-medium mb-4">
               Get In Touch
@@ -109,7 +136,7 @@ const ContactSection = () => {
             </div>
           </div>
 
-          
+
           <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-8">
             {isSubmitted ? (
               <div className="h-full flex flex-col items-center justify-center text-center py-12">
@@ -126,64 +153,73 @@ const ContactSection = () => {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
 
-              
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input
-                    value={formData.ownerName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, ownerName: e.target.value })
-                    }
-                    placeholder="Owner Name"
-                    required
-                    className="w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
-                  />
 
-                  <input
-                    value={formData.restaurantName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, restaurantName: e.target.value })
-                    }
-                    placeholder="Restaurant Name"
-                    required
-                    className="w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <input
+                      value={formData.ownerName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, ownerName: e.target.value })
+                      }
+                      placeholder="Owner Name"
+                      className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.ownerName ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                    />
+                    {errors.ownerName && <p className="text-red-500 text-xs mt-1">{errors.ownerName}</p>}
+                  </div>
+
+                  <div>
+                    <input
+                      value={formData.restaurantName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, restaurantName: e.target.value })
+                      }
+                      placeholder="Restaurant Name"
+                      className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.restaurantName ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                    />
+                    {errors.restaurantName && <p className="text-red-500 text-xs mt-1">{errors.restaurantName}</p>}
+                  </div>
                 </div>
 
-                
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  placeholder="Email Address"
-                  required
-                  className="w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
-                />
 
-                
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  placeholder="Phone Number"
-                  required
-                  className="w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
-                />
+                <div>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    placeholder="Email Address"
+                    className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.email ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                  />
+                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                </div>
 
-              
-                <textarea
-                  rows={4}
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
-                  placeholder="Tell us about your restaurant..."
-                  required
-                  className="w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
-                />
+                <div>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    placeholder="Phone Number"
+                    className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.phone ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                  />
+                  {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                </div>
+
+
+                <div>
+                  <textarea
+                    rows={4}
+                    value={formData.message}
+                    onChange={(e) =>
+                      setFormData({ ...formData, message: e.target.value })
+                    }
+                    placeholder="Tell us about your restaurant..."
+                    className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.message ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                  />
+                  {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
+                </div>
 
                 <button
                   type="submit"

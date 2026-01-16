@@ -15,8 +15,6 @@ export const calculateProratedAmount = (extraTables, currentDate, monthEndDate) 
     return extraTables * PRICE_PER_TABLE
   }
   
-  const monthStart = new Date(endDate.getFullYear(), endDate.getMonth(), 1)
-  
   const totalDaysInMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate()
   
   if (remainingDays > totalDaysInMonth) {
@@ -35,11 +33,19 @@ export const generatePaymentToken = () => {
   return crypto.randomBytes(32).toString("hex")
 }
 
-export const createExtraTableInvoice = async (restaurantId, extraTables, currentDate, monthEndDate, newTotalTables = null) => {
+export const createExtraTableInvoice = async (restaurantId, extraTables, currentDate, monthEndDate, newTotalTables = null, locationUpdates = null) => {
   const proratedAmount = calculateProratedAmount(extraTables, currentDate, monthEndDate)
   const token = generatePaymentToken()
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173"
   const paymentLink = `${frontendUrl}/payment?token=${token}`
+
+  const metadata = {
+    newTotalTables: newTotalTables,
+  }
+
+  if (locationUpdates && Array.isArray(locationUpdates)) {
+    metadata.locationUpdates = locationUpdates
+  }
 
   const invoice = await Invoice.create({
     restaurantId,
@@ -52,9 +58,7 @@ export const createExtraTableInvoice = async (restaurantId, extraTables, current
     paymentLink,
     paymentLinkToken: token,
     status: "PENDING",
-    metadata: {
-      newTotalTables: newTotalTables,
-    },
+    metadata,
   })
 
   return invoice

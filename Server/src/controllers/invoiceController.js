@@ -101,9 +101,58 @@ const verifyInvoicePayment = asyncHandler(async (req, res) => {
   const sub = restaurant.subscription
 
   if (invoice.type === "EXTRA_TABLE") {
-    const newTotalTables = invoice.metadata?.newTotalTables || (restaurant.locations?.reduce((sum, loc) => {
+    if (invoice.metadata?.locationUpdates && Array.isArray(invoice.metadata.locationUpdates)) {
+      const locationUpdates = invoice.metadata.locationUpdates
+      
+      locationUpdates.forEach((update) => {
+        if (update.locationId === 'new') {
+          if (!restaurant.locations || restaurant.locations.length === 0) {
+            restaurant.locations = [{
+              locationName: "Main Location",
+              address: restaurant.address || "",
+              city: restaurant.city || "",
+              state: restaurant.state || "",
+              zipCode: restaurant.zipCode || "",
+              country: "India",
+              phone: restaurant.phone,
+              totalTables: update.totalTables,
+              isActive: true,
+            }]
+          }
+        } else {
+          const locationIndex = restaurant.locations?.findIndex(
+            (loc) => loc._id?.toString() === update.locationId
+          )
+          if (locationIndex !== undefined && locationIndex !== -1) {
+            restaurant.locations[locationIndex].totalTables = Math.max(0, parseInt(update.totalTables) || 0)
+          }
+        }
+      })
+    } else {
+      if (restaurant.locations && restaurant.locations.length > 0) {
+        const firstLocation = restaurant.locations[0]
+        firstLocation.totalTables = (firstLocation.totalTables || 0) + invoice.tablesAdded
+      } else {
+        const currentTables = restaurant.locations?.reduce((sum, loc) => {
+          return sum + (loc.totalTables || 0)
+        }, 0) || 0
+        restaurant.locations = [{
+          locationName: "Main Location",
+          address: restaurant.address || "",
+          city: restaurant.city || "",
+          state: restaurant.state || "",
+          zipCode: restaurant.zipCode || "",
+          country: "India",
+          phone: restaurant.phone,
+          totalTables: currentTables + invoice.tablesAdded,
+          isActive: true,
+        }]
+      }
+    }
+    
+    const newTotalTables = restaurant.locations?.reduce((sum, loc) => {
       return sum + (loc.totalTables || 0)
-    }, 0) || 0) + invoice.tablesAdded
+    }, 0) || 0
     
     const { calculatePrice } = await import("../utils/pricing.js")
     const pricing = calculatePrice(newTotalTables)

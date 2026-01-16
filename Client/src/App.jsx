@@ -14,7 +14,7 @@ import PaymentPage from './pages/LandingPage/PaymentPage';
 import AdminLoginPage from './pages/AdminPage/AdminLoginPage'
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AdminDashboard, RestaurantRequests, SubscriptionManagement } from './components/AdminPageComponents'
+import { AdminDashboard, RestaurantRequests, SubscriptionManagement, RestaurantStatus } from './components/AdminPageComponents'
 import { Toaster } from 'react-hot-toast';
 import { AuthContext } from './context/AuthContext';
 import NotFound from './pages/NotFound';
@@ -90,7 +90,8 @@ const App = () => {
             <Route index element={<AdminDashboard />} />
             <Route path="requests" element={<RestaurantRequests />} />
             <Route path="subscriptions" element={<SubscriptionManagement />} />
-            {/* <Route path="status" element={<RestaurantStatus />} />
+            <Route path="status" element={<RestaurantStatus />} />
+            {/* 
             <Route path="support" element={<SupportTickets />} /> */}
           </Route>
 

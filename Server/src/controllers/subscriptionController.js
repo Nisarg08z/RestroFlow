@@ -134,6 +134,15 @@ const getSubscriptionById = asyncHandler(async (req, res) => {
     autoRenew: sub.isActive || false,
     isActive: sub.isActive || false,
     locations: restaurant.locations?.length || 0,
+    locationDetails: restaurant.locations?.map((loc) => ({
+      _id: loc._id?.toString(),
+      locationName: loc.locationName,
+      address: loc.address,
+      city: loc.city,
+      state: loc.state,
+      totalTables: loc.totalTables || 0,
+      isActive: loc.isActive,
+    })) || [],
   }
 
   return res.status(200).json(
@@ -143,7 +152,7 @@ const getSubscriptionById = asyncHandler(async (req, res) => {
 
 const updateSubscription = asyncHandler(async (req, res) => {
   const { restaurantId } = req.params
-  const { endDate, autoRenew, pricePerMonth, totalTables, monthsToAdd, sendPaymentEmail = true } = req.body
+  const { endDate, autoRenew, pricePerMonth, totalTables, monthsToAdd, sendPaymentEmail = true, locationUpdates } = req.body
 
   const restaurant = await Restaurant.findById(restaurantId)
 
@@ -157,7 +166,69 @@ const updateSubscription = asyncHandler(async (req, res) => {
 
   let invoice = null
 
-  if (totalTables !== undefined && totalTables !== null) {
+  if (locationUpdates && Array.isArray(locationUpdates) && locationUpdates.length > 0) {
+    const currentTables = restaurant.locations?.reduce((sum, loc) => {
+      return sum + (loc.totalTables || 0)
+    }, 0) || 0
+
+    const newTotalTables = locationUpdates.reduce((sum, update) => {
+      return sum + (parseInt(update.totalTables) || 0)
+    }, 0)
+
+    if (newTotalTables > currentTables) {
+      const extraTables = newTotalTables - currentTables
+      const now = new Date()
+      
+      let monthEndDate = restaurant.subscription.endDate
+      if (!monthEndDate || new Date(monthEndDate) < now) {
+        monthEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        monthEndDate.setHours(23, 59, 59, 999)
+      } else {
+        monthEndDate = new Date(monthEndDate)
+      }
+
+      if (monthEndDate <= now) {
+        monthEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        monthEndDate.setHours(23, 59, 59, 999)
+      }
+
+      invoice = await createExtraTableInvoice(restaurantId, extraTables, now, monthEndDate, newTotalTables, locationUpdates)
+      
+      if (invoice.amount <= 0) {
+        const fullMonthPrice = extraTables * 50
+        invoice.amount = fullMonthPrice
+        invoice.description = `Payment for ${extraTables} extra table(s) - full month`
+        await invoice.save()
+      }
+
+      if (sendPaymentEmail) {
+        try {
+          await sendPaymentLinkEmail(
+            restaurant.email,
+            restaurant.restaurantName,
+            invoice.paymentLink,
+            invoice.amount,
+            invoice.description,
+            invoice.dueDate
+          )
+        } catch (error) {
+          console.error("Error sending payment email:", error)
+        }
+      }
+    } else if (newTotalTables < currentTables) {
+      locationUpdates.forEach((update) => {
+        const locationIndex = restaurant.locations?.findIndex(
+          (loc) => loc._id?.toString() === update.locationId
+        )
+        if (locationIndex !== undefined && locationIndex !== -1) {
+          restaurant.locations[locationIndex].totalTables = Math.max(0, parseInt(update.totalTables) || 0)
+        }
+      })
+      const pricing = calculatePrice(newTotalTables)
+      restaurant.subscription.pricePerMonth = pricing.monthlyPrice
+      await restaurant.save()
+    }
+  } else if (totalTables !== undefined && totalTables !== null) {
     const currentTables = restaurant.locations?.reduce((sum, loc) => {
       return sum + (loc.totalTables || 0)
     }, 0) || 0
@@ -179,7 +250,28 @@ const updateSubscription = asyncHandler(async (req, res) => {
         monthEndDate.setHours(23, 59, 59, 999)
       }
 
-      invoice = await createExtraTableInvoice(restaurantId, extraTables, now, monthEndDate, totalTables)
+      const locationUpdatesForInvoice = []
+      if (restaurant.locations && restaurant.locations.length > 0) {
+        restaurant.locations.forEach((loc) => {
+          if (loc._id) {
+            const currentLocTables = loc.totalTables || 0
+            const newLocTables = loc === restaurant.locations[0] 
+              ? currentLocTables + extraTables 
+              : currentLocTables
+            locationUpdatesForInvoice.push({
+              locationId: loc._id.toString(),
+              totalTables: newLocTables
+            })
+          }
+        })
+      } else {
+        locationUpdatesForInvoice.push({
+          locationId: 'new',
+          totalTables: totalTables
+        })
+      }
+
+      invoice = await createExtraTableInvoice(restaurantId, extraTables, now, monthEndDate, totalTables, locationUpdatesForInvoice)
       
       if (invoice.amount <= 0) {
         const fullMonthPrice = extraTables * 50
@@ -187,28 +279,6 @@ const updateSubscription = asyncHandler(async (req, res) => {
         invoice.description = `Payment for ${extraTables} extra table(s) - full month`
         await invoice.save()
       }
-
-      if (restaurant.locations && restaurant.locations.length > 0) {
-        const firstLocation = restaurant.locations[0]
-        firstLocation.totalTables = (firstLocation.totalTables || 0) + extraTables
-      } else {
-        restaurant.locations = [{
-          locationName: "Main Location",
-          address: restaurant.address || "",
-          city: restaurant.city || "",
-          state: restaurant.state || "",
-          zipCode: restaurant.zipCode || "",
-          country: "India",
-          phone: restaurant.phone,
-          totalTables: totalTables,
-          isActive: true,
-        }]
-      }
-
-      const pricing = calculatePrice(totalTables)
-      restaurant.subscription.pricePerMonth = pricing.monthlyPrice
-
-      await restaurant.save()
 
       if (sendPaymentEmail) {
         try {
@@ -480,10 +550,9 @@ const getSubscriptionStats = asyncHandler(async (req, res) => {
     totalMRR,
     activeSubscriptions: activeCount,
     expiringSoon: expiringCount,
-    expired: expiredCount,
+    expiredCount: expiredCount,
     cancelled: cancelledCount,
     totalSubscriptions: restaurants.length,
-    growthRate: "+12%",
   }
 
   return res.status(200).json(

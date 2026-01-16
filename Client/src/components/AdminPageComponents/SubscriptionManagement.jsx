@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Search,
   CreditCard,
-  TrendingUp,
   AlertCircle,
   Calendar,
   DollarSign,
@@ -17,6 +16,7 @@ import {
   updateSubscription,
   renewSubscription,
   getSubscriptionStats,
+  getSubscriptionById,
 } from "../../utils/api";
 
 const PRICE_PER_TABLE = 50;
@@ -46,7 +46,7 @@ const SubscriptionManagement = () => {
     totalMRR: 0,
     activeSubscriptions: 0,
     expiringSoon: 0,
-    growthRate: "+12%",
+    expiredCount: 0,
   });
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -61,12 +61,24 @@ const SubscriptionManagement = () => {
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [calculatedExtensionPrice, setCalculatedExtensionPrice] = useState(0);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  const [emailNotification, setEmailNotification] = useState(null);
+  const [locationDetails, setLocationDetails] = useState([]);
+  const [loadingLocations, setLoadingLocations] = useState(false);
 
   
   useEffect(() => {
     fetchData();
   }, []);
+
+
+  useEffect(() => {
+    if (emailNotification) {
+      const timer = setTimeout(() => {
+        setEmailNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [emailNotification]);
 
   const fetchData = async () => {
     try {
@@ -104,8 +116,36 @@ const SubscriptionManagement = () => {
     return "bg-[oklch(0.22_0.005_260)] text-[oklch(0.65_0_0)]";
   };
 
+  const canRenew = (restaurantId) => {
+    const lastRenewalKey = `lastRenewal_${restaurantId}`;
+    const lastRenewalTime = localStorage.getItem(lastRenewalKey);
+    
+    if (!lastRenewalTime) return true;
+    
+    const lastRenewal = new Date(lastRenewalTime);
+    const now = new Date();
+    const diffInMs = now - lastRenewal;
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    
+    return diffInHours >= 24;
+  };
 
-  const handleEditClick = (sub) => {
+  const getRemainingCooldownHours = (restaurantId) => {
+    const lastRenewalKey = `lastRenewal_${restaurantId}`;
+    const lastRenewalTime = localStorage.getItem(lastRenewalKey);
+    
+    if (!lastRenewalTime) return 0;
+    
+    const lastRenewal = new Date(lastRenewalTime);
+    const now = new Date();
+    const diffInMs = now - lastRenewal;
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    
+    return Math.max(0, 24 - diffInHours);
+  };
+
+
+  const handleEditClick = async (sub) => {
     setSelectedSub(sub);
     setEditEndDate(sub.endDate || "");
     setEditTotalTables(sub.totalTables || 0);
@@ -115,8 +155,35 @@ const SubscriptionManagement = () => {
     setCalculatedPrice(calculatePrice(sub.totalTables || 0));
     setCalculatedExtensionPrice(0);
     setError(null);
-    setSuccessMessage(null);
-    setShowEdit(true);
+    setLoadingLocations(true);
+    
+    try {
+      const response = await getSubscriptionById(sub.restaurantId);
+      if (response.data?.success && response.data.data.locationDetails) {
+        setLocationDetails(response.data.data.locationDetails.map(loc => ({
+          ...loc,
+          editTables: loc.totalTables || 0,
+        })));
+      } else {
+        setLocationDetails([{
+          _id: 'default',
+          locationName: 'Main Location',
+          totalTables: sub.totalTables || 0,
+          editTables: sub.totalTables || 0,
+        }]);
+      }
+    } catch (err) {
+      console.error("Error fetching location details:", err);
+      setLocationDetails([{
+        _id: 'default',
+        locationName: 'Main Location',
+        totalTables: sub.totalTables || 0,
+        editTables: sub.totalTables || 0,
+      }]);
+    } finally {
+      setLoadingLocations(false);
+      setShowEdit(true);
+    }
   };
 
   const handleTablesChange = (tables) => {
@@ -129,11 +196,30 @@ const SubscriptionManagement = () => {
     const numMonths = parseInt(months) || 0;
     setEditMonthsToAdd(numMonths);
     if (numMonths > 0 && selectedSub) {
-      const extensionPrice = calculatePrice(selectedSub.totalTables || 0) * numMonths;
+      const totalTablesFromLocations = locationDetails.reduce((sum, loc) => sum + (loc.editTables || 0), 0);
+      const extensionPrice = calculatePrice(totalTablesFromLocations || selectedSub.totalTables || 0) * numMonths;
       setCalculatedExtensionPrice(extensionPrice);
     } else {
       setCalculatedExtensionPrice(0);
     }
+  };
+
+  const handleLocationTablesChange = (locationId, tables) => {
+    const numTables = parseInt(tables) || 0;
+    setLocationDetails((prev) => {
+      const updated = prev.map((loc) =>
+        loc._id === locationId ? { ...loc, editTables: numTables } : loc
+      );
+      
+      const newTotal = updated.reduce((sum, loc) => sum + (loc.editTables || 0), 0);
+      setCalculatedPrice(calculatePrice(newTotal));
+      
+      if (editMonthsToAdd > 0) {
+        setCalculatedExtensionPrice(calculatePrice(newTotal) * editMonthsToAdd);
+      }
+      
+      return updated;
+    });
   };
 
   const handleSaveChanges = async () => {
@@ -145,7 +231,18 @@ const SubscriptionManagement = () => {
 
       const updateData = {};
       
-      if (editTotalTables !== selectedSub.totalTables) {
+      if (locationDetails.length > 0) {
+        const hasLocationChanges = locationDetails.some(
+          (loc) => loc.editTables !== loc.totalTables
+        );
+        
+        if (hasLocationChanges) {
+          updateData.locationUpdates = locationDetails.map((loc) => ({
+            locationId: loc._id,
+            totalTables: loc.editTables || 0,
+          }));
+        }
+      } else if (editTotalTables !== selectedSub.totalTables) {
         updateData.totalTables = editTotalTables;
       }
       
@@ -161,19 +258,23 @@ const SubscriptionManagement = () => {
         updateData.autoRenew = editAutoRenew;
       }
 
-
       updateData.sendPaymentEmail = sendPaymentEmail;
 
       const response = await updateSubscription(selectedSub.restaurantId, updateData);
 
       if (response.data?.success) {
         if (response.data.data.invoice) {
-          const emailStatus = sendPaymentEmail 
-            ? `Payment link sent to ${selectedSub.restaurantName}`
-            : `Payment email not sent (as per your preference)`;
-          setSuccessMessage(
-            `Invoice created! Amount: ₹${response.data.data.invoice.amount}. ${emailStatus}`
-          );
+          if (sendPaymentEmail && response.data.data.invoice) {
+            setEmailNotification({
+              restaurantName: selectedSub.restaurantName,
+              amount: response.data.data.invoice.amount,
+            });
+          }
+          
+          if (locationDetails.some(loc => loc.editTables > loc.totalTables) || editTotalTables > selectedSub.totalTables) {
+            setError(null);
+          }
+          
           if (response.data.data.subscription) {
             setSubscriptions((prev) =>
               prev.map((sub) =>
@@ -192,7 +293,6 @@ const SubscriptionManagement = () => {
             )
           );
           setShowEdit(false);
-          setSuccessMessage(null);
         }
         fetchData();
       }
@@ -207,6 +307,13 @@ const SubscriptionManagement = () => {
   const handleRenew = async (sub) => {
     if (!sub) return;
 
+    if (!canRenew(sub.restaurantId)) {
+      const remainingHours = getRemainingCooldownHours(sub.restaurantId);
+      const remainingHoursRounded = Math.ceil(remainingHours);
+      setError(`Please wait ${remainingHoursRounded} hour(s) before renewing again.`);
+      return;
+    }
+
     try {
       setUpdating(true);
       setError(null);
@@ -214,10 +321,14 @@ const SubscriptionManagement = () => {
       const response = await renewSubscription(sub.restaurantId, { months: 1 });
 
       if (response.data?.success) {
+        const lastRenewalKey = `lastRenewal_${sub.restaurantId}`;
+        localStorage.setItem(lastRenewalKey, new Date().toISOString());
+
         if (response.data.data.invoice) {
-          setSuccessMessage(
-            `Renewal invoice created! Payment link sent to ${sub.restaurantName}. Amount: ₹${response.data.data.invoice.amount}`
-          );
+          setEmailNotification({
+            restaurantName: sub.restaurantName,
+            amount: response.data.data.invoice.amount,
+          });
         } else {
           setSubscriptions((prev) =>
             prev.map((s) =>
@@ -251,9 +362,28 @@ const SubscriptionManagement = () => {
         </div>
       )}
 
-      {successMessage && (
-        <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 sm:p-4">
-          <p className="text-green-500 text-xs sm:text-sm break-words">{successMessage}</p>
+      {emailNotification && (
+        <div className="fixed top-4 right-4 z-50 bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 sm:p-4 shadow-lg max-w-xs sm:max-w-sm transition-all duration-300 ease-out">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+              <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-blue-500 font-semibold text-xs sm:text-sm mb-1">Email Sent</p>
+              <p className="text-blue-400 text-xs break-words">
+                Payment link sent to <span className="font-medium">{emailNotification.restaurantName}</span>
+              </p>
+              <p className="text-blue-500 font-bold text-xs sm:text-sm mt-1">
+                Amount: ₹{emailNotification.amount}
+              </p>
+            </div>
+            <button
+              onClick={() => setEmailNotification(null)}
+              className="flex-shrink-0 text-blue-400 hover:text-blue-500 transition-colors p-0.5"
+            >
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -297,12 +427,14 @@ const SubscriptionManagement = () => {
         </div>
         <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-3 md:p-4">
           <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-red-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
             </div>
             <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-[oklch(0.98_0_0)]">{stats.growthRate || "+12%"}</p>
-              <p className="text-xs md:text-sm text-[oklch(0.65_0_0)]">Growth Rate</p>
+              <p className="text-xl md:text-2xl font-bold text-[oklch(0.98_0_0)]">
+                {stats.expiredCount || 0}
+              </p>
+              <p className="text-xs md:text-sm text-[oklch(0.65_0_0)]">Expired</p>
             </div>
           </div>
         </div>
@@ -410,8 +542,9 @@ const SubscriptionManagement = () => {
                   {(sub.status === "expired" || sub.status === "expiring") && (
                     <button
                       onClick={() => handleRenew(sub)}
-                      disabled={updating}
-                      className="flex-1 px-3 py-1.5 text-xs bg-[oklch(0.7_0.18_45)] text-black rounded-lg hover:bg-[oklch(0.7_0.18_45)]/90 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={updating || !canRenew(sub.restaurantId)}
+                      className="flex-1 px-3 py-1.5 text-xs bg-[oklch(0.7_0.18_45)] text-black rounded-lg hover:bg-[oklch(0.7_0.18_45)]/90 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed relative"
+                      title={!canRenew(sub.restaurantId) ? `Please wait ${Math.ceil(getRemainingCooldownHours(sub.restaurantId))} hour(s) before renewing again.` : ""}
                     >
                       {updating ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -538,8 +671,9 @@ const SubscriptionManagement = () => {
                       {(sub.status === "expired" || sub.status === "expiring") && (
                         <button
                           onClick={() => handleRenew(sub)}
-                          disabled={updating}
-                          className="px-2 md:px-3 py-1 text-xs md:text-sm bg-[oklch(0.7_0.18_45)] text-black rounded-lg hover:bg-[oklch(0.7_0.18_45)]/90 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={updating || !canRenew(sub.restaurantId)}
+                          className="px-2 md:px-3 py-1 text-xs md:text-sm bg-[oklch(0.7_0.18_45)] text-black rounded-lg hover:bg-[oklch(0.7_0.18_45)]/90 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed relative"
+                          title={!canRenew(sub.restaurantId) ? `Please wait ${Math.ceil(getRemainingCooldownHours(sub.restaurantId))} hour(s) before renewing again.` : ""}
                         >
                           {updating ? (
                             <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
@@ -564,10 +698,9 @@ const SubscriptionManagement = () => {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3 sm:p-4" onClick={() => {
           setShowEdit(false);
           setError(null);
-          setSuccessMessage(null);
         }}>
           <div
-            className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4 sm:p-5 md:p-6 w-full max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+            className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4 sm:p-5 md:p-6 w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 sm:mb-5">
@@ -582,7 +715,6 @@ const SubscriptionManagement = () => {
                   onClick={() => {
                     setShowEdit(false);
                     setError(null);
-                    setSuccessMessage(null);
                   }}
                   className="flex-shrink-0 p-1 hover:bg-[oklch(0.22_0.005_260)] rounded-lg transition-colors"
                 >
@@ -592,109 +724,196 @@ const SubscriptionManagement = () => {
             </div>
             {selectedSub && (
               <div className="space-y-3 sm:space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)]">
-                    Total Tables
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="1000"
-                    value={editTotalTables}
-                    onChange={(e) => handleTablesChange(e.target.value)}
-                    className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm sm:text-base"
-                  />
-                  <p className="text-xs text-[oklch(0.65_0_0)] leading-relaxed">
-                    Price: ₹{calculatedPrice}/mo (₹{PRICE_PER_TABLE} per table)
-                    {editTotalTables > selectedSub.totalTables && (
-                      <span className="block mt-1 text-yellow-500">
-                        Prorated invoice will be created for extra tables
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)]">
-                    Add Months (Extension)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="12"
-                    value={editMonthsToAdd}
-                    onChange={(e) => handleMonthsChange(e.target.value)}
-                    className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm sm:text-base"
-                    placeholder="0"
-                  />
-                  {editMonthsToAdd > 0 && (
-                    <p className="text-xs text-[oklch(0.65_0_0)] leading-relaxed">
-                      Extension Price: ₹{calculatedExtensionPrice} for {editMonthsToAdd} month(s)
-                      <span className="block mt-1 text-yellow-500">
-                        Payment invoice will be sent to restaurant
-                      </span>
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)]">
-                    End Date {editMonthsToAdd > 0 && <span className="text-[oklch(0.65_0_0)] font-normal text-xs">(calculated after payment)</span>}
-                  </label>
-                  <input
-                    type="date"
-                    value={editEndDate}
-                    onChange={(e) => setEditEndDate(e.target.value)}
-                    disabled={editMonthsToAdd > 0}
-                    className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)] flex items-center justify-between">
-                    <span>Auto Renew</span>
-                    <button
-                      type="button"
-                      onClick={() => setEditAutoRenew(!editAutoRenew)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] focus:ring-offset-2 focus:ring-offset-[oklch(0.17_0.005_260)] ${
-                        editAutoRenew ? "bg-[oklch(0.7_0.18_45)]" : "bg-[oklch(0.28_0.005_260)]"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          editAutoRenew ? "translate-x-6" : "translate-x-1"
-                        }`}
-                      />
-                    </button>
-                  </label>
-                  <p className="text-xs text-[oklch(0.65_0_0)]">
-                    {editAutoRenew 
-                      ? "Enabled: Renewal reminders will be sent automatically before subscription expires"
-                      : "Disabled: No automatic renewal reminders will be sent"}
-                  </p>
-                </div>
-                {(editTotalTables > selectedSub.totalTables || editMonthsToAdd > 0) && (
+                {loadingLocations ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-[oklch(0.7_0.18_45)]" />
+                  </div>
+                ) : locationDetails.length > 0 ? (
+                  <div className="space-y-3">
+                    <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)]">
+                      Tables by Location
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {locationDetails.map((loc, index) => {
+                        const isIncreased = loc.editTables > loc.totalTables;
+                        
+                        return (
+                          <div key={loc._id || index} className="p-3 sm:p-4 bg-[oklch(0.22_0.005_260)] rounded-lg border border-[oklch(0.28_0.005_260)] flex flex-col">
+                            <div className="mb-3">
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)] truncate">
+                                    {loc.locationName || `Location ${index + 1}`}
+                                  </p>
+                                  {loc.address && (
+                                    <p className="text-xs text-[oklch(0.65_0_0)] truncate mt-0.5">
+                                      {loc.city && loc.state ? `${loc.city}, ${loc.state}` : loc.address}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-between mt-2">
+                                <span className="text-xs text-[oklch(0.65_0_0)]">
+                                  Current: <span className="font-medium text-[oklch(0.98_0_0)]">{loc.totalTables || 0}</span>
+                                </span>
+                                {isIncreased && (
+                                  <span className="text-xs text-yellow-500 font-medium">
+                                    +{loc.editTables - loc.totalTables}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="mt-auto">
+                              <input
+                                type="number"
+                                min="0"
+                                max="1000"
+                                value={loc.editTables || 0}
+                                onChange={(e) => handleLocationTablesChange(loc._id, e.target.value)}
+                                className="w-full px-3 py-2 bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] focus:border-transparent"
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="pt-3 border-t border-[oklch(0.28_0.005_260)] bg-[oklch(0.22_0.005_260)] rounded-lg p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                        <p className="text-xs sm:text-sm text-[oklch(0.65_0_0)]">
+                          <span className="font-medium text-[oklch(0.98_0_0)]">Total Tables: </span>
+                          <span className="text-base font-semibold text-[oklch(0.98_0_0)]">
+                            {locationDetails.reduce((sum, loc) => sum + (loc.editTables || 0), 0)}
+                          </span>
+                        </p>
+                        <p className="text-xs sm:text-sm text-[oklch(0.65_0_0)]">
+                          <span className="font-medium text-[oklch(0.98_0_0)]">Price: </span>
+                          <span className="text-base font-semibold text-[oklch(0.7_0.18_45)]">₹{calculatedPrice}</span>
+                          <span className="text-[oklch(0.65_0_0)]">/mo</span>
+                        </p>
+                      </div>
+                      {locationDetails.reduce((sum, loc) => sum + (loc.editTables || 0), 0) > selectedSub.totalTables && (
+                        <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          Prorated invoice will be created for extra tables
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
                   <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)] flex items-center justify-between">
-                      <span>Send Payment Email</span>
+                    <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)]">
+                      Total Tables
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="1000"
+                      value={editTotalTables}
+                      onChange={(e) => handleTablesChange(e.target.value)}
+                      className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm sm:text-base"
+                    />
+                    <p className="text-xs text-[oklch(0.65_0_0)] leading-relaxed">
+                      Price: ₹{calculatedPrice}/mo (₹{PRICE_PER_TABLE} per table)
+                      {editTotalTables > selectedSub.totalTables && (
+                        <span className="block mt-1 text-yellow-500">
+                          Prorated invoice will be created for extra tables
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)]">
+                      Add Months (Extension)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="12"
+                      value={editMonthsToAdd}
+                      onChange={(e) => handleMonthsChange(e.target.value)}
+                      className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] focus:border-transparent"
+                      placeholder="0"
+                    />
+                    {editMonthsToAdd > 0 && (
+                      <p className="text-xs text-[oklch(0.65_0_0)]">
+                        Price: <span className="font-medium text-[oklch(0.7_0.18_45)]">₹{calculatedExtensionPrice}</span>
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)]">
+                      End Date {editMonthsToAdd > 0 && <span className="text-[oklch(0.65_0_0)] font-normal text-xs">(auto)</span>}
+                    </label>
+                    <input
+                      type="date"
+                      value={editEndDate}
+                      onChange={(e) => setEditEndDate(e.target.value)}
+                      disabled={editMonthsToAdd > 0}
+                      className="w-full px-3 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                {editMonthsToAdd > 0 && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2 sm:p-3">
+                    <p className="text-xs text-yellow-500 flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      Payment invoice will be sent to restaurant for {editMonthsToAdd} month(s) extension
+                    </p>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="space-y-2 p-3 bg-[oklch(0.22_0.005_260)] rounded-lg border border-[oklch(0.28_0.005_260)]">
+                    <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)] flex items-center justify-between mb-2">
+                      <span>Auto Renew</span>
                       <button
                         type="button"
-                        onClick={() => setSendPaymentEmail(!sendPaymentEmail)}
+                        onClick={() => setEditAutoRenew(!editAutoRenew)}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] focus:ring-offset-2 focus:ring-offset-[oklch(0.17_0.005_260)] ${
-                          sendPaymentEmail ? "bg-[oklch(0.7_0.18_45)]" : "bg-[oklch(0.28_0.005_260)]"
+                          editAutoRenew ? "bg-[oklch(0.7_0.18_45)]" : "bg-[oklch(0.28_0.005_260)]"
                         }`}
                       >
                         <span
                           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            sendPaymentEmail ? "translate-x-6" : "translate-x-1"
+                            editAutoRenew ? "translate-x-6" : "translate-x-1"
                           }`}
                         />
                       </button>
                     </label>
                     <p className="text-xs text-[oklch(0.65_0_0)]">
-                      {sendPaymentEmail 
-                        ? "Payment email will be sent to restaurant with payment link"
-                        : "Invoice will be created but no email will be sent (useful for family members or special cases)"}
+                      {editAutoRenew 
+                        ? "Renewal reminders will be sent automatically"
+                        : "No automatic renewal reminders"}
                     </p>
                   </div>
-                )}
+                  {(editTotalTables > selectedSub.totalTables || editMonthsToAdd > 0 || locationDetails.some(loc => loc.editTables > loc.totalTables)) && (
+                    <div className="space-y-2 p-3 bg-[oklch(0.22_0.005_260)] rounded-lg border border-[oklch(0.28_0.005_260)]">
+                      <label className="text-xs sm:text-sm font-medium text-[oklch(0.98_0_0)] flex items-center justify-between mb-2">
+                        <span>Send Payment Email</span>
+                        <button
+                          type="button"
+                          onClick={() => setSendPaymentEmail(!sendPaymentEmail)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] focus:ring-offset-2 focus:ring-offset-[oklch(0.17_0.005_260)] ${
+                            sendPaymentEmail ? "bg-[oklch(0.7_0.18_45)]" : "bg-[oklch(0.28_0.005_260)]"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              sendPaymentEmail ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </label>
+                      <p className="text-xs text-[oklch(0.65_0_0)]">
+                        {sendPaymentEmail 
+                          ? "Payment link will be sent via email"
+                          : "No email sent (for family/special cases)"}
+                      </p>
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                   <button
                     className="flex-1 bg-[oklch(0.7_0.18_45)] text-black py-2.5 sm:py-2 rounded-lg hover:bg-[oklch(0.7_0.18_45)]/90 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
@@ -716,7 +935,6 @@ const SubscriptionManagement = () => {
                     onClick={() => {
                       setShowEdit(false);
                       setError(null);
-                      setSuccessMessage(null);
                     }}
                     disabled={updating}
                   >

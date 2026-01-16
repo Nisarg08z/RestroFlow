@@ -49,6 +49,15 @@ export const adminLogout = () =>
 export const getAllRestaurants = () =>
   api.get("/admin/restaurants")
 
+export const getRestaurantById = (restaurantId) =>
+  api.get(`/admin/restaurants/${restaurantId}`)
+
+export const toggleRestaurantBlock = (restaurantId) =>
+  api.patch(`/admin/restaurants/${restaurantId}/toggle-block`)
+
+export const deleteRestaurant = (restaurantId) =>
+  api.delete(`/admin/restaurants/${restaurantId}`)
+
 /* ================= RESTAURANT REQUESTS ================= */
 
 export const submitRestaurantRequest = (data) =>

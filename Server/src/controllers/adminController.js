@@ -134,6 +134,56 @@ const refreshAdminToken = asyncHandler(async (req, res) => {
   )
 })
 
+const toggleRestaurantBlock = asyncHandler(async (req, res) => {
+  const { restaurantId } = req.params
+
+  const restaurant = await Restaurant.findById(restaurantId)
+
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found")
+  }
+
+  restaurant.isBlocked = !restaurant.isBlocked
+  await restaurant.save()
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      restaurant,
+      restaurant.isBlocked ? "Restaurant suspended successfully" : "Restaurant activated successfully"
+    )
+  )
+})
+
+const deleteRestaurant = asyncHandler(async (req, res) => {
+  const { restaurantId } = req.params
+
+  const restaurant = await Restaurant.findByIdAndDelete(restaurantId)
+
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found")
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, {}, "Restaurant deleted successfully")
+  )
+})
+
+const getRestaurantById = asyncHandler(async (req, res) => {
+  const { restaurantId } = req.params
+
+  const restaurant = await Restaurant.findById(restaurantId)
+    .select("-password -refreshToken")
+
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found")
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, restaurant, "Restaurant fetched successfully")
+  )
+})
+
 
 export {
   loginAdmin,
@@ -141,5 +191,8 @@ export {
   getAllRestaurants,
   getCurrentAdmin,
   logoutAdmin,
-  refreshAdminToken
+  refreshAdminToken,
+  toggleRestaurantBlock,
+  deleteRestaurant,
+  getRestaurantById
 }

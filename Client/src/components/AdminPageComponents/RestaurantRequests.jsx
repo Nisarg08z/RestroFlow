@@ -95,7 +95,6 @@ const RestaurantRequests = () => {
     try {
       setIsLoading(true);
       const response = await getAllRestaurantRequests({
-        status: filter !== "all" ? filter : undefined,
         search: searchQuery || undefined,
       });
       setRequests(response.data.data || []);
@@ -109,7 +108,7 @@ const RestaurantRequests = () => {
 
   useEffect(() => {
     fetchRequests();
-  }, [filter]);
+  }, []);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -119,7 +118,9 @@ const RestaurantRequests = () => {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const filteredRequests = requests;
+  const filteredRequests = requests.filter(
+    (req) => filter === "all" || req.status === filter
+  );
 
   const handleApprove = async (id) => {
     setProcessingRequestId(id);
@@ -160,20 +161,6 @@ const RestaurantRequests = () => {
     } finally {
       setProcessingRequestId(null);
       localStorage.removeItem(PROCESSING_KEY);
-    }
-  };
-
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this request?")) {
-      return;
-    }
-    try {
-      await deleteRestaurantRequest(id);
-      setRequests((prev) => prev.filter((req) => req._id !== id));
-      toast.success("Request deleted");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete request");
     }
   };
 
@@ -233,7 +220,7 @@ const RestaurantRequests = () => {
             />
           </div>
           <div className="flex flex-wrap gap-2 md:justify-end">
-            {["all", "pending", "approved", "rejected"].map((status) => (
+            {["all", "pending", "approved", "rejected", "completed"].map((status) => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
@@ -268,19 +255,17 @@ const RestaurantRequests = () => {
             filteredRequests.map((request) => (
               <div
                 key={request._id}
-                className={`p-4 md:p-5 bg-[oklch(0.22_0.005_260)] rounded-lg border transition-colors ${
-                  processingRequestId === request._id
-                    ? "border-blue-500/50 bg-blue-500/5"
-                    : "border-[oklch(0.28_0.005_260)] hover:border-[oklch(0.7_0.18_45)]/50"
-                }`}
+                className={`p-4 md:p-5 bg-[oklch(0.22_0.005_260)] rounded-lg border transition-colors ${processingRequestId === request._id
+                  ? "border-blue-500/50 bg-blue-500/5"
+                  : "border-[oklch(0.28_0.005_260)] hover:border-[oklch(0.7_0.18_45)]/50"
+                  }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex items-start gap-3 md:gap-4">
-                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      processingRequestId === request._id
-                        ? "bg-blue-500/10"
-                        : "bg-[oklch(0.7_0.18_45)]/10"
-                    }`}>
+                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${processingRequestId === request._id
+                      ? "bg-blue-500/10"
+                      : "bg-[oklch(0.7_0.18_45)]/10"
+                      }`}>
                       {processingRequestId === request._id ? (
                         <Loader2 className="w-5 h-5 md:w-6 md:h-6 text-blue-500 animate-spin" />
                       ) : (
@@ -301,7 +286,9 @@ const RestaurantRequests = () => {
                               ? "bg-yellow-500/10 text-yellow-500"
                               : request.status === "approved"
                                 ? "bg-green-500/10 text-green-500"
-                                : "bg-red-500/10 text-red-500"
+                                : request.status === "completed"
+                                  ? "bg-blue-500/10 text-blue-500"
+                                  : "bg-red-500/10 text-red-500"
                               }`}
                           >
                             {request.status}
@@ -500,7 +487,7 @@ const RestaurantRequests = () => {
                       console.error(error);
                       toast.error(
                         error.response?.data?.message ||
-                          "Failed to send reply email"
+                        "Failed to send reply email"
                       );
                     } finally {
                       setIsSendingReply(false);

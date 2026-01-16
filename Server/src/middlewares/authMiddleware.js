@@ -35,6 +35,10 @@ export const verifyRestaurantJWT = async (req, _, next) => {
   const restaurant = await Restaurant.findById(decoded._id).select("-password -refreshToken")
   if (!restaurant) throw new ApiError(401, "Invalid restaurant token")
 
+  if (restaurant.isBlocked) {
+    throw new ApiError(403, "Your account has been suspended. Please contact admin for assistance.")
+  }
+
   req.user = restaurant
   next()
 }

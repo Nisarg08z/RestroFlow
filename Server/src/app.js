@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { socketMiddleware } from "./utils/socket.js";
+import { errorHandler } from "./middlewares/error.middleware.js";
 
 const app = express();
 
@@ -35,5 +36,7 @@ app.use("/api/v1/restaurant", restaurantRouter)
 app.use("/api/v1/requests", restaurantRequestRouter)
 app.use("/api/v1/subscriptions", subscriptionRouter)
 app.use("/api/v1/invoices", invoiceRouter)
+
+app.use(errorHandler)
 
 export { app };

@@ -32,6 +32,15 @@ export const refreshRestaurantToken = () =>
 export const restaurantLogout = () =>
   api.post("/restaurant/logout")
 
+export const requestPasswordReset = (data) =>
+  api.post("/restaurant/forgot-password", data)
+
+export const verifyOTP = (data) =>
+  api.post("/restaurant/verify-otp", data)
+
+export const resetPassword = (data) =>
+  api.post("/restaurant/reset-password", data)
+
 /* ================= ADMIN ================= */
 
 export const adminLogin = (data) =>

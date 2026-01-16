@@ -12,6 +12,7 @@ import { restaurantLogin } from "../../utils/api"
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -23,6 +24,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     try {
       await restaurantLogin({
@@ -34,7 +36,8 @@ export default function LoginPage() {
       navigate("/dashboard")
 
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed")
+      const errorMessage = error.response?.data?.message || "Login failed"
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -94,6 +97,12 @@ export default function LoginPage() {
           <p className="text-[oklch(0.65_0_0)] mb-8">
             Sign in to access your restaurant dashboard
           </p>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-500 text-sm">{error}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
 

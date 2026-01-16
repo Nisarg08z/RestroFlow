@@ -375,3 +375,55 @@ The RestroFlow Team
 
   return sendGenericEmail(email, subject, html, text);
 };
+export const sendOTPEmail = async (email, otp) => {
+  const subject = "Reset Your Password - RestroFlow";
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>RestroFlow Password Reset</title>
+    </head>
+    <body style="background-color:#0f1115;color:#e5e7eb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:24px;">
+      <div style="max-width:600px;margin:0 auto;background-color:#161a20;border-radius:16px;padding:24px;">
+        <h2 style="margin-top:0;margin-bottom:16px;color:#ffffff;">Password Reset Request</h2>
+        <p style="line-height:1.6;color:#cbd5e1;">
+          You requested to reset your password. Use the OTP below to proceed:
+        </p>
+        <div style="background:#1e2430;padding:16px;border-radius:8px;text-align:center;margin:24px 0;">
+          <span style="font-size:32px;font-weight:bold;color:#f7931e;letter-spacing:4px;">${otp}</span>
+        </div>
+        <p style="line-height:1.6;color:#cbd5e1;">
+          This OTP is valid for 10 minutes. Do not share this code with anyone.
+        </p>
+        <p style="margin-top:24px;color:#cbd5e1;">
+          If you didn't request this, please ignore this email.
+        </p>
+        <p style="margin-top:24px;color:#cbd5e1;">
+          Best regards,<br />
+          <strong style="color:#f7931e;">The RestroFlow Team</strong>
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+Password Reset Request
+
+You requested to reset your password. Use the OTP below to proceed:
+
+OTP: ${otp}
+
+This OTP is valid for 10 minutes. Do not share this code with anyone.
+
+If you didn't request this, please ignore this email.
+
+Best regards,
+The RestroFlow Team
+  `;
+
+  return sendGenericEmail(email, subject, html, text);
+};

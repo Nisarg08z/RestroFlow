@@ -12,6 +12,7 @@ import { adminLogin } from "../../utils/api"
 export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
   const navigate = useNavigate()
 
   const [formData, setFormData] = useState({
@@ -37,7 +38,8 @@ export default function AdminLoginPage() {
         navigate("/admin/dashboard")
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Admin login failed")
+      const errorMessage = error.response?.data?.message || "Admin login failed"
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -79,6 +81,12 @@ export default function AdminLoginPage() {
           <p className="text-[oklch(0.65_0_0)] mb-8">
             Sign in to manage restaurants and platform settings
           </p>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-500 text-sm">{error}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
 

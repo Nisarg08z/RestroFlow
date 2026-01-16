@@ -154,6 +154,14 @@ const restaurantSchema = new Schema(
       type: Boolean,
       default: false,
     },
+
+    resetPasswordOTP: {
+      type: String,
+    },
+
+    resetPasswordExpiry: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

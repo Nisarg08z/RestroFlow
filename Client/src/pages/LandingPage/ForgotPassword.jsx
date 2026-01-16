@@ -7,6 +7,8 @@ import {
   EyeOff,
 } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
+import { requestPasswordReset, verifyOTP, resetPassword } from "../../utils/api"
+import toast from "react-hot-toast"
 
 export default function ForgotPassword() {
   const navigate = useNavigate()
@@ -24,9 +26,15 @@ export default function ForgotPassword() {
   const handleEmailSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 1200))
-    setIsLoading(false)
-    setStep("otp")
+    try {
+      await requestPasswordReset({ email })
+      toast.success("OTP sent to your email")
+      setStep("otp")
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send OTP")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleOtpChange = (value, index) => {
@@ -41,22 +49,43 @@ export default function ForgotPassword() {
 
   const handleOtpSubmit = async (e) => {
     e.preventDefault()
+    if (otp.join("").length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP")
+      return
+    }
+
     setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 1200))
-    setIsLoading(false)
-    setStep("reset")
+    try {
+      await verifyOTP({ email, otp: otp.join("") })
+      setStep("reset")
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Invalid OTP")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleResetPassword = async (e) => {
     e.preventDefault()
-    if (passwords.password !== passwords.confirmPassword) return
+    if (passwords.password !== passwords.confirmPassword) {
+      toast.error("Passwords do not match")
+      return
+    }
 
     setIsLoading(true)
-    await new Promise((r) => setTimeout(r, 1200))
-    setIsLoading(false)
-    setStep("success")
-
-    setTimeout(() => navigate("/login"), 2000)
+    try {
+      await resetPassword({
+        email,
+        otp: otp.join(""),
+        newPassword: passwords.password
+      })
+      setStep("success")
+      setTimeout(() => navigate("/login"), 2000)
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reset password")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

@@ -7,27 +7,27 @@ const PrivacyPage = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[oklch(0.13_0.005_260)] min-h-screen">
+    <section className="py-24 px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-        <button
+          <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)] transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Home</span>
           </button>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-bold text-[oklch(0.98_0_0)] mb-8">
+        <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-8">
           Privacy Policy
         </h1>
-        <p className="text-[oklch(0.65_0_0)] mb-8">
+        <p className="text-muted-foreground mb-8">
           Last updated: {new Date().toLocaleDateString()}
         </p>
 
-        <div className="space-y-8 text-[oklch(0.65_0_0)]">
+        <div className="space-y-8 text-muted-foreground">
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               1. Introduction
             </h2>
             <p>
@@ -36,7 +36,7 @@ const PrivacyPage = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               2. Information We Collect
             </h2>
             <p className="mb-3">We collect information that you provide directly to us, including:</p>
@@ -50,7 +50,7 @@ const PrivacyPage = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               3. How We Use Your Information
             </h2>
             <p className="mb-3">We use the information we collect to:</p>
@@ -64,7 +64,7 @@ const PrivacyPage = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               4. Information Sharing
             </h2>
             <p>
@@ -79,7 +79,7 @@ const PrivacyPage = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               5. Data Security
             </h2>
             <p>
@@ -88,7 +88,7 @@ const PrivacyPage = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               6. Your Rights
             </h2>
             <p className="mb-3">You have the right to:</p>
@@ -102,7 +102,7 @@ const PrivacyPage = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               7. Contact Us
             </h2>
             <p>

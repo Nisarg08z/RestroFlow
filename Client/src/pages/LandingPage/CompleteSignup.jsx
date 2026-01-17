@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import Logo from "../../assets/logo.png";
 import {
-  UtensilsCrossed,
   Eye,
   EyeOff,
   CheckCircle,
@@ -269,10 +269,10 @@ const CompleteSignup = () => {
 
   if (verifying) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[oklch(0.13_0.005_260)] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-[oklch(0.7_0.18_45)] mx-auto mb-4 animate-spin" />
-          <p className="text-[oklch(0.98_0_0)]">Verifying your signup link...</p>
+          <Loader2 className="w-12 h-12 text-primary mx-auto mb-4 animate-spin" />
+          <p className="text-foreground">Verifying your signup link...</p>
         </div>
       </div>
     );
@@ -280,18 +280,18 @@ const CompleteSignup = () => {
 
   if (step === "error") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[oklch(0.13_0.005_260)] px-4">
-        <div className="max-w-md w-full bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-8 text-center">
-          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-[oklch(0.98_0_0)] mb-2">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="max-w-md w-full bg-card border border-border rounded-2xl p-8 text-center">
+          <XCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             Invalid Signup Link
           </h1>
-          <p className="text-[oklch(0.65_0_0)] mb-6">
+          <p className="text-muted-foreground mb-6">
             This signup link is invalid or has expired. Please contact support or request a new approval.
           </p>
           <Link
             to="/"
-            className="inline-block px-6 py-3 bg-[oklch(0.7_0.18_45)] text-[oklch(0.13_0.005_260)] rounded-lg font-medium hover:bg-orange-400 transition-colors"
+            className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-colors"
           >
             Go to Homepage
           </Link>
@@ -302,18 +302,18 @@ const CompleteSignup = () => {
 
   if (step === "success") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[oklch(0.13_0.005_260)] px-4">
-        <div className="max-w-md w-full bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-8 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="max-w-md w-full bg-card border border-border rounded-2xl p-8 text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-[oklch(0.98_0_0)] mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             Account Created Successfully!
           </h1>
-          <p className="text-[oklch(0.65_0_0)] mb-6">
+          <p className="text-muted-foreground mb-6">
             Your RestroFlow account has been created and payment is confirmed. You can now log in and start using the platform.
           </p>
           <Link
             to="/login"
-            className="inline-block px-6 py-3 bg-[oklch(0.7_0.18_45)] text-[oklch(0.13_0.005_260)] rounded-lg font-medium hover:bg-orange-400 transition-colors"
+            className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-colors"
           >
             Go to Login
           </Link>
@@ -326,12 +326,12 @@ const CompleteSignup = () => {
   const monthlyPrice = calculatePrice(totalTables);
 
   return (
-    <div className="min-h-screen bg-[oklch(0.13_0.005_260)] px-4 py-12">
+    <div className="min-h-screen bg-background px-4 py-12">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)] transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Home</span>
@@ -339,29 +339,27 @@ const CompleteSignup = () => {
         </div>
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-[oklch(0.7_0.18_45)] rounded-lg flex items-center justify-center">
-              <UtensilsCrossed className="w-6 h-6 text-[oklch(0.13_0.005_260)]" />
-            </div>
-            <span className="text-2xl font-bold text-[oklch(0.98_0_0)]">RestroFlow</span>
+            <img src={Logo} alt="RestroFlow" className="w-10 h-10 object-contain" />
+            <span className="text-2xl font-bold text-foreground">RestroFlow</span>
           </Link>
-          <h1 className="text-3xl font-bold text-[oklch(0.98_0_0)] mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Complete Your Signup
           </h1>
-          <p className="text-[oklch(0.65_0_0)]">
+          <p className="text-muted-foreground">
             Welcome, {requestData?.restaurantName}! Set up your account and locations.
           </p>
         </div>
 
         {step === "form" && (
-          <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-8">
+          <div className="bg-card border border-border rounded-2xl p-8">
             <form onSubmit={handleFormSubmit} className="space-y-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-[oklch(0.98_0_0)]">
+                <h3 className="text-lg font-semibold text-foreground">
                   Set Password
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[oklch(0.98_0_0)] mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Password *
                     </label>
                     <div className="relative">
@@ -372,23 +370,23 @@ const CompleteSignup = () => {
                           setFormData({ ...formData, password: e.target.value })
                         }
                         placeholder="Enter your password"
-                        className={`w-full px-4 py-3 pr-10 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.password ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                        className={`w-full px-4 py-3 pr-10 rounded-lg bg-input border ${errors.password ? 'border-destructive' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)]"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                     {errors.password && (
-                      <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                      <p className="text-destructive text-sm mt-1">{errors.password}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[oklch(0.98_0_0)] mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Confirm Password *
                     </label>
                     <div className="relative">
@@ -399,18 +397,18 @@ const CompleteSignup = () => {
                           setFormData({ ...formData, confirmPassword: e.target.value })
                         }
                         placeholder="Confirm your password"
-                        className={`w-full px-4 py-3 pr-10 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.confirmPassword ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                        className={`w-full px-4 py-3 pr-10 rounded-lg bg-input border ${errors.confirmPassword ? 'border-destructive' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)]"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
                         {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                     {errors.confirmPassword && (
-                      <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+                      <p className="text-destructive text-sm mt-1">{errors.confirmPassword}</p>
                     )}
                   </div>
                 </div>
@@ -419,14 +417,14 @@ const CompleteSignup = () => {
               {/* Locations Section */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-[oklch(0.98_0_0)] flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-[oklch(0.7_0.18_45)]" />
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-primary" />
                     Restaurant Locations
                   </h3>
                   <button
                     type="button"
                     onClick={addLocation}
-                    className="text-sm text-[oklch(0.7_0.18_45)] hover:text-[oklch(0.7_0.18_45)]/80 font-medium flex items-center gap-1"
+                    className="text-sm text-primary hover:opacity-80 font-medium flex items-center gap-1"
                   >
                     <Plus className="w-4 h-4" />
                     Add Location
@@ -436,17 +434,17 @@ const CompleteSignup = () => {
                 {formData.locations.map((location, index) => (
                   <div
                     key={index}
-                    className="p-4 bg-[oklch(0.22_0.005_260)] rounded-lg border border-[oklch(0.28_0.005_260)] space-y-4"
+                    className="p-4 bg-secondary rounded-lg border border-border space-y-4"
                   >
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium text-[oklch(0.98_0_0)]">
+                      <h4 className="text-sm font-medium text-foreground">
                         Location {index + 1}
                       </h4>
                       {formData.locations.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeLocation(index)}
-                          className="text-sm text-red-500 hover:text-red-400"
+                          className="text-sm text-destructive hover:text-destructive/80"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -455,7 +453,7 @@ const CompleteSignup = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
-                        <label className="block text-sm text-[oklch(0.65_0_0)] mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           Location Name *
                         </label>
                         <input
@@ -464,57 +462,57 @@ const CompleteSignup = () => {
                           onChange={(e) =>
                             handleLocationChange(index, "locationName", e.target.value)
                           }
-                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_name`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                          className={`w-full px-4 py-3 rounded-lg bg-input border ${errors[`location_${index}_name`] ? 'border-destructive' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                         />
-                        {errors[`location_${index}_name`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_name`]}</p>}
+                        {errors[`location_${index}_name`] && <p className="text-destructive text-xs mt-1">{errors[`location_${index}_name`]}</p>}
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="block text-sm text-[oklch(0.65_0_0)] mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           Street Address *
                         </label>
                         <div className="relative">
-                          <MapPin className="absolute left-3 top-3 w-4 h-4 text-[oklch(0.65_0_0)]" />
+                          <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                           <input
                             placeholder="123 Main Street"
                             value={location.address}
                             onChange={(e) =>
                               handleLocationChange(index, "address", e.target.value)
                             }
-                            className={`w-full pl-9 pr-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_address`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                            className={`w-full pl-9 pr-4 py-3 rounded-lg bg-input border ${errors[`location_${index}_address`] ? 'border-destructive' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                           />
                         </div>
-                        {errors[`location_${index}_address`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_address`]}</p>}
+                        {errors[`location_${index}_address`] && <p className="text-destructive text-xs mt-1">{errors[`location_${index}_address`]}</p>}
                       </div>
 
                       <div>
-                        <label className="block text-sm text-[oklch(0.65_0_0)] mb-2">City *</label>
+                        <label className="block text-sm text-muted-foreground mb-2">City *</label>
                         <input
                           placeholder="Mumbai"
                           value={location.city}
                           onChange={(e) =>
                             handleLocationChange(index, "city", e.target.value)
                           }
-                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_city`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                          className={`w-full px-4 py-3 rounded-lg bg-input border ${errors[`location_${index}_city`] ? 'border-destructive' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                         />
-                        {errors[`location_${index}_city`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_city`]}</p>}
+                        {errors[`location_${index}_city`] && <p className="text-destructive text-xs mt-1">{errors[`location_${index}_city`]}</p>}
                       </div>
 
                       <div>
-                        <label className="block text-sm text-[oklch(0.65_0_0)] mb-2">State *</label>
+                        <label className="block text-sm text-muted-foreground mb-2">State *</label>
                         <input
                           placeholder="Maharashtra"
                           value={location.state}
                           onChange={(e) =>
                             handleLocationChange(index, "state", e.target.value)
                           }
-                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_state`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                          className={`w-full px-4 py-3 rounded-lg bg-input border ${errors[`location_${index}_state`] ? 'border-destructive' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                         />
-                        {errors[`location_${index}_state`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_state`]}</p>}
+                        {errors[`location_${index}_state`] && <p className="text-destructive text-xs mt-1">{errors[`location_${index}_state`]}</p>}
                       </div>
 
                       <div>
-                        <label className="block text-sm text-[oklch(0.65_0_0)] mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           Zip Code *
                         </label>
                         <input
@@ -523,29 +521,29 @@ const CompleteSignup = () => {
                           onChange={(e) =>
                             handleLocationChange(index, "zipCode", e.target.value)
                           }
-                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_zipCode`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                          className={`w-full px-4 py-3 rounded-lg bg-input border ${errors[`location_${index}_zipCode`] ? 'border-destructive' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                         />
-                        {errors[`location_${index}_zipCode`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_zipCode`]}</p>}
+                        {errors[`location_${index}_zipCode`] && <p className="text-destructive text-xs mt-1">{errors[`location_${index}_zipCode`]}</p>}
                       </div>
 
                       <div>
-                        <label className="block text-sm text-[oklch(0.65_0_0)] mb-2">Country *</label>
+                        <label className="block text-sm text-muted-foreground mb-2">Country *</label>
                         <input
                           placeholder="India"
                           value={location.country}
                           onChange={(e) =>
                             handleLocationChange(index, "country", e.target.value)
                           }
-                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                          className={`w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm text-[oklch(0.65_0_0)] mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           Location Phone
                         </label>
                         <div className="relative">
-                          <Phone className="absolute left-3 top-3 w-4 h-4 text-[oklch(0.65_0_0)]" />
+                          <Phone className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                           <input
                             type="tel"
                             placeholder="+91 9876543210"
@@ -553,14 +551,14 @@ const CompleteSignup = () => {
                             onChange={(e) =>
                               handleLocationChange(index, "phone", e.target.value)
                             }
-                            className={`w-full pl-9 pr-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_phone`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                            className={`w-full pl-9 pr-4 py-3 rounded-lg bg-input border ${errors[`location_${index}_phone`] ? 'border-destructive' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                           />
                         </div>
-                        {errors[`location_${index}_phone`] && <p className="text-red-500 text-xs mt-1">{errors[`location_${index}_phone`]}</p>}
+                        {errors[`location_${index}_phone`] && <p className="text-destructive text-xs mt-1">{errors[`location_${index}_phone`]}</p>}
                       </div>
 
                       <div>
-                        <label className="block text-sm text-[oklch(0.65_0_0)] mb-2">
+                        <label className="block text-sm text-muted-foreground mb-2">
                           Number of Tables *
                         </label>
                         <input
@@ -571,10 +569,10 @@ const CompleteSignup = () => {
                             handleLocationChange(index, "totalTables", e.target.value)
                           }
                           min="1"
-                          className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.17_0.005_260)] border ${errors[`location_${index}_tables`] ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                          className={`w-full px-4 py-3 rounded-lg bg-input border ${errors[`location_${index}_tables`] ? 'border-destructive' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                         />
                         {errors[`location_${index}_tables`] && (
-                          <p className="text-red-500 text-sm mt-1">
+                          <p className="text-destructive text-sm mt-1">
                             {errors[`location_${index}_tables`]}
                           </p>
                         )}
@@ -586,7 +584,7 @@ const CompleteSignup = () => {
 
               {/* GST Number */}
               <div>
-                <label className="block text-sm font-medium text-[oklch(0.98_0_0)] mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   GST Number (Optional)
                 </label>
                 <input
@@ -596,31 +594,31 @@ const CompleteSignup = () => {
                     setFormData({ ...formData, gstNumber: e.target.value })
                   }
                   placeholder="Enter GST number"
-                  className="w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+                  className="w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
               {/* Price Summary */}
               {totalTables > 0 && (
-                <div className="p-4 bg-[oklch(0.22_0.005_260)] rounded-lg border border-[oklch(0.28_0.005_260)]">
+                <div className="p-4 bg-secondary rounded-lg border border-border">
                   <div className="flex items-center gap-2 mb-3">
-                    <Calculator className="w-5 h-5 text-[oklch(0.7_0.18_45)]" />
-                    <h4 className="text-sm font-semibold text-[oklch(0.98_0_0)]">
+                    <Calculator className="w-5 h-5 text-primary" />
+                    <h4 className="text-sm font-semibold text-foreground">
                       Pricing Summary
                     </h4>
                   </div>
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between text-[oklch(0.65_0_0)]">
+                    <div className="flex justify-between text-muted-foreground">
                       <span>Total Tables:</span>
-                      <span className="text-[oklch(0.98_0_0)] font-medium">{totalTables}</span>
+                      <span className="text-foreground font-medium">{totalTables}</span>
                     </div>
-                    <div className="flex justify-between text-[oklch(0.65_0_0)]">
+                    <div className="flex justify-between text-muted-foreground">
                       <span>Price per table/month:</span>
-                      <span className="text-[oklch(0.98_0_0)] font-medium">₹50</span>
+                      <span className="text-foreground font-medium">₹50</span>
                     </div>
-                    <div className="flex justify-between text-lg font-bold text-[oklch(0.98_0_0)] pt-2 border-t border-[oklch(0.28_0.005_260)]">
+                    <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border">
                       <span>Monthly Subscription:</span>
-                      <span className="text-[oklch(0.7_0.18_45)]">₹{monthlyPrice}</span>
+                      <span className="text-primary">₹{monthlyPrice}</span>
                     </div>
                   </div>
                 </div>
@@ -629,7 +627,7 @@ const CompleteSignup = () => {
               <button
                 type="submit"
                 disabled={loading || totalTables === 0}
-                className="w-full py-3 rounded-lg font-medium bg-[oklch(0.7_0.18_45)] hover:bg-orange-400 transition-colors text-[oklch(0.13_0.005_260)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-lg font-medium bg-primary hover:opacity-90 transition-colors text-primary-foreground disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -648,32 +646,32 @@ const CompleteSignup = () => {
         )}
 
         {step === "payment" && paymentData && (
-          <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-8">
+          <div className="bg-card border border-border rounded-2xl p-8">
             <div className="text-center mb-6">
-              <CreditCard className="w-12 h-12 text-[oklch(0.7_0.18_45)] mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-[oklch(0.98_0_0)] mb-2">
+              <CreditCard className="w-12 h-12 text-primary mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-foreground mb-2">
                 Complete Payment
               </h2>
-              <p className="text-[oklch(0.65_0_0)]">
-                Total Amount: <span className="text-[oklch(0.98_0_0)] font-bold text-xl">₹{paymentData.amount}</span>
+              <p className="text-muted-foreground">
+                Total Amount: <span className="text-foreground font-bold text-xl">₹{paymentData.amount}</span>
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="p-4 bg-[oklch(0.22_0.005_260)] rounded-lg">
-                <p className="text-sm text-[oklch(0.65_0_0)] mb-2">Payment Details:</p>
+              <div className="p-4 bg-secondary rounded-lg">
+                <p className="text-sm text-muted-foreground mb-2">Payment Details:</p>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-[oklch(0.65_0_0)]">Total Tables:</span>
-                    <span className="text-[oklch(0.98_0_0)]">{paymentData.totalTables}</span>
+                    <span className="text-muted-foreground">Total Tables:</span>
+                    <span className="text-foreground">{paymentData.totalTables}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[oklch(0.65_0_0)]">Plan:</span>
-                    <span className="text-[oklch(0.98_0_0)]">{paymentData.plan}</span>
+                    <span className="text-muted-foreground">Plan:</span>
+                    <span className="text-foreground">{paymentData.plan}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[oklch(0.65_0_0)]">Price per table:</span>
-                    <span className="text-[oklch(0.98_0_0)]">₹{paymentData.pricing.pricePerTable}</span>
+                    <span className="text-muted-foreground">Price per table:</span>
+                    <span className="text-foreground">₹{paymentData.pricing.pricePerTable}</span>
                   </div>
                 </div>
               </div>
@@ -681,7 +679,7 @@ const CompleteSignup = () => {
               <button
                 onClick={handlePayment}
                 disabled={loading || !razorpayLoaded}
-                className="w-full py-3 rounded-lg font-medium bg-[oklch(0.7_0.18_45)] hover:bg-orange-400 transition-colors text-[oklch(0.13_0.005_260)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-lg font-medium bg-primary hover:opacity-90 transition-colors text-primary-foreground disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -698,7 +696,7 @@ const CompleteSignup = () => {
 
               <button
                 onClick={() => setStep("form")}
-                className="w-full py-3 rounded-lg font-medium border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] transition-colors"
+                className="w-full py-3 rounded-lg font-medium border border-border text-foreground hover:bg-secondary transition-colors"
               >
                 Back to Form
               </button>

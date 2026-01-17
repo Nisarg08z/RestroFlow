@@ -169,54 +169,54 @@ const RestaurantRequests = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-4">
+        <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center">
               <Building2 className="w-6 h-6 text-yellow-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-[oklch(0.98_0_0)]">{pendingCount}</p>
-              <p className="text-sm text-[oklch(0.65_0_0)]">Pending Requests</p>
+              <p className="text-2xl font-bold text-foreground">{pendingCount}</p>
+              <p className="text-sm text-muted-foreground">Pending Requests</p>
             </div>
           </div>
         </div>
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-4">
+        <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
               <Check className="w-6 h-6 text-green-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-[oklch(0.98_0_0)]">
+              <p className="text-2xl font-bold text-foreground">
                 {requests.filter((r) => r.status === "approved").length}
               </p>
-              <p className="text-sm text-[oklch(0.65_0_0)]">Approved</p>
+              <p className="text-sm text-muted-foreground">Approved</p>
             </div>
           </div>
         </div>
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-4">
+        <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center">
               <X className="w-6 h-6 text-red-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-[oklch(0.98_0_0)]">
+              <p className="text-2xl font-bold text-foreground">
                 {requests.filter((r) => r.status === "rejected").length}
               </p>
-              <p className="text-sm text-[oklch(0.65_0_0)]">Rejected</p>
+              <p className="text-sm text-muted-foreground">Rejected</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-4">
+      <div className="bg-card border border-border rounded-2xl p-4">
         <div className="flex flex-col md:flex-row gap-3 md:gap-4">
           <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[oklch(0.65_0_0)]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               placeholder="Search restaurants or emails..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]"
+              className="w-full pl-9 pr-4 py-2 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div className="flex flex-wrap gap-2 md:justify-end">
@@ -225,8 +225,8 @@ const RestaurantRequests = () => {
                 key={status}
                 onClick={() => setFilter(status)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${filter === status
-                  ? "bg-[oklch(0.7_0.18_45)] text-[oklch(0.13_0.005_260)]"
-                  : "border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)]"
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border text-foreground hover:bg-muted"
                   }`}
               >
                 {status}
@@ -236,45 +236,45 @@ const RestaurantRequests = () => {
         </div>
       </div>
 
-      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl">
-        <div className="px-4 py-4 md:px-6 md:py-6 border-b border-[oklch(0.28_0.005_260)]">
-          <h2 className="text-lg md:text-xl font-bold text-[oklch(0.98_0_0)]">Contact Form Submissions</h2>
+      <div className="bg-card border border-border rounded-2xl">
+        <div className="px-4 py-4 md:px-6 md:py-6 border-b border-border">
+          <h2 className="text-lg md:text-xl font-bold text-foreground">Contact Form Submissions</h2>
         </div>
         <div className="px-4 pb-4 pt-4 md:p-6 space-y-4 overflow-x-auto">
           {isLoading ? (
             <div className="text-center py-12">
-              <Loader2 className="w-12 h-12 text-[oklch(0.7_0.18_45)] mx-auto mb-3 animate-spin" />
-              <p className="text-[oklch(0.65_0_0)]">Loading requests...</p>
+              <Loader2 className="w-12 h-12 text-primary mx-auto mb-3 animate-spin" />
+              <p className="text-muted-foreground">Loading requests...</p>
             </div>
           ) : filteredRequests.length === 0 ? (
             <div className="text-center py-12">
-              <Building2 className="w-12 h-12 text-[oklch(0.65_0_0)] mx-auto mb-3" />
-              <p className="text-[oklch(0.65_0_0)]">No requests found</p>
+              <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">No requests found</p>
             </div>
           ) : (
             filteredRequests.map((request) => (
               <div
                 key={request._id}
-                className={`p-4 md:p-5 bg-[oklch(0.22_0.005_260)] rounded-lg border transition-colors ${processingRequestId === request._id
+                className={`p-4 md:p-5 bg-muted rounded-lg border transition-colors ${processingRequestId === request._id
                   ? "border-blue-500/50 bg-blue-500/5"
-                  : "border-[oklch(0.28_0.005_260)] hover:border-[oklch(0.7_0.18_45)]/50"
+                  : "border-border hover:border-primary/50"
                   }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex items-start gap-3 md:gap-4">
                     <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${processingRequestId === request._id
                       ? "bg-blue-500/10"
-                      : "bg-[oklch(0.7_0.18_45)]/10"
+                      : "bg-primary/10"
                       }`}>
                       {processingRequestId === request._id ? (
                         <Loader2 className="w-5 h-5 md:w-6 md:h-6 text-blue-500 animate-spin" />
                       ) : (
-                        <Building2 className="w-5 h-5 md:w-6 md:h-6 text-[oklch(0.7_0.18_45)]" />
+                        <Building2 className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                       )}
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-[oklch(0.98_0_0)]">{request.restaurantName}</h3>
+                        <h3 className="font-semibold text-foreground">{request.restaurantName}</h3>
                         {processingRequestId === request._id ? (
                           <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-500 flex items-center gap-1">
                             <Send className="w-3 h-3" />
@@ -295,8 +295,8 @@ const RestaurantRequests = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-[oklch(0.65_0_0)]">{request.ownerName}</p>
-                      <div className="flex flex-wrap gap-3 text-xs text-[oklch(0.65_0_0)]">
+                      <p className="text-sm text-muted-foreground">{request.ownerName}</p>
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Mail className="w-3 h-3" /> {request.email}
                         </span>
@@ -318,7 +318,7 @@ const RestaurantRequests = () => {
                         setShowDetails(true);
                       }}
                       disabled={processingRequestId === request._id}
-                      className="px-4 py-2 rounded-lg border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] transition flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Eye className="w-4 h-4" />
                       View
@@ -366,35 +366,35 @@ const RestaurantRequests = () => {
           onClick={() => setShowDetails(false)}
         >
           <div
-            className="mt-10 md:mt-0 bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl max-w-2xl w-full"
+            className="mt-10 md:mt-0 bg-card border border-border rounded-2xl max-w-2xl w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 md:p-6 border-b border-[oklch(0.28_0.005_260)]">
-              <h2 className="text-lg md:text-xl font-bold text-[oklch(0.98_0_0)]">Request Details</h2>
-              <p className="text-sm text-[oklch(0.65_0_0)] mt-1">Review the restaurant request details</p>
+            <div className="p-4 md:p-6 border-b border-border">
+              <h2 className="text-lg md:text-xl font-bold text-foreground">Request Details</h2>
+              <p className="text-sm text-muted-foreground mt-1">Review the restaurant request details</p>
             </div>
             <div className="p-4 md:p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <p className="text-xs text-[oklch(0.65_0_0)]">Restaurant Name</p>
-                  <p className="text-sm font-medium text-[oklch(0.98_0_0)]">{selectedRequest.restaurantName}</p>
+                  <p className="text-xs text-muted-foreground">Restaurant Name</p>
+                  <p className="text-sm font-medium text-foreground">{selectedRequest.restaurantName}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-[oklch(0.65_0_0)]">Owner Name</p>
-                  <p className="text-sm font-medium text-[oklch(0.98_0_0)]">{selectedRequest.ownerName}</p>
+                  <p className="text-xs text-muted-foreground">Owner Name</p>
+                  <p className="text-sm font-medium text-foreground">{selectedRequest.ownerName}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-[oklch(0.65_0_0)]">Email</p>
-                  <p className="text-sm font-medium text-[oklch(0.98_0_0)]">{selectedRequest.email}</p>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="text-sm font-medium text-foreground">{selectedRequest.email}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-[oklch(0.65_0_0)]">Phone</p>
-                  <p className="text-sm font-medium text-[oklch(0.98_0_0)]">{selectedRequest.phone}</p>
+                  <p className="text-xs text-muted-foreground">Phone</p>
+                  <p className="text-sm font-medium text-foreground">{selectedRequest.phone}</p>
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-xs text-[oklch(0.65_0_0)]">Message</p>
-                <p className="text-sm text-[oklch(0.98_0_0)] bg-[oklch(0.22_0.005_260)] p-3 rounded-lg">{selectedRequest.message}</p>
+                <p className="text-xs text-muted-foreground">Message</p>
+                <p className="text-sm text-foreground bg-muted p-3 rounded-lg">{selectedRequest.message}</p>
               </div>
 
               {selectedRequest.status === "pending" && (
@@ -430,7 +430,7 @@ const RestaurantRequests = () => {
               )}
 
               <button
-                className="w-full border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm md:text-base mt-2"
+                className="w-full border border-border text-foreground hover:bg-muted px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 text-sm md:text-base mt-2"
                 onClick={() => {
                   setShowReply(true);
                   setShowDetails(false);
@@ -450,12 +450,12 @@ const RestaurantRequests = () => {
           onClick={() => setShowReply(false)}
         >
           <div
-            className="mt-10 md:mt-0 bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl max-w-lg w-full"
+            className="mt-10 md:mt-0 bg-card border border-border rounded-2xl max-w-lg w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 md:p-6 border-b border-[oklch(0.28_0.005_260)]">
-              <h2 className="text-lg md:text-xl font-bold text-[oklch(0.98_0_0)]">Reply to {selectedRequest.restaurantName}</h2>
-              <p className="text-sm text-[oklch(0.65_0_0)] mt-1">Send an email response to {selectedRequest.email}</p>
+            <div className="p-4 md:p-6 border-b border-border">
+              <h2 className="text-lg md:text-xl font-bold text-foreground">Reply to {selectedRequest.restaurantName}</h2>
+              <p className="text-sm text-muted-foreground mt-1">Send an email response to {selectedRequest.email}</p>
             </div>
             <div className="p-4 md:p-6 space-y-4">
               <textarea
@@ -463,11 +463,11 @@ const RestaurantRequests = () => {
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
                 rows={6}
-                className="w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] resize-none"
+                className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               />
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
-                  className="flex-1 bg-[oklch(0.7_0.18_45)] text-[oklch(0.13_0.005_260)] px-4 py-3 rounded-lg font-medium hover:bg-[oklch(0.7_0.18_45)]/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
+                  className="flex-1 bg-primary text-primary-foreground px-4 py-3 rounded-lg font-medium hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
                   disabled={isSendingReply || !replyMessage.trim()}
                   onClick={async () => {
                     if (!replyMessage.trim()) {
@@ -500,7 +500,7 @@ const RestaurantRequests = () => {
                   <span>{isSendingReply ? "Sending..." : "Send Reply"}</span>
                 </button>
                 <button
-                  className="px-4 py-3 rounded-lg border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] transition text-sm md:text-base"
+                  className="px-4 py-3 rounded-lg border border-border text-foreground hover:bg-muted transition text-sm md:text-base"
                   onClick={() => {
                     if (!isSendingReply) {
                       setShowReply(false);

@@ -21,26 +21,26 @@ const VideoSection = () => {
   }
 
   return (
-    <section 
-    id="video"
-    className="py-24 px-4 sm:px-6 lg:px-8 bg-[oklch(0.17_0.005_260)]">
+    <section
+      id="video"
+      className="py-24 px-4 sm:px-6 lg:px-8 bg-card">
       <div className="max-w-5xl mx-auto">
 
         <div className="text-center mb-12">
-          <p className="text-[oklch(0.7_0.18_45)] font-medium mb-4">
+          <p className="text-primary font-medium mb-4">
             See It In Action
           </p>
 
-          <h2 className="text-3xl sm:text-4xl font-bold text-[oklch(0.98_0_0)] mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
             Watch how RestroFlow transforms restaurants
           </h2>
 
-          <p className="text-[oklch(0.65_0_0)] max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             A quick 2-minute overview of how our platform works
           </p>
         </div>
 
-        <div className="relative aspect-video bg-[oklch(0.22_0.005_260)] rounded-2xl overflow-hidden border border-[oklch(0.28_0.005_260)]">
+        <div className="relative aspect-video bg-secondary rounded-2xl overflow-hidden border border-border">
           {!isPlaying ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <img
@@ -49,7 +49,7 @@ const VideoSection = () => {
                 className="absolute inset-0 w-full h-full object-cover"
               />
 
-              <div className="absolute inset-0 bg-[oklch(0.13_0.005_260)]/40" />
+              <div className="absolute inset-0 bg-background/40" />
 
               <button
                 onClick={handlePlay}
@@ -57,13 +57,13 @@ const VideoSection = () => {
                   relative z-10
                   w-20 h-20
                   rounded-full
-                  bg-[oklch(0.7_0.18_45)]
-                  hover:bg-[oklch(0.7_0.18_45)]/90
+                  bg-primary
+                  hover:bg-primary/90
                   flex items-center justify-center
                   transition
                 "
               >
-                <Play className="w-8 h-8 ml-1 text-[oklch(0.13_0.005_260)]" />
+                <Play className="w-8 h-8 ml-1 text-primary-foreground" />
               </button>
             </div>
           ) : (
@@ -73,14 +73,14 @@ const VideoSection = () => {
                 className="
                   absolute top-4 right-4 z-10
                   w-10 h-10
-                  bg-[oklch(0.13_0.005_260)]/80
+                  bg-background/80
                   rounded-full
                   flex items-center justify-center
-                  hover:bg-[oklch(0.13_0.005_260)]
+                  hover:bg-background
                   transition
                 "
               >
-                <X className="w-5 h-5 text-[oklch(0.98_0_0)]" />
+                <X className="w-5 h-5 text-foreground" />
               </button>
 
               <video
@@ -99,28 +99,28 @@ const VideoSection = () => {
 
         <div className="mt-8 grid sm:grid-cols-3 gap-6 text-center">
           <div>
-            <div className="text-2xl font-bold text-[oklch(0.98_0_0)]">
+            <div className="text-2xl font-bold text-foreground">
               2 min
             </div>
-            <div className="text-[oklch(0.65_0_0)] text-sm">
+            <div className="text-muted-foreground text-sm">
               Quick overview
             </div>
           </div>
 
           <div>
-            <div className="text-2xl font-bold text-[oklch(0.98_0_0)]">
+            <div className="text-2xl font-bold text-foreground">
               Live Demo
             </div>
-            <div className="text-[oklch(0.65_0_0)] text-sm">
+            <div className="text-muted-foreground text-sm">
               Real restaurant footage
             </div>
           </div>
 
           <div>
-            <div className="text-2xl font-bold text-[oklch(0.98_0_0)]">
+            <div className="text-2xl font-bold text-foreground">
               All Features
             </div>
-            <div className="text-[oklch(0.65_0_0)] text-sm">
+            <div className="text-muted-foreground text-sm">
               Complete walkthrough
             </div>
           </div>

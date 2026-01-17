@@ -60,19 +60,19 @@ const DashboardsSection = () => {
   return (
     <section
       id="dashboards"
-      className="py-24 px-4 sm:px-6 lg:px-8 bg-[oklch(0.13_0.005_260)]"
+      className="py-24 px-4 sm:px-6 lg:px-8 bg-secondary"
     >
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <p className="text-[oklch(0.7_0.18_45)] font-medium mb-4">
+          <p className="text-primary font-medium mb-4">
             Dashboards
           </p>
 
-          <h2 className="text-3xl sm:text-4xl font-bold text-[oklch(0.98_0_0)] mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
             Four powerful dashboards, one platform
           </h2>
 
-          <p className="text-[oklch(0.65_0_0)] max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Each user gets a tailored experience designed for their specific role
           </p>
         </div>
@@ -84,15 +84,15 @@ const DashboardsSection = () => {
               className="grid lg:grid-cols-2 gap-12 items-center"
             >
               <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-                <p className="text-[oklch(0.7_0.18_45)] font-medium mb-2">
+                <p className="text-primary font-medium mb-2">
                   {dashboard.subtitle}
                 </p>
 
-                <h3 className="text-2xl sm:text-3xl font-bold text-[oklch(0.98_0_0)] mb-4">
+                <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
                   {dashboard.title}
                 </h3>
 
-                <p className="text-[oklch(0.65_0_0)] mb-6">
+                <p className="text-muted-foreground mb-6">
                   {dashboard.description}
                 </p>
 
@@ -102,11 +102,11 @@ const DashboardsSection = () => {
                       key={featureIndex}
                       className="flex items-center gap-3"
                     >
-                      <div className="w-5 h-5 bg-[oklch(0.7_0.18_45)]/10 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Check className="w-3 h-3 text-[oklch(0.7_0.18_45)]" />
+                      <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3 h-3 text-primary" />
                       </div>
 
-                      <span className="text-[oklch(0.65_0_0)]">
+                      <span className="text-muted-foreground">
                         {feature}
                       </span>
                     </li>
@@ -115,7 +115,7 @@ const DashboardsSection = () => {
               </div>
 
               <div className={index % 2 === 1 ? "lg:order-1" : ""}>
-                <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-2 hover:border-[oklch(0.7_0.18_45)]/30 transition-colors overflow-hidden">
+                <div className="bg-card border border-border rounded-2xl p-2 hover:border-primary/30 transition-colors overflow-hidden">
                   <img
                     src={dashboard.image}
                     alt={dashboard.title}

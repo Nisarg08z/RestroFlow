@@ -32,7 +32,7 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       const [restaurantsRes, requestsRes] = await Promise.all([
         getAllRestaurants().catch(() => ({ data: { data: [] } })),
         getAllRestaurantRequests().catch(() => ({ data: { data: [] } })),
@@ -43,7 +43,7 @@ const AdminDashboard = () => {
 
       const totalRestaurants = restaurants.length;
       const pendingRequests = requests.filter((r) => r.status === "pending").length;
-      
+
       const activeSubscriptions = restaurants.filter(
         (r) => r.subscription?.isActive === true
       ).length;
@@ -85,7 +85,7 @@ const AdminDashboard = () => {
       value: stats.totalRestaurants,
       change: "",
       icon: Building2,
-      color: "text-[oklch(0.7_0.18_45)]",
+      color: "text-primary",
     },
     {
       label: "Pending Requests",
@@ -115,7 +115,7 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-[oklch(0.7_0.18_45)] animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -126,31 +126,30 @@ const AdminDashboard = () => {
         {statsCards.map((stat) => (
           <div
             key={stat.label}
-            className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-6"
+            className="bg-card border border-border rounded-xl p-6"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className={`w-12 h-12 bg-[oklch(0.7_0.18_45)]/10 rounded-xl flex items-center justify-center`}>
+              <div className={`w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center`}>
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
               {stat.change && (
                 <span
-                  className={`text-xs font-medium ${
-                    stat.comingSoon
-                      ? "text-[oklch(0.65_0_0)]"
+                  className={`text-xs font-medium ${stat.comingSoon
+                      ? "text-muted-foreground"
                       : stat.change.startsWith("+")
-                      ? "text-green-500"
-                      : "text-red-500"
-                  }`}
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
                 >
                   {stat.change}
                 </span>
               )}
             </div>
 
-            <p className="text-3xl font-bold text-[oklch(0.98_0_0)] mb-1">
+            <p className="text-3xl font-bold text-foreground mb-1">
               {stat.value}
             </p>
-            <p className="text-sm text-[oklch(0.65_0_0)]">
+            <p className="text-sm text-muted-foreground">
               {stat.label}
             </p>
           </div>
@@ -158,14 +157,14 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl">
+        <div className="bg-card border border-border rounded-xl">
           <div className="flex items-center justify-between p-6 pb-2">
-            <h2 className="text-lg font-semibold text-[oklch(0.98_0_0)]">
+            <h2 className="text-lg font-semibold text-foreground">
               Recent Requests
             </h2>
             <button
               onClick={() => navigate("/admin/dashboard/requests")}
-              className="text-[oklch(0.7_0.18_45)] flex items-center gap-1 text-sm hover:underline"
+              className="text-primary flex items-center gap-1 text-sm hover:underline"
             >
               View All <ArrowRight className="w-4 h-4" />
             </button>
@@ -174,24 +173,24 @@ const AdminDashboard = () => {
           <div className="p-6 space-y-4">
             {recentRequests.length === 0 ? (
               <div className="text-center py-8">
-                <Inbox className="w-12 h-12 text-[oklch(0.65_0_0)] mx-auto mb-3" />
-                <p className="text-[oklch(0.65_0_0)]">No recent requests</p>
+                <Inbox className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No recent requests</p>
               </div>
             ) : (
               recentRequests.map((req) => (
                 <div
                   key={req._id}
-                  className="flex items-center justify-between p-3 bg-[oklch(0.22_0.005_260)] rounded-lg hover:bg-[oklch(0.25_0.005_260)] transition-colors"
+                  className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 bg-[oklch(0.7_0.18_45)]/10 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-5 h-5 text-[oklch(0.7_0.18_45)]" />
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[oklch(0.98_0_0)] truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {req.restaurantName}
                       </p>
-                      <p className="text-xs text-[oklch(0.65_0_0)] truncate">
+                      <p className="text-xs text-muted-foreground truncate">
                         {req.email}
                       </p>
                     </div>
@@ -199,17 +198,16 @@ const AdminDashboard = () => {
 
                   <div className="text-right flex-shrink-0 ml-3">
                     <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        req.status === "pending"
+                      className={`px-2 py-1 text-xs rounded-full ${req.status === "pending"
                           ? "bg-yellow-500/10 text-yellow-500"
                           : req.status === "approved"
-                          ? "bg-green-500/10 text-green-500"
-                          : "bg-red-500/10 text-red-500"
-                      }`}
+                            ? "bg-green-500/10 text-green-500"
+                            : "bg-red-500/10 text-red-500"
+                        }`}
                     >
                       {req.status}
                     </span>
-                    <p className="text-xs text-[oklch(0.65_0_0)] mt-1 flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {formatTimeAgo(req.createdAt)}
                     </p>
@@ -220,25 +218,25 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl">
+        <div className="bg-card border border-border rounded-xl">
           <div className="flex items-center justify-between p-6 pb-2">
-            <h2 className="text-lg font-semibold text-[oklch(0.98_0_0)]">
+            <h2 className="text-lg font-semibold text-foreground">
               Recent Tickets
             </h2>
             <button
               onClick={() => navigate("/admin/dashboard/support")}
-              className="text-[oklch(0.7_0.18_45)] flex items-center gap-1 text-sm hover:underline"
+              className="text-primary flex items-center gap-1 text-sm hover:underline"
             >
               View All <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
           <div className="p-6">
-            <div className="h-full flex items-center justify-center bg-[oklch(0.22_0.005_260)] rounded-lg border border-[oklch(0.28_0.005_260)] py-12">
+            <div className="h-full flex items-center justify-center bg-muted rounded-lg border border-border py-12">
               <div className="text-center">
-                <HeadphonesIcon className="w-12 h-12 text-[oklch(0.65_0_0)] mx-auto mb-3" />
-                <p className="text-[oklch(0.98_0_0)] font-medium mb-1">Coming Soon</p>
-                <p className="text-sm text-[oklch(0.65_0_0)]">
+                <HeadphonesIcon className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-foreground font-medium mb-1">Coming Soon</p>
+                <p className="text-sm text-muted-foreground">
                   Support tickets feature will be available soon
                 </p>
               </div>
@@ -246,20 +244,20 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-      
-      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-6">
+
+      <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="w-5 h-5 text-[oklch(0.7_0.18_45)]" />
-          <h2 className="text-lg font-semibold text-[oklch(0.98_0_0)]">
+          <TrendingUp className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">
             Restaurant Growth
           </h2>
         </div>
 
-        <div className="h-64 flex items-center justify-center bg-[oklch(0.22_0.005_260)] rounded-lg border border-[oklch(0.28_0.005_260)]">
+        <div className="h-64 flex items-center justify-center bg-muted rounded-lg border border-border">
           <div className="text-center">
-            <Users className="w-12 h-12 text-[oklch(0.65_0_0)] mx-auto mb-3" />
-            <p className="text-[oklch(0.65_0_0)]">Restaurant growth chart</p>
-            <p className="text-sm text-[oklch(0.65_0_0)]">
+            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">Restaurant growth chart</p>
+            <p className="text-sm text-muted-foreground">
               Connect analytics to view data
             </p>
           </div>

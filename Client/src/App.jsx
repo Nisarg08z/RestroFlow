@@ -44,15 +44,16 @@ const App = () => {
         position="bottom-right"
         toastOptions={{
           style: {
-            background: '#2d2d2d',
-            color: '#fff',
+            background: 'var(--card)',
+            color: 'var(--foreground)',
+            border: '1px solid var(--border)',
           },
         }}
       />
       <Router>
 
         <ScrollToTop />
-        
+
         <Routes>
           <Route path="/" element={<LandingPageLayout />}>
             <Route
@@ -72,13 +73,13 @@ const App = () => {
           <Route path="login" element={<LoginPage />} />
 
           <Route path="forgot-password" element={<ForgotPassword />} />
-          
+
           <Route path="complete-signup" element={<CompleteSignup />} />
-          
+
           <Route path="payment" element={<PaymentPage />} />
-          
+
           <Route path="admin/login" element={<AdminLoginPage />} />
-          
+
           <Route
             path="admin/dashboard"
             element={

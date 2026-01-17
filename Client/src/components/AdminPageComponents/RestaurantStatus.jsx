@@ -186,7 +186,7 @@ const RestaurantStatus = () => {
       case "suspended":
         return "bg-red-500/10 text-red-500";
       default:
-        return "bg-[oklch(0.22_0.005_260)] text-[oklch(0.65_0_0)]";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -198,7 +198,7 @@ const RestaurantStatus = () => {
     if (event) {
       event.stopPropagation();
     }
-    
+
     if (showDropdown === restaurantId) {
       setShowDropdown(null);
       setDropdownPosition({});
@@ -214,10 +214,10 @@ const RestaurantStatus = () => {
       const spaceAbove = buttonRect.top;
       const dropdownHeight = 180;
       const dropdownWidth = 160;
-      
+
       const isNearBottom = buttonRect.bottom > viewportHeight * 0.7;
       const shouldOpenUpward = (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) || isNearBottom;
-      
+
       let left = buttonRect.right - dropdownWidth;
       if (left < 10) {
         left = buttonRect.left;
@@ -225,23 +225,23 @@ const RestaurantStatus = () => {
       if (left + dropdownWidth > viewportWidth - 10) {
         left = viewportWidth - dropdownWidth - 10;
       }
-      
-      let top = shouldOpenUpward 
+
+      let top = shouldOpenUpward
         ? buttonRect.top - dropdownHeight - 4
         : buttonRect.bottom + 4;
-      
+
       if (top < 10) {
         top = buttonRect.bottom + 4;
       }
       if (top + dropdownHeight > viewportHeight - 10) {
         top = buttonRect.top - dropdownHeight - 4;
       }
-      
+
       setDropdownPosition({
         ...dropdownPosition,
         [restaurantId]: shouldOpenUpward ? 'up' : 'down'
       });
-      
+
       setDropdownCoords({
         ...dropdownCoords,
         [restaurantId]: {
@@ -256,7 +256,7 @@ const RestaurantStatus = () => {
         [restaurantId]: 'down'
       });
     }
-    
+
     setShowDropdown(restaurantId);
   };
 
@@ -274,7 +274,7 @@ const RestaurantStatus = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[oklch(0.7_0.18_45)]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -294,51 +294,51 @@ const RestaurantStatus = () => {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-3 md:p-4 hover:border-green-500/30 transition-colors">
+        <div className="bg-card border border-border rounded-xl p-3 md:p-4 hover:border-green-500/30 transition-colors">
           <div className="flex items-center gap-3 md:gap-4">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-green-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
               <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
             </div>
             <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-[oklch(0.98_0_0)]">{activeCount}</p>
-              <p className="text-xs md:text-sm text-[oklch(0.65_0_0)]">Active Restaurants</p>
+              <p className="text-xl md:text-2xl font-bold text-foreground">{activeCount}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Active Restaurants</p>
             </div>
           </div>
         </div>
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-3 md:p-4 hover:border-yellow-500/30 transition-colors">
+        <div className="bg-card border border-border rounded-xl p-3 md:p-4 hover:border-yellow-500/30 transition-colors">
           <div className="flex items-center gap-3 md:gap-4">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
               <Clock className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
             </div>
             <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-[oklch(0.98_0_0)]">{inactiveCount}</p>
-              <p className="text-xs md:text-sm text-[oklch(0.65_0_0)]">Inactive Restaurants</p>
+              <p className="text-xl md:text-2xl font-bold text-foreground">{inactiveCount}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Inactive Restaurants</p>
             </div>
           </div>
         </div>
-        <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-3 md:p-4 hover:border-red-500/30 transition-colors">
+        <div className="bg-card border border-border rounded-xl p-3 md:p-4 hover:border-red-500/30 transition-colors">
           <div className="flex items-center gap-3 md:gap-4">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-red-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
               <XCircle className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
             </div>
             <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-[oklch(0.98_0_0)]">{suspendedCount}</p>
-              <p className="text-xs md:text-sm text-[oklch(0.65_0_0)]">Suspended Restaurants</p>
+              <p className="text-xl md:text-2xl font-bold text-foreground">{suspendedCount}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Suspended Restaurants</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-3 md:p-4">
+      <div className="bg-card border border-border rounded-xl p-3 md:p-4">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[oklch(0.65_0_0)]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search restaurants by name, owner, or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 py-2 bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)] focus:border-transparent"
+              className="w-full pl-9 py-2 bg-muted border border-border rounded-lg text-foreground text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -350,11 +350,10 @@ const RestaurantStatus = () => {
                   setShowDropdown(null);
                 }}
                 disabled={actionLoading}
-                className={`px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors capitalize disabled:opacity-50 disabled:cursor-not-allowed ${
-                  statusFilter === status
-                    ? "bg-[oklch(0.7_0.18_45)] text-black"
-                    : "bg-[oklch(0.22_0.005_260)] border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.28_0.005_260)]"
-                }`}
+                className={`px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors capitalize disabled:opacity-50 disabled:cursor-not-allowed ${statusFilter === status
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted border border-border text-foreground hover:bg-border"
+                  }`}
               >
                 {status}
               </button>
@@ -363,27 +362,27 @@ const RestaurantStatus = () => {
         </div>
       </div>
 
-      <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl overflow-hidden">
-        <div className="p-3 md:p-4 border-b border-[oklch(0.28_0.005_260)]">
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="p-3 md:p-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <h3 className="text-base md:text-lg font-semibold text-[oklch(0.98_0_0)]">
+            <h3 className="text-base md:text-lg font-semibold text-foreground">
               All Restaurants ({filteredRestaurants.length})
             </h3>
             <button
               onClick={fetchRestaurants}
               disabled={loading}
-              className="p-1.5 hover:bg-[oklch(0.22_0.005_260)] rounded-lg transition-colors disabled:opacity-50"
+              className="p-1.5 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
               title="Refresh"
             >
-              <RefreshCw className={`w-4 h-4 text-[oklch(0.65_0_0)] ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 text-muted-foreground ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
 
-        <div className="block md:hidden divide-y divide-[oklch(0.28_0.005_260)]">
+        <div className="block md:hidden divide-y divide-border">
           {filteredRestaurants.length === 0 ? (
             <div className="py-8 text-center px-4">
-              <p className="text-[oklch(0.65_0_0)] text-sm">
+              <p className="text-muted-foreground text-sm">
                 {searchQuery || statusFilter !== "all"
                   ? "No restaurants found matching your filters."
                   : "No restaurants found."}
@@ -396,34 +395,34 @@ const RestaurantStatus = () => {
               return (
                 <div
                   key={restaurant._id || restaurant.id}
-                  className="p-4 space-y-3 hover:bg-[oklch(0.22_0.005_260)]/30 transition-colors"
+                  className="p-4 space-y-3 hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 bg-[oklch(0.7_0.18_45)]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Building2 className="w-5 h-5 text-[oklch(0.7_0.18_45)]" />
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-5 h-5 text-primary" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-[oklch(0.98_0_0)] text-sm truncate">
+                        <p className="font-medium text-foreground text-sm truncate">
                           {restaurant.restaurantName}
                         </p>
-                        <p className="text-xs text-[oklch(0.65_0_0)] truncate">{restaurant.ownerName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{restaurant.ownerName}</p>
                       </div>
                     </div>
                     <div className="relative">
                       <button
                         onClick={(e) => toggleDropdown(restaurant._id || restaurant.id, e)}
                         disabled={actionLoading}
-                        className="p-1.5 hover:bg-[oklch(0.22_0.005_260)] rounded-lg transition-colors disabled:opacity-50"
+                        className="p-1.5 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
                       >
-                        <MoreVertical className="w-4 h-4 text-[oklch(0.65_0_0)]" />
+                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
                       </button>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-xs text-[oklch(0.65_0_0)] mb-1">Status</p>
+                      <p className="text-xs text-muted-foreground mb-1">Status</p>
                       <div className="flex items-center gap-1.5">
                         {getStatusIcon(status)}
                         <span className={`px-2 py-1 text-xs rounded-full capitalize ${getStatusColor(status)}`}>
@@ -432,12 +431,12 @@ const RestaurantStatus = () => {
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs text-[oklch(0.65_0_0)] mb-1">Tables</p>
-                      <p className="font-medium text-[oklch(0.98_0_0)]">{totalTables}</p>
+                      <p className="text-xs text-muted-foreground mb-1">Tables</p>
+                      <p className="font-medium text-foreground">{totalTables}</p>
                     </div>
                   </div>
 
-                  <div className="text-xs text-[oklch(0.65_0_0)]">
+                  <div className="text-xs text-muted-foreground">
                     <p className="truncate flex items-center gap-1">
                       <Mail className="w-3 h-3" />
                       {restaurant.email}
@@ -457,23 +456,23 @@ const RestaurantStatus = () => {
           <div className="inline-block min-w-full align-middle">
             <table className="w-full min-w-[800px]">
               <thead>
-                <tr className="border-b border-[oklch(0.28_0.005_260)]">
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)]">
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
                     Restaurant
                   </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)]">
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
                     Status
                   </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)]">
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
                     Tables
                   </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)] hidden lg:table-cell">
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground hidden lg:table-cell">
                     Email
                   </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)] hidden lg:table-cell">
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground hidden lg:table-cell">
                     Joined
                   </th>
-                  <th className="text-right py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-[oklch(0.65_0_0)]">
+                  <th className="text-right py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
                     Manage
                   </th>
                 </tr>
@@ -482,7 +481,7 @@ const RestaurantStatus = () => {
                 {filteredRestaurants.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="py-8 md:py-12 text-center px-4">
-                      <p className="text-[oklch(0.65_0_0)] text-sm md:text-base">
+                      <p className="text-muted-foreground text-sm md:text-base">
                         {searchQuery || statusFilter !== "all"
                           ? "No restaurants found matching your filters."
                           : "No restaurants found."}
@@ -496,18 +495,18 @@ const RestaurantStatus = () => {
                     return (
                       <tr
                         key={restaurant._id || restaurant.id}
-                        className="border-b border-[oklch(0.28_0.005_260)]/50 hover:bg-[oklch(0.22_0.005_260)]/30 transition-colors"
+                        className="border-b border-border/50 hover:bg-muted/30 transition-colors"
                       >
                         <td className="py-3 md:py-4 px-2 md:px-4">
                           <div className="flex items-center gap-2 md:gap-3">
-                            <div className="w-8 h-8 md:w-10 md:h-10 bg-[oklch(0.7_0.18_45)]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Building2 className="w-4 h-4 md:w-5 md:h-5 text-[oklch(0.7_0.18_45)]" />
+                            <div className="w-8 h-8 md:w-10 md:h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <Building2 className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                             </div>
                             <div className="min-w-0">
-                              <p className="font-medium text-[oklch(0.98_0_0)] text-sm md:text-base truncate">
+                              <p className="font-medium text-foreground text-sm md:text-base truncate">
                                 {restaurant.restaurantName}
                               </p>
-                              <p className="text-xs text-[oklch(0.65_0_0)] truncate">{restaurant.ownerName}</p>
+                              <p className="text-xs text-muted-foreground truncate">{restaurant.ownerName}</p>
                             </div>
                           </div>
                         </td>
@@ -519,13 +518,13 @@ const RestaurantStatus = () => {
                             </span>
                           </div>
                         </td>
-                        <td className="py-3 md:py-4 px-2 md:px-4 text-[oklch(0.98_0_0)] font-medium">
+                        <td className="py-3 md:py-4 px-2 md:px-4 text-foreground font-medium">
                           <span className="text-sm md:text-base">{totalTables}</span>
                         </td>
-                        <td className="py-3 md:py-4 px-2 md:px-4 text-[oklch(0.65_0_0)] text-xs md:text-sm hidden lg:table-cell">
+                        <td className="py-3 md:py-4 px-2 md:px-4 text-muted-foreground text-xs md:text-sm hidden lg:table-cell">
                           <span className="truncate block max-w-[200px]">{restaurant.email}</span>
                         </td>
-                        <td className="py-3 md:py-4 px-2 md:px-4 text-[oklch(0.65_0_0)] text-xs md:text-sm hidden lg:table-cell">
+                        <td className="py-3 md:py-4 px-2 md:px-4 text-muted-foreground text-xs md:text-sm hidden lg:table-cell">
                           {restaurant.createdAt ? formatDate(restaurant.createdAt) : "N/A"}
                         </td>
                         <td className="py-3 md:py-4 px-2 md:px-4 text-right">
@@ -533,9 +532,9 @@ const RestaurantStatus = () => {
                             <button
                               onClick={(e) => toggleDropdown(restaurant._id || restaurant.id, e)}
                               disabled={actionLoading}
-                              className="p-1.5 hover:bg-[oklch(0.22_0.005_260)] rounded-lg transition-colors disabled:opacity-50"
+                              className="p-1.5 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
                             >
-                              <MoreVertical className="w-4 h-4 text-[oklch(0.65_0_0)]" />
+                              <MoreVertical className="w-4 h-4 text-muted-foreground" />
                             </button>
                           </div>
                         </td>
@@ -559,14 +558,14 @@ const RestaurantStatus = () => {
           }}
         >
           <div
-            className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4 sm:p-5 md:p-6 w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+            className="bg-card border border-border rounded-xl p-4 sm:p-5 md:p-6 w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 sm:mb-5">
               <div className="flex justify-between items-start gap-2 mb-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold text-[oklch(0.98_0_0)]">Restaurant Details</h3>
-                  <p className="text-xs sm:text-sm text-[oklch(0.65_0_0)] mt-1 truncate">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground">Restaurant Details</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
                     {selectedRestaurant?.restaurantName}
                   </p>
                 </div>
@@ -576,66 +575,66 @@ const RestaurantStatus = () => {
                     setRestaurantDetails(null);
                     setError(null);
                   }}
-                  className="flex-shrink-0 p-1 hover:bg-[oklch(0.22_0.005_260)] rounded-lg transition-colors"
+                  className="flex-shrink-0 p-1 hover:bg-muted rounded-lg transition-colors"
                 >
-                  <X className="w-5 h-5 text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)]" />
+                  <X className="w-5 h-5 text-muted-foreground hover:text-foreground" />
                 </button>
               </div>
             </div>
 
             {detailsLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-[oklch(0.7_0.18_45)]" />
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : restaurantDetails ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Left Column */}
                 <div className="space-y-4">
-                  <div className="bg-[oklch(0.22_0.005_260)] rounded-lg p-4">
-                    <h4 className="text-sm font-semibold text-[oklch(0.98_0_0)] mb-3">Basic Information</h4>
+                  <div className="bg-muted rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-foreground mb-3">Basic Information</h4>
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs text-[oklch(0.65_0_0)] mb-1">Restaurant Name</p>
-                        <p className="text-sm text-[oklch(0.98_0_0)] font-medium">{restaurantDetails.restaurantName}</p>
+                        <p className="text-xs text-muted-foreground mb-1">Restaurant Name</p>
+                        <p className="text-sm text-foreground font-medium">{restaurantDetails.restaurantName}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-[oklch(0.65_0_0)] mb-1">Owner Name</p>
-                        <p className="text-sm text-[oklch(0.98_0_0)] font-medium">{restaurantDetails.ownerName}</p>
+                        <p className="text-xs text-muted-foreground mb-1">Owner Name</p>
+                        <p className="text-sm text-foreground font-medium">{restaurantDetails.ownerName}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-[oklch(0.65_0_0)] mb-1 flex items-center gap-1">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                           <Mail className="w-3 h-3" />
                           Email
                         </p>
-                        <p className="text-sm text-[oklch(0.98_0_0)] font-medium break-all">{restaurantDetails.email}</p>
+                        <p className="text-sm text-foreground font-medium break-all">{restaurantDetails.email}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-[oklch(0.65_0_0)] mb-1 flex items-center gap-1">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                           <Phone className="w-3 h-3" />
                           Phone
                         </p>
-                        <p className="text-sm text-[oklch(0.98_0_0)] font-medium">{restaurantDetails.phone || "N/A"}</p>
+                        <p className="text-sm text-foreground font-medium">{restaurantDetails.phone || "N/A"}</p>
                       </div>
                       {restaurantDetails.gstNumber && (
                         <div>
-                          <p className="text-xs text-[oklch(0.65_0_0)] mb-1">GST Number</p>
-                          <p className="text-sm text-[oklch(0.98_0_0)] font-medium">{restaurantDetails.gstNumber}</p>
+                          <p className="text-xs text-muted-foreground mb-1">GST Number</p>
+                          <p className="text-sm text-foreground font-medium">{restaurantDetails.gstNumber}</p>
                         </div>
                       )}
                       <div>
-                        <p className="text-xs text-[oklch(0.65_0_0)] mb-1 flex items-center gap-1">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           Joined Date
                         </p>
-                        <p className="text-sm text-[oklch(0.98_0_0)] font-medium">
+                        <p className="text-sm text-foreground font-medium">
                           {restaurantDetails.createdAt ? formatDate(restaurantDetails.createdAt) : "N/A"}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-[oklch(0.22_0.005_260)] rounded-lg p-4">
-                    <h4 className="text-sm font-semibold text-[oklch(0.98_0_0)] mb-3">Status</h4>
+                  <div className="bg-muted rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-foreground mb-3">Status</h4>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(getRestaurantStatus(restaurantDetails))}
                       <span
@@ -652,36 +651,36 @@ const RestaurantStatus = () => {
                   </div>
 
                   {restaurantDetails.subscription && (
-                    <div className="bg-[oklch(0.22_0.005_260)] rounded-lg p-4">
-                      <h4 className="text-sm font-semibold text-[oklch(0.98_0_0)] mb-3 flex items-center gap-2">
+                    <div className="bg-muted rounded-lg p-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                         <DollarSign className="w-4 h-4" />
                         Subscription Information
                       </h4>
                       <div className="space-y-3">
                         <div>
-                          <p className="text-xs text-[oklch(0.65_0_0)] mb-1">Monthly Price</p>
-                          <p className="text-sm text-[oklch(0.98_0_0)] font-medium">
+                          <p className="text-xs text-muted-foreground mb-1">Monthly Price</p>
+                          <p className="text-sm text-foreground font-medium">
                             ₹{restaurantDetails.subscription.pricePerMonth || 0}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-[oklch(0.65_0_0)] mb-1">Subscription Status</p>
-                          <p className="text-sm text-[oklch(0.98_0_0)] font-medium">
+                          <p className="text-xs text-muted-foreground mb-1">Subscription Status</p>
+                          <p className="text-sm text-foreground font-medium">
                             {restaurantDetails.subscription.isActive ? "Active" : "Inactive"}
                           </p>
                         </div>
                         {restaurantDetails.subscription.startDate && (
                           <div>
-                            <p className="text-xs text-[oklch(0.65_0_0)] mb-1">Start Date</p>
-                            <p className="text-sm text-[oklch(0.98_0_0)] font-medium">
+                            <p className="text-xs text-muted-foreground mb-1">Start Date</p>
+                            <p className="text-sm text-foreground font-medium">
                               {formatDate(restaurantDetails.subscription.startDate)}
                             </p>
                           </div>
                         )}
                         {restaurantDetails.subscription.endDate && (
                           <div>
-                            <p className="text-xs text-[oklch(0.65_0_0)] mb-1">End Date</p>
-                            <p className="text-sm text-[oklch(0.98_0_0)] font-medium">
+                            <p className="text-xs text-muted-foreground mb-1">End Date</p>
+                            <p className="text-sm text-foreground font-medium">
                               {formatDate(restaurantDetails.subscription.endDate)}
                             </p>
                           </div>
@@ -693,8 +692,8 @@ const RestaurantStatus = () => {
 
                 <div className="space-y-4">
                   {restaurantDetails.locations && restaurantDetails.locations.length > 0 && (
-                    <div className="bg-[oklch(0.22_0.005_260)] rounded-lg p-4">
-                      <h4 className="text-sm font-semibold text-[oklch(0.98_0_0)] mb-3 flex items-center gap-2">
+                    <div className="bg-muted rounded-lg p-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                         <MapPin className="w-4 h-4" />
                         Locations ({restaurantDetails.locations.length})
                       </h4>
@@ -702,18 +701,18 @@ const RestaurantStatus = () => {
                         {restaurantDetails.locations.map((loc, index) => (
                           <div
                             key={loc._id || index}
-                            className="p-3 bg-[oklch(0.17_0.005_260)] rounded-lg border border-[oklch(0.28_0.005_260)]"
+                            className="p-3 bg-card rounded-lg border border-border"
                           >
                             <div className="flex items-start justify-between mb-2">
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-[oklch(0.98_0_0)]">
+                                <p className="text-sm font-medium text-foreground">
                                   {loc.locationName || `Location ${index + 1}`}
                                 </p>
-                                <p className="text-xs text-[oklch(0.65_0_0)] mt-1 break-words">
+                                <p className="text-xs text-muted-foreground mt-1 break-words">
                                   {loc.address}, {loc.city}, {loc.state} {loc.zipCode}
                                 </p>
                               </div>
-                              <span className="text-sm font-medium text-[oklch(0.7_0.18_45)] ml-2 flex-shrink-0">
+                              <span className="text-sm font-medium text-primary ml-2 flex-shrink-0">
                                 {loc.totalTables || 0} tables
                               </span>
                             </div>
@@ -723,10 +722,10 @@ const RestaurantStatus = () => {
                     </div>
                   )}
 
-                  <div className="bg-[oklch(0.22_0.005_260)] rounded-lg p-4">
+                  <div className="bg-muted rounded-lg p-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-[oklch(0.98_0_0)]">Total Tables</p>
-                      <p className="text-lg font-bold text-[oklch(0.7_0.18_45)]">
+                      <p className="text-sm font-semibold text-foreground">Total Tables</p>
+                      <p className="text-lg font-bold text-primary">
                         {getTotalTables(restaurantDetails)}
                       </p>
                     </div>
@@ -735,7 +734,7 @@ const RestaurantStatus = () => {
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-[oklch(0.65_0_0)] text-sm">Failed to load restaurant details</p>
+                <p className="text-muted-foreground text-sm">Failed to load restaurant details</p>
               </div>
             )}
           </div>
@@ -751,7 +750,7 @@ const RestaurantStatus = () => {
           }}
         >
           <div
-            className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-xl p-4 sm:p-5 md:p-6 w-full max-w-md"
+            className="bg-card border border-border rounded-xl p-4 sm:p-5 md:p-6 w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4">
@@ -759,10 +758,10 @@ const RestaurantStatus = () => {
                 <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center">
                   <Trash2 className="w-5 h-5 text-red-500" />
                 </div>
-                <h3 className="text-base sm:text-lg font-semibold text-[oklch(0.98_0_0)]">Delete Restaurant</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-foreground">Delete Restaurant</h3>
               </div>
-              <p className="text-sm text-[oklch(0.65_0_0)]">
-                Are you sure you want to delete <span className="font-medium text-[oklch(0.98_0_0)]">{selectedRestaurant.restaurantName}</span>? This action cannot be undone.
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete <span className="font-medium text-foreground">{selectedRestaurant.restaurantName}</span>? This action cannot be undone.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -790,7 +789,7 @@ const RestaurantStatus = () => {
                   setSelectedRestaurant(null);
                 }}
                 disabled={actionLoading}
-                className="px-4 py-2.5 sm:py-2 border border-[oklch(0.28_0.005_260)] rounded-lg text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] disabled:opacity-50 text-sm sm:text-base transition-colors"
+                className="px-4 py-2.5 sm:py-2 border border-border rounded-lg text-foreground hover:bg-muted disabled:opacity-50 text-sm sm:text-base transition-colors"
               >
                 Cancel
               </button>
@@ -801,7 +800,7 @@ const RestaurantStatus = () => {
 
       {showDropdown && dropdownCoords[showDropdown] && (
         <div
-          className="fixed bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg shadow-xl z-50 min-w-[160px] backdrop-blur-sm"
+          className="fixed bg-popover border border-border rounded-lg shadow-xl z-50 min-w-[160px] backdrop-blur-sm"
           style={{
             top: dropdownCoords[showDropdown].top,
             left: dropdownCoords[showDropdown].left,
@@ -821,7 +820,7 @@ const RestaurantStatus = () => {
                     setDropdownPosition({});
                     setDropdownCoords({});
                   }}
-                  className="w-full px-3 py-2.5 text-left text-xs sm:text-sm text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] flex items-center gap-2 transition-colors first:rounded-t-lg"
+                  className="w-full px-3 py-2.5 text-left text-xs sm:text-sm text-popover-foreground hover:bg-muted flex items-center gap-2 transition-colors first:rounded-t-lg"
                 >
                   <Eye className="w-4 h-4 flex-shrink-0" />
                   View Details
@@ -834,7 +833,7 @@ const RestaurantStatus = () => {
                     handleToggleBlock(restaurant);
                   }}
                   disabled={actionLoading}
-                  className="w-full px-3 py-2.5 text-left text-xs sm:text-sm text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] flex items-center gap-2 transition-colors disabled:opacity-50"
+                  className="w-full px-3 py-2.5 text-left text-xs sm:text-sm text-popover-foreground hover:bg-muted flex items-center gap-2 transition-colors disabled:opacity-50"
                 >
                   <Power className="w-4 h-4 flex-shrink-0" />
                   {status === "active" || status === "inactive" ? "Suspend" : "Activate"}
@@ -848,7 +847,7 @@ const RestaurantStatus = () => {
                     setDropdownCoords({});
                   }}
                   disabled={actionLoading}
-                  className="w-full px-3 py-2.5 text-left text-xs sm:text-sm text-red-500 hover:bg-[oklch(0.22_0.005_260)] flex items-center gap-2 transition-colors disabled:opacity-50 last:rounded-b-lg border-t border-[oklch(0.28_0.005_260)]"
+                  className="w-full px-3 py-2.5 text-left text-xs sm:text-sm text-red-500 hover:bg-muted flex items-center gap-2 transition-colors disabled:opacity-50 last:rounded-b-lg border-t border-border"
                 >
                   <Trash2 className="w-4 h-4 flex-shrink-0" />
                   Delete
@@ -860,13 +859,13 @@ const RestaurantStatus = () => {
       )}
 
       {showDropdown && (
-        <div 
-          className="fixed inset-0 z-[40]" 
+        <div
+          className="fixed inset-0 z-[40]"
           onClick={() => {
             setShowDropdown(null);
             setDropdownPosition({});
             setDropdownCoords({});
-          }} 
+          }}
         />
       )}
     </div>

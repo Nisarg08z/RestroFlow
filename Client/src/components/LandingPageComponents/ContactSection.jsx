@@ -76,36 +76,36 @@ const ContactSection = () => {
   return (
     <section
       id="contact"
-      className="py-24 px-4 sm:px-6 lg:px-8 bg-[oklch(0.13_0.005_260)]"
+      className="py-24 px-4 sm:px-6 lg:px-8 bg-background"
     >
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16">
 
 
           <div>
-            <p className="text-[oklch(0.7_0.18_45)] font-medium mb-4">
+            <p className="text-primary font-medium mb-4">
               Get In Touch
             </p>
 
-            <h2 className="text-3xl sm:text-4xl font-bold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
               Ready to transform your restaurant?
             </h2>
 
-            <p className="text-[oklch(0.65_0_0)] mb-8">
+            <p className="text-muted-foreground mb-8">
               Contact us to get a personalized demo and pricing for your restaurant.
               We&apos;ll show you exactly how RestroFlow can help your business grow.
             </p>
 
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[oklch(0.7_0.18_45)]/10 rounded-xl flex items-center justify-center">
-                  <Mail className="w-6 h-6 text-[oklch(0.7_0.18_45)]" />
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <Mail className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <div className="text-[oklch(0.98_0_0)] font-medium">Email Us</div>
+                  <div className="text-foreground font-medium">Email Us</div>
                   <a
                     href="mailto:contact.restroflow@gmail.com"
-                    className="text-[oklch(0.65_0_0)] hover:text-[oklch(0.7_0.18_45)] transition"
+                    className="text-muted-foreground hover:text-primary transition"
                   >
                     contact.restroflow@gmail.com
                   </a>
@@ -113,22 +113,22 @@ const ContactSection = () => {
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[oklch(0.7_0.18_45)]/10 rounded-xl flex items-center justify-center">
-                  <Phone className="w-6 h-6 text-[oklch(0.7_0.18_45)]" />
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <Phone className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <div className="text-[oklch(0.98_0_0)] font-medium">Call Us</div>
-                  <span className="text-[oklch(0.65_0_0)]">+91 9876543210</span>
+                  <div className="text-foreground font-medium">Call Us</div>
+                  <span className="text-muted-foreground">+91 9876543210</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[oklch(0.7_0.18_45)]/10 rounded-xl flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-[oklch(0.7_0.18_45)]" />
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <div className="text-[oklch(0.98_0_0)] font-medium">Location</div>
-                  <span className="text-[oklch(0.65_0_0)]">
+                  <div className="text-foreground font-medium">Location</div>
+                  <span className="text-muted-foreground">
                     Ahmedabad, Gujarat, India
                   </span>
                 </div>
@@ -137,16 +137,16 @@ const ContactSection = () => {
           </div>
 
 
-          <div className="bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-2xl p-8">
+          <div className="bg-card border border-border rounded-2xl p-8">
             {isSubmitted ? (
               <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                <div className="w-16 h-16 bg-[oklch(0.7_0.18_45)]/10 rounded-full flex items-center justify-center mb-4">
-                  <CheckCircle className="w-8 h-8 text-[oklch(0.7_0.18_45)]" />
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold text-[oklch(0.98_0_0)] mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   Message Sent!
                 </h3>
-                <p className="text-[oklch(0.65_0_0)]">
+                <p className="text-muted-foreground">
                   We&apos;ll get back to you within 24 hours.
                 </p>
               </div>
@@ -162,7 +162,7 @@ const ContactSection = () => {
                         setFormData({ ...formData, ownerName: e.target.value })
                       }
                       placeholder="Owner Name"
-                      className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.ownerName ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                      className={`w-full px-4 py-3 rounded-lg bg-input border ${errors.ownerName ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                     />
                     {errors.ownerName && <p className="text-red-500 text-xs mt-1">{errors.ownerName}</p>}
                   </div>
@@ -174,7 +174,7 @@ const ContactSection = () => {
                         setFormData({ ...formData, restaurantName: e.target.value })
                       }
                       placeholder="Restaurant Name"
-                      className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.restaurantName ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                      className={`w-full px-4 py-3 rounded-lg bg-input border ${errors.restaurantName ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                     />
                     {errors.restaurantName && <p className="text-red-500 text-xs mt-1">{errors.restaurantName}</p>}
                   </div>
@@ -189,7 +189,7 @@ const ContactSection = () => {
                       setFormData({ ...formData, email: e.target.value })
                     }
                     placeholder="Email Address"
-                    className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.email ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                    className={`w-full px-4 py-3 rounded-lg bg-input border ${errors.email ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                   />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                 </div>
@@ -202,7 +202,7 @@ const ContactSection = () => {
                       setFormData({ ...formData, phone: e.target.value })
                     }
                     placeholder="Phone Number"
-                    className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.phone ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                    className={`w-full px-4 py-3 rounded-lg bg-input border ${errors.phone ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                   />
                   {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                 </div>
@@ -216,7 +216,7 @@ const ContactSection = () => {
                       setFormData({ ...formData, message: e.target.value })
                     }
                     placeholder="Tell us about your restaurant..."
-                    className={`w-full px-4 py-3 rounded-lg bg-[oklch(0.22_0.005_260)] border ${errors.message ? 'border-red-500' : 'border-[oklch(0.28_0.005_260)]'} text-[oklch(0.98_0_0)] placeholder:text-[oklch(0.65_0_0)] focus:outline-none focus:ring-2 focus:ring-[oklch(0.7_0.18_45)]`}
+                    className={`w-full px-4 py-3 rounded-lg bg-input border ${errors.message ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
                   />
                   {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
                 </div>
@@ -224,7 +224,7 @@ const ContactSection = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium bg-[oklch(0.7_0.18_45)] text-[oklch(0.13_0.005_260)] hover:bg-orange-400 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium bg-primary text-primary-foreground hover:opacity-90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>

@@ -1,7 +1,10 @@
 import React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  UtensilsCrossed,
+  Link,
+  useLocation,
+  useNavigate
+} from "react-router-dom";
+import {
   LayoutDashboard,
   Inbox,
   Activity,
@@ -11,6 +14,7 @@ import {
   LogOut,
   MessageCircle,
 } from "lucide-react";
+import Logo from "../../assets/logo.png";
 import { adminLogout } from "../../utils/api";
 import toast from "react-hot-toast";
 
@@ -26,7 +30,7 @@ const menuItems = [
 const AdminSidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const isActive = (path) => {
     if (path === "/admin/dashboard") {
       return location.pathname === "/admin/dashboard" || location.pathname === "/admin/dashboard/";
@@ -52,38 +56,36 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-[oklch(0.13_0.005_260)]/80 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-sidebar/80 backdrop-blur-sm z-40 lg:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-[oklch(0.17_0.005_260)] border-r border-[oklch(0.28_0.005_260)] z-50 flex flex-col transition-transform duration-300
+        className={`fixed top-0 left-0 h-full w-64 bg-sidebar border-r border-sidebar-border z-50 flex flex-col transition-transform duration-300
         ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
-        
-        <div className="p-6 border-b border-[oklch(0.28_0.005_260)] flex items-center justify-between">
+
+        <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-[oklch(0.7_0.18_45)] rounded-lg flex items-center justify-center">
-              <UtensilsCrossed className="w-5 h-5 text-[oklch(0.13_0.005_260)]" />
-            </div>
+            <img src={Logo} alt="RestroFlow" className="w-9 h-9 object-contain" />
             <div>
-              <span className="text-lg font-bold text-[oklch(0.98_0_0)]">
+              <span className="text-lg font-bold text-sidebar-foreground">
                 RestroFlow
               </span>
-              <p className="text-xs text-[oklch(0.65_0_0)]">Admin Panel</p>
+              <p className="text-xs text-sidebar-foreground/70">Admin Panel</p>
             </div>
           </Link>
 
           <button
             onClick={onClose}
-            className="lg:hidden text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)]"
+            className="lg:hidden text-sidebar-foreground/70 hover:text-sidebar-foreground"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        
+
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {menuItems.map((item) => (
             <Link
@@ -91,10 +93,9 @@ const AdminSidebar = ({ isOpen, onClose }) => {
               to={item.path}
               onClick={onClose}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
-                ${
-                  isActive(item.path)
-                    ? "bg-[oklch(0.7_0.18_45)] text-[oklch(0.13_0.005_260)]"
-                    : "text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)]"
+                ${isActive(item.path)
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 }`}
             >
               {item.icon}
@@ -103,11 +104,11 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           ))}
         </nav>
 
-        
-        <div className="p-4 border-t border-[oklch(0.28_0.005_260)]">
+
+        <div className="p-4 border-t border-sidebar-border">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-4 py-3 rounded-lg border border-[oklch(0.28_0.005_260)] text-[oklch(0.98_0_0)] hover:bg-[oklch(0.22_0.005_260)] transition"
+            className="w-full flex items-center gap-2 px-4 py-3 rounded-lg border border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition"
           >
             <LogOut className="w-4 h-4" />
             Logout

@@ -9,14 +9,14 @@ const StatsSection = () => {
   ];
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 border-y border-gray-800 bg-[oklch(0.17_0.005_260)]">
+    <section className="py-16 px-4 sm:px-6 lg:px-8 border-y border-border bg-card">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 gap-8 lg:flex lg:justify-evenly lg:items-start">
           {stats.map((stat, index) => (
-            <div key={index} className="text-center lg:text-left">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">{stat.value}</div>
-              <div className="text-white font-medium">{stat.label}</div>
-              <div className="text-sm text-gray-400">{stat.description}</div>
+            <div key={index} className="text-center lg:text-left flex flex-col justify-center">
+              <div className="text-3xl sm:text-4xl font-bold text-foreground mb-1">{stat.value}</div>
+              <div className="text-foreground font-medium">{stat.label}</div>
+              <div className="text-sm text-muted-foreground">{stat.description}</div>
             </div>
           ))}
         </div>

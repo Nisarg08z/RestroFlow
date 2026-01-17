@@ -132,18 +132,18 @@ const AdminHeader = ({ onMenuClick }) => {
   const unreadNotifications = notifications.filter((n) => !n.read);
 
   return (
-    <header className="sticky top-0 z-30 bg-[oklch(0.17_0.005_260)]/95 backdrop-blur-sm border-b border-[oklch(0.28_0.005_260)] px-4 md:px-6 lg:px-8 py-4">
+    <header className="sticky top-0 z-30 bg-sidebar/95 backdrop-blur-sm border-b border-sidebar-border px-4 md:px-6 lg:px-8 py-4">
       <div className="flex items-center justify-between gap-4">
         {/* Left */}
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="lg:hidden text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)] transition"
+            className="lg:hidden text-sidebar-foreground/70 hover:text-sidebar-foreground transition"
           >
             <Menu className="w-6 h-6" />
           </button>
 
-          <h1 className="text-xl md:text-2xl font-bold text-[oklch(0.98_0_0)]">
+          <h1 className="text-xl md:text-2xl font-bold text-sidebar-foreground">
             {currentTitle}
           </h1>
         </div>
@@ -152,31 +152,31 @@ const AdminHeader = ({ onMenuClick }) => {
           <div className="relative" ref={notificationRef}>
             <button
               onClick={handleBellClick}
-              className="relative p-2 rounded-lg hover:bg-[oklch(0.22_0.005_260)] transition"
+              className="relative p-2 rounded-lg hover:bg-sidebar-accent transition"
             >
-              <Bell className="w-5 h-5 text-[oklch(0.98_0_0)]" />
+              <Bell className="w-5 h-5 text-sidebar-foreground" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-5 h-5 bg-[oklch(0.7_0.18_45)] rounded-full flex items-center justify-center text-xs font-bold text-[oklch(0.13_0.005_260)]">
+                <span className="absolute top-1 right-1 w-5 h-5 bg-sidebar-primary rounded-full flex items-center justify-center text-xs font-bold text-sidebar-primary-foreground">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </button>
 
             {showNotifications && (
-              <div className="absolute -right-[3.5rem] sm:right-0 top-full mt-2 w-[92vw] sm:w-80 md:w-96 bg-[oklch(0.17_0.005_260)] border border-[oklch(0.28_0.005_260)] rounded-lg shadow-xl max-h-[80vh] overflow-y-auto z-50">
-                <div className="p-4 border-b border-[oklch(0.28_0.005_260)] flex items-center justify-between">
-                  <h3 className="font-semibold text-[oklch(0.98_0_0)]">
+              <div className="absolute -right-[3.5rem] sm:right-0 top-full mt-2 w-[92vw] sm:w-80 md:w-96 bg-sidebar border border-sidebar-border rounded-lg shadow-xl max-h-[80vh] overflow-y-auto z-50">
+                <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
+                  <h3 className="font-semibold text-sidebar-foreground">
                     Notifications
                   </h3>
                   {unreadCount > 0 && (
-                    <span className="text-xs text-[oklch(0.65_0_0)]">
+                    <span className="text-xs text-muted-foreground">
                       {unreadCount} new
                     </span>
                   )}
                 </div>
-                <div className="divide-y divide-[oklch(0.28_0.005_260)]">
+                <div className="divide-y divide-sidebar-border">
                   {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-[oklch(0.65_0_0)]">
+                    <div className="p-4 text-center text-muted-foreground">
                       No notifications
                     </div>
                   ) : (
@@ -184,26 +184,26 @@ const AdminHeader = ({ onMenuClick }) => {
                       <div
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`p-4 hover:bg-[oklch(0.22_0.005_260)] cursor-pointer transition ${!notification.read ? "bg-[oklch(0.22_0.005_260)]/50" : ""
+                        className={`p-4 hover:bg-sidebar-accent cursor-pointer transition ${!notification.read ? "bg-sidebar-accent/50" : ""
                           }`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 bg-[oklch(0.7_0.18_45)]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Building2 className="w-5 h-5 text-[oklch(0.7_0.18_45)]" />
+                          <div className="w-10 h-10 bg-sidebar-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Building2 className="w-5 h-5 text-sidebar-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-[oklch(0.98_0_0)]">
+                            <p className="text-sm font-medium text-sidebar-foreground">
                               {notification.title}
                             </p>
-                            <p className="text-xs text-[oklch(0.65_0_0)] mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-[oklch(0.65_0_0)] mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {new Date(notification.createdAt).toLocaleString()}
                             </p>
                           </div>
                           {!notification.read && (
-                            <div className="w-2 h-2 bg-[oklch(0.7_0.18_45)] rounded-full flex-shrink-0 mt-2" />
+                            <div className="w-2 h-2 bg-sidebar-primary rounded-full flex-shrink-0 mt-2" />
                           )}
                         </div>
                       </div>
@@ -211,10 +211,10 @@ const AdminHeader = ({ onMenuClick }) => {
                   )}
                 </div>
                 {notifications.length > 0 && (
-                  <div className="p-2 border-t border-[oklch(0.28_0.005_260)]">
+                  <div className="p-2 border-t border-sidebar-border">
                     <button
                       onClick={() => navigate("/admin/dashboard/requests")}
-                      className="w-full text-sm text-[oklch(0.7_0.18_45)] hover:text-[oklch(0.7_0.18_45)]/80 font-medium"
+                      className="w-full text-sm text-sidebar-primary hover:text-sidebar-primary/80 font-medium"
                     >
                       View All Requests
                     </button>

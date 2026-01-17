@@ -6,24 +6,24 @@ const AboutUs = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[oklch(0.13_0.005_260)] min-h-screen">
+    <section className="py-24 px-4 sm:px-6 lg:px-8 bg-background min-h-screen">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-        <button
+          <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-[oklch(0.65_0_0)] hover:text-[oklch(0.98_0_0)] transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Home</span>
           </button>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-bold text-[oklch(0.98_0_0)] mb-8">
+        <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-8">
           About Us
         </h1>
 
-        <div className="space-y-8 text-[oklch(0.65_0_0)]">
+        <div className="space-y-8 text-muted-foreground">
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               Our Mission
             </h2>
             <p>
@@ -32,7 +32,7 @@ const AboutUs = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               Our Story
             </h2>
             <p>
@@ -44,7 +44,7 @@ const AboutUs = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               What We Do
             </h2>
             <p className="mb-3">RestroFlow provides a complete restaurant management ecosystem:</p>
@@ -58,12 +58,12 @@ const AboutUs = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               Our Values
             </h2>
             <div className="space-y-4">
               <div>
-                <h3 className="text-xl font-semibold text-[oklch(0.98_0_0)] mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   Innovation
                 </h3>
                 <p>
@@ -71,7 +71,7 @@ const AboutUs = () => {
                 </p>
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-[oklch(0.98_0_0)] mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   Reliability
                 </h3>
                 <p>
@@ -79,7 +79,7 @@ const AboutUs = () => {
                 </p>
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-[oklch(0.98_0_0)] mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   Customer-Centric
                 </h3>
                 <p>
@@ -90,7 +90,7 @@ const AboutUs = () => {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-[oklch(0.98_0_0)] mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               Contact Us
             </h2>
             <p>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { getCurrentAdmin } from "../utils/api";
 
 const ProtectedRoute = ({ children, requiredRole = "ADMIN" }) => {
@@ -11,7 +12,7 @@ const ProtectedRoute = ({ children, requiredRole = "ADMIN" }) => {
     const checkAuth = async () => {
       try {
         const role = localStorage.getItem("role");
-        
+
         if (!role || role !== requiredRole) {
           setIsAuthenticated(false);
           setIsLoading(false);
@@ -35,10 +36,10 @@ const ProtectedRoute = ({ children, requiredRole = "ADMIN" }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[oklch(0.13_0.005_260)]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[oklch(0.7_0.18_45)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[oklch(0.98_0_0)]">Checking authentication...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Checking authentication...</p>
         </div>
       </div>
     );
@@ -52,4 +53,3 @@ const ProtectedRoute = ({ children, requiredRole = "ADMIN" }) => {
 };
 
 export default ProtectedRoute;
-

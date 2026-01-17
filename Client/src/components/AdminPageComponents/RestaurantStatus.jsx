@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Search,
   Building2,
@@ -101,6 +102,17 @@ const RestaurantStatus = () => {
       setDetailsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (showDetailsModal || showDeleteModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showDetailsModal, showDeleteModal]);
 
   const handleToggleBlock = async (restaurant) => {
     try {
@@ -548,9 +560,10 @@ const RestaurantStatus = () => {
         </div>
       </div>
 
-      {showDetailsModal && (
+      {showDetailsModal && createPortal(
         <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3 sm:p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]"
+
           onClick={() => {
             setShowDetailsModal(false);
             setRestaurantDetails(null);
@@ -738,12 +751,13 @@ const RestaurantStatus = () => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showDeleteModal && selectedRestaurant && (
+      {showDeleteModal && selectedRestaurant && createPortal(
         <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3 sm:p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-3 sm:p-4"
           onClick={() => {
             setShowDeleteModal(false);
             setSelectedRestaurant(null);
@@ -795,7 +809,8 @@ const RestaurantStatus = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {showDropdown && dropdownCoords[showDropdown] && (

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Search,
   CreditCard,
@@ -79,6 +80,17 @@ const SubscriptionManagement = () => {
       return () => clearTimeout(timer);
     }
   }, [emailNotification]);
+
+  useEffect(() => {
+    if (showEdit) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showEdit]);
 
   const fetchData = async () => {
     try {
@@ -362,8 +374,8 @@ const SubscriptionManagement = () => {
         </div>
       )}
 
-      {emailNotification && (
-        <div className="fixed top-4 right-4 z-50 bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 sm:p-4 shadow-lg max-w-xs sm:max-w-sm transition-all duration-300 ease-out">
+      {emailNotification && createPortal(
+        <div className="fixed top-4 right-4 z-[110] bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 sm:p-4 shadow-lg max-w-xs sm:max-w-sm transition-all duration-300 ease-out">
           <div className="flex items-start gap-2 sm:gap-3">
             <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
               <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
@@ -384,7 +396,8 @@ const SubscriptionManagement = () => {
               <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -694,8 +707,8 @@ const SubscriptionManagement = () => {
         </div>
       </div>
 
-      {showEdit && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3 sm:p-4" onClick={() => {
+      {showEdit && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-3 sm:p-4" onClick={() => {
           setShowEdit(false);
           setError(null);
         }}>
@@ -940,7 +953,8 @@ const SubscriptionManagement = () => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

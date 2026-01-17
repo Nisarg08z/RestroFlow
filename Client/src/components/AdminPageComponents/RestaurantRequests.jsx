@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { io } from "socket.io-client";
 import {
   Search,
@@ -142,6 +143,17 @@ const RestaurantRequests = () => {
       localStorage.removeItem(PROCESSING_KEY);
     }
   };
+
+  useEffect(() => {
+    if (showDetails || showReply) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showDetails, showReply]);
 
   const handleReject = async (id) => {
     setProcessingRequestId(id);
@@ -360,13 +372,13 @@ const RestaurantRequests = () => {
         </div>
       </div>
 
-      {showDetails && selectedRequest && (
+      {showDetails && selectedRequest && createPortal(
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start md:items-center justify-center z-50 p-3 md:p-4 overflow-y-auto"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-3 md:p-4"
           onClick={() => setShowDetails(false)}
         >
           <div
-            className="mt-10 md:mt-0 bg-card border border-border rounded-2xl max-w-2xl w-full"
+            className="bg-card border border-border rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 md:p-6 border-b border-border">
@@ -441,16 +453,17 @@ const RestaurantRequests = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showReply && selectedRequest && (
+      {showReply && selectedRequest && createPortal(
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start md:items-center justify-center z-50 p-3 md:p-4 overflow-y-auto"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-3 md:p-4"
           onClick={() => setShowReply(false)}
         >
           <div
-            className="mt-10 md:mt-0 bg-card border border-border rounded-2xl max-w-lg w-full"
+            className="bg-card border border-border rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 md:p-6 border-b border-border">
@@ -512,7 +525,8 @@ const RestaurantRequests = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

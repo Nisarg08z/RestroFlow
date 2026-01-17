@@ -169,6 +169,11 @@ const restaurantSchema = new Schema(
 )
 
 restaurantSchema.pre("save", async function (next) {
+  if (this.subscription && this.subscription.endDate) {
+    if (new Date() > this.subscription.endDate) {
+      this.subscription.isActive = false;
+    }
+  }
   if (!this.isModified("password")) return next()
   this.password = await bcrypt.hash(this.password, 10)
   next()

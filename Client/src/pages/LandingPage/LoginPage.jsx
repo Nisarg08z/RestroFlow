@@ -27,13 +27,17 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      await restaurantLogin({
+      const response = await restaurantLogin({
         email: formData.email,
         password: formData.password,
       })
 
+      if (response.data?.data?.accessToken) {
+        localStorage.setItem("accessToken", response.data.data.accessToken)
+      }
+
       localStorage.setItem("role", "RESTAURANT")
-      navigate("/dashboard")
+      navigate("/restaurant/welcome")
 
     } catch (error) {
       const errorMessage = error.response?.data?.message || "Login failed"

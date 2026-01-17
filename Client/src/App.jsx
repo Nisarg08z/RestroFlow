@@ -14,10 +14,13 @@ import PaymentPage from './pages/LandingPage/PaymentPage';
 import AdminLoginPage from './pages/AdminPage/AdminLoginPage'
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AdminDashboard, RestaurantRequests, SubscriptionManagement, RestaurantStatus } from './components/AdminPageComponents'
+import { AdminDashboard, RestaurantRequests, SubscriptionManagement, RestaurantStatus, AdminSupportTickets } from './components/AdminPageComponents'
 import { Toaster } from 'react-hot-toast';
 import { AuthContext } from './context/AuthContext';
 import NotFound from './pages/NotFound';
+import ManagerWelcome from './pages/ManagerPage/ManagerWelcome';
+import ProfilePage from './pages/ManagerPage/ProfilePage';
+import SupportPage from './pages/ManagerPage/SupportPage';
 
 const LandingGate = ({ children }) => {
   const { role, loading } = useContext(AuthContext);
@@ -31,7 +34,7 @@ const LandingGate = ({ children }) => {
   }
 
   if (role === 'RESTAURANT') {
-    return <Navigate to="/restaurant/dashboard" replace />;
+    return <Navigate to="/restaurant/welcome" replace />;
   }
 
   return children;
@@ -92,9 +95,33 @@ const App = () => {
             <Route path="requests" element={<RestaurantRequests />} />
             <Route path="subscriptions" element={<SubscriptionManagement />} />
             <Route path="status" element={<RestaurantStatus />} />
-            {/* 
-            <Route path="support" element={<SupportTickets />} /> */}
+            <Route path="support" element={<AdminSupportTickets />} />
           </Route>
+
+          <Route
+            path="restaurant/welcome"
+            element={
+              <ProtectedRoute requiredRole="RESTAURANT">
+                <ManagerWelcome />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="restaurant/profile"
+            element={
+              <ProtectedRoute requiredRole="RESTAURANT">
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="restaurant/support"
+            element={
+              <ProtectedRoute requiredRole="RESTAURANT">
+                <SupportPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="*" element={<NotFound />} />
 

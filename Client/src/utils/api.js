@@ -41,6 +41,18 @@ export const verifyOTP = (data) =>
 export const resetPassword = (data) =>
   api.post("/restaurant/reset-password", data)
 
+export const createLocationPaymentOrder = (data) =>
+  api.post("/restaurant/locations/create-payment-order", data)
+
+export const verifyLocationPaymentAndAdd = (data) =>
+  api.post("/restaurant/locations/verify-payment", data)
+
+export const updateRestaurantProfile = (data) =>
+  api.patch("/restaurant/me", data)
+
+export const updateLocation = (locationId, data) =>
+  api.patch(`/restaurant/locations/${locationId}`, data)
+
 /* ================= ADMIN ================= */
 
 export const adminLogin = (data) =>
@@ -132,6 +144,20 @@ export const getAllInvoices = (params = {}) =>
 
 export const getInvoiceById = (invoiceId) =>
   api.get(`/invoices/${invoiceId}`)
+
+/* ================= TICKETS / SUPPORT ================= */
+
+export const createTicket = (data) =>
+  api.post("/tickets/create", data)
+
+export const getRestaurantTickets = () =>
+  api.get("/tickets/my-tickets")
+
+export const getAdminTickets = () =>
+  api.get("/tickets/admin/all")
+
+export const updateTicketStatus = (ticketId, data) =>
+  api.patch(`/tickets/admin/${ticketId}`, data)
 
 /* ================= INTERCEPTOR ================= */
 

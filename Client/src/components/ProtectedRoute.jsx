@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { getCurrentAdmin } from "../utils/api";
+import { getCurrentAdmin, getCurrentRestaurant } from "../utils/api";
 
 const ProtectedRoute = ({ children, requiredRole = "ADMIN" }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -19,7 +19,12 @@ const ProtectedRoute = ({ children, requiredRole = "ADMIN" }) => {
           return;
         }
 
-        await getCurrentAdmin();
+        if (requiredRole === "ADMIN") {
+          await getCurrentAdmin();
+        } else if (requiredRole === "RESTAURANT") {
+          await getCurrentRestaurant();
+        }
+
         setIsAuthenticated(true);
       } catch (error) {
         console.error("Auth check failed:", error);
@@ -46,7 +51,8 @@ const ProtectedRoute = ({ children, requiredRole = "ADMIN" }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    const loginPath = requiredRole === "ADMIN" ? "/admin/login" : "/login";
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
   return children;

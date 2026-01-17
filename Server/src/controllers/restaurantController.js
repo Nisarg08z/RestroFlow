@@ -4,7 +4,9 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import { Restaurant } from "../models/restaurantModel.js"
 import jwt from "jsonwebtoken"
 import { generateAccessAndRefreshTokens } from "../utils/generateTokens.js"
+
 import { sendOTPEmail } from "../utils/emailService.js"
+import { createOrder, verifyPayment } from "../utils/razorpay.js";
 
 const restaurantLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body
@@ -175,9 +177,148 @@ const resetPassword = asyncHandler(async (req, res) => {
 
 const getCurrentRestaurant = asyncHandler(async (req, res) => {
   return res
-    .status(200)
     .json(new ApiResponse(200, req.user, "Restaurant fetched"))
 })
+
+const createLocationPaymentOrder = asyncHandler(async (req, res) => {
+  const { totalTables } = req.body;
+
+  if (!totalTables || totalTables <= 0) {
+    throw new ApiError(400, "Total tables must be greater than 0");
+  }
+
+  const PRICE_PER_TABLE = 50;
+  const amount = Number(totalTables) * PRICE_PER_TABLE;
+
+  const receipt = `loc_add_${Date.now()}`;
+  const order = await createOrder(amount, "INR", receipt);
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      orderId: order.id,
+      amount: amount,
+      currency: "INR",
+      totalTables,
+    }, "Payment order created successfully")
+  );
+});
+
+const verifyLocationPaymentAndAdd = asyncHandler(async (req, res) => {
+  const {
+    locationName, address, city, state, zipCode, country, phone, totalTables,
+    razorpay_order_id, razorpay_payment_id, razorpay_signature
+  } = req.body;
+
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    throw new ApiError(400, "Payment verification details are required");
+  }
+
+  const isPaymentValid = verifyPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+  if (!isPaymentValid) {
+    throw new ApiError(400, "Invalid payment signature");
+  }
+
+  if (!locationName || !address || !city || !state || !zipCode || !totalTables) {
+    throw new ApiError(400, "All location fields are required");
+  }
+
+  const restaurant = await Restaurant.findById(req.user._id);
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+
+  const newLocation = {
+    locationName,
+    address,
+    city,
+    state,
+    zipCode,
+    country: country || "USA",
+    phone,
+    totalTables: Number(totalTables),
+    isActive: true
+  };
+
+  restaurant.locations.push(newLocation);
+
+  const PRICE_PER_TABLE = 50;
+  const additionalCost = Number(totalTables) * PRICE_PER_TABLE;
+
+  if (restaurant.subscription) {
+    restaurant.subscription.pricePerMonth += additionalCost;
+  } else {
+    restaurant.subscription = {
+      pricePerMonth: additionalCost,
+      isActive: true,
+      startDate: new Date(),
+      endDate: new Date(new Date().setMonth(new Date().getMonth() + 1))
+    };
+  }
+
+  await restaurant.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, restaurant, "Location added and payment verified successfully")
+  );
+});
+
+const updateRestaurantProfile = asyncHandler(async (req, res) => {
+  const { phone, gstNumber, restaurantName, ownerName } = req.body;
+
+  const restaurant = await Restaurant.findById(req.user._id);
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+
+  if (phone !== undefined) restaurant.phone = phone;
+  if (gstNumber !== undefined) restaurant.gstNumber = gstNumber;
+  if (restaurantName !== undefined) restaurant.restaurantName = restaurantName;
+  if (ownerName !== undefined) restaurant.ownerName = ownerName;
+
+  await restaurant.save();
+
+  const updatedRestaurant = await Restaurant.findById(req.user._id)
+    .select("-password -refreshToken");
+
+  return res.status(200).json(
+    new ApiResponse(200, updatedRestaurant, "Profile updated successfully")
+  );
+});
+
+const updateLocation = asyncHandler(async (req, res) => {
+  const { locationId } = req.params;
+  const { locationName, address, city, state, zipCode, country, phone, totalTables, isActive } = req.body;
+
+  const restaurant = await Restaurant.findById(req.user._id);
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+
+  const location = restaurant.locations.id(locationId);
+  if (!location) {
+    throw new ApiError(404, "Location not found");
+  }
+
+  // Update location fields
+  if (locationName !== undefined) location.locationName = locationName;
+  if (address !== undefined) location.address = address;
+  if (city !== undefined) location.city = city;
+  if (state !== undefined) location.state = state;
+  if (zipCode !== undefined) location.zipCode = zipCode;
+  if (country !== undefined) location.country = country;
+  if (phone !== undefined) location.phone = phone;
+  if (totalTables !== undefined) location.totalTables = Number(totalTables);
+  if (isActive !== undefined) location.isActive = isActive;
+
+  await restaurant.save();
+
+  const updatedRestaurant = await Restaurant.findById(req.user._id)
+    .select("-password -refreshToken");
+
+  return res.status(200).json(
+    new ApiResponse(200, updatedRestaurant, "Location updated successfully")
+  );
+});
 
 export {
   restaurantLogin,
@@ -187,4 +328,9 @@ export {
   forgotPassword,
   resetPassword,
   verifyOTP,
+  createLocationPaymentOrder,
+  verifyLocationPaymentAndAdd,
+  updateRestaurantProfile,
+  updateLocation,
 }
+

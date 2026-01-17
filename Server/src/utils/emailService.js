@@ -100,23 +100,24 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
           body {
             margin: 0;
             padding: 0;
-            background-color: #0f1115;
+            background-color: #f8fafc;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-            color: #e5e7eb;
+            color: #1e293b;
           }
       
           .wrapper {
             width: 100%;
             padding: 32px 12px;
+            box-sizing: border-box;
           }
       
           .card {
             max-width: 600px;
             margin: auto;
-            background: #161a20;
+            background: #ffffff;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           }
       
           .header {
@@ -139,14 +140,14 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
           .content h2 {
             margin-top: 0;
             font-size: 22px;
-            color: #ffffff;
+            color: #1e293b;
           }
       
           .content p {
             font-size: 15px;
             line-height: 1.7;
             margin: 16px 0;
-            color: #cbd5e1;
+            color: #475569;
           }
       
           .cta-wrapper {
@@ -163,27 +164,28 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
             font-size: 16px;
             font-weight: 600;
             border-radius: 10px;
-            box-shadow: 0 8px 20px rgba(255, 107, 53, 0.45);
+            box-shadow: 0 4px 12px rgba(247, 147, 30, 0.3);
           }
       
           .cta-button:hover {
             opacity: 0.95;
+            box-shadow: 0 6px 16px rgba(247, 147, 30, 0.4);
           }
       
           .info-box {
-            background: #1e2430;
+            background: #fff7ed;
             border-left: 4px solid #ff6b35;
             padding: 16px;
             margin-top: 24px;
             font-size: 14px;
-            color: #cbd5e1;
+            color: #9a3412;
             border-radius: 8px;
           }
       
           .link-box {
             margin-top: 20px;
             font-size: 13px;
-            color: #9ca3af;
+            color: #64748b;
             word-break: break-all;
           }
       
@@ -196,12 +198,13 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
             text-align: center;
             padding: 22px;
             font-size: 12px;
-            color: #9ca3af;
-            background: #12161c;
+            color: #64748b;
+            background: #f1f5f9;
+            border-top: 1px solid #e2e8f0;
           }
       
           .footer strong {
-            color: #e5e7eb;
+            color: #334155;
           }
         </style>
       </head>
@@ -219,7 +222,7 @@ export const sendSignupEmail = async (email, restaurantName, signupLink) => {
       
               <p>
                 Your restaurant onboarding request has been
-                <strong style="color:#ffffff;">approved</strong> by our admin team.
+                <strong style="color:#16a34a;">approved</strong> by our admin team.
               </p>
       
               <p>
@@ -300,11 +303,11 @@ export const sendRequestReplyEmail = async (email, restaurantName, message) => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>RestroFlow Reply</title>
     </head>
-    <body style="background-color:#0f1115;color:#e5e7eb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:24px;">
-      <div style="max-width:600px;margin:0 auto;background-color:#161a20;border-radius:16px;padding:24px;">
-        <h2 style="margin-top:0;margin-bottom:16px;color:#ffffff;">Hello ${restaurantName || "there"},</h2>
-        <p style="white-space:pre-line;line-height:1.6;color:#cbd5e1;">${message}</p>
-        <p style="margin-top:24px;color:#cbd5e1;">
+    <body style="background-color:#f8fafc;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:24px;">
+      <div style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:16px;padding:24px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <h2 style="margin-top:0;margin-bottom:16px;color:#1e293b;">Hello ${restaurantName || "there"},</h2>
+        <p style="white-space:pre-line;line-height:1.6;color:#475569;">${message}</p>
+        <p style="margin-top:24px;color:#475569;">
           Best regards,<br />
           <strong style="color:#f7931e;">The RestroFlow Team</strong>
         </p>
@@ -329,8 +332,8 @@ export const sendRequestRejectedEmail = async (email, restaurantName, adminNotes
   const subject = "Your RestroFlow request has been rejected";
 
   const reasonBlock = adminNotes && adminNotes.trim()
-    ? `<p style="margin-top:16px;color:#cbd5e1;">Reason from our team:</p>
-       <p style="white-space:pre-line;line-height:1.6;color:#f97373;">${adminNotes.trim()}</p>`
+    ? `<p style="margin-top:16px;color:#475569;">Reason from our team:</p>
+       <p style="white-space:pre-line;line-height:1.6;color:#ef4444;background:#fef2f2;padding:12px;border-radius:8px;border-left:4px solid #ef4444;">${adminNotes.trim()}</p>`
     : "";
 
   const html = `
@@ -341,17 +344,17 @@ export const sendRequestRejectedEmail = async (email, restaurantName, adminNotes
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>RestroFlow Request Status</title>
     </head>
-    <body style="background-color:#0f1115;color:#e5e7eb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:24px;">
-      <div style="max-width:600px;margin:0 auto;background-color:#161a20;border-radius:16px;padding:24px;">
-        <h2 style="margin-top:0;margin-bottom:16px;color:#ffffff;">Hello ${restaurantName || "there"},</h2>
-        <p style="line-height:1.6;color:#cbd5e1;">
+    <body style="background-color:#f8fafc;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:24px;">
+      <div style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:16px;padding:24px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <h2 style="margin-top:0;margin-bottom:16px;color:#1e293b;">Hello ${restaurantName || "there"},</h2>
+        <p style="line-height:1.6;color:#475569;">
           Thank you for your interest in RestroFlow. After reviewing your request, we’re not able to approve it at this time.
         </p>
         ${reasonBlock}
-        <p style="margin-top:24px;color:#cbd5e1;">
+        <p style="margin-top:24px;color:#475569;">
           You can reply to this email if you have questions or want to share more details about your restaurant.
         </p>
-        <p style="margin-top:24px;color:#cbd5e1;">
+        <p style="margin-top:24px;color:#475569;">
           Best regards,<br />
           <strong style="color:#f7931e;">The RestroFlow Team</strong>
         </p>
@@ -386,22 +389,22 @@ export const sendOTPEmail = async (email, otp) => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>RestroFlow Password Reset</title>
     </head>
-    <body style="background-color:#0f1115;color:#e5e7eb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:24px;">
-      <div style="max-width:600px;margin:0 auto;background-color:#161a20;border-radius:16px;padding:24px;">
-        <h2 style="margin-top:0;margin-bottom:16px;color:#ffffff;">Password Reset Request</h2>
-        <p style="line-height:1.6;color:#cbd5e1;">
+    <body style="background-color:#f8fafc;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:24px;">
+      <div style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:16px;padding:24px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <h2 style="margin-top:0;margin-bottom:16px;color:#1e293b;">Password Reset Request</h2>
+        <p style="line-height:1.6;color:#475569;">
           You requested to reset your password. Use the OTP below to proceed:
         </p>
-        <div style="background:#1e2430;padding:16px;border-radius:8px;text-align:center;margin:24px 0;">
+        <div style="background:#fff7ed;padding:16px;border-radius:8px;text-align:center;margin:24px 0;border:1px solid #ffedd5;">
           <span style="font-size:32px;font-weight:bold;color:#f7931e;letter-spacing:4px;">${otp}</span>
         </div>
-        <p style="line-height:1.6;color:#cbd5e1;">
+        <p style="line-height:1.6;color:#475569;">
           This OTP is valid for 10 minutes. Do not share this code with anyone.
         </p>
-        <p style="margin-top:24px;color:#cbd5e1;">
+        <p style="margin-top:24px;color:#475569;">
           If you didn't request this, please ignore this email.
         </p>
-        <p style="margin-top:24px;color:#cbd5e1;">
+        <p style="margin-top:24px;color:#475569;">
           Best regards,<br />
           <strong style="color:#f7931e;">The RestroFlow Team</strong>
         </p>

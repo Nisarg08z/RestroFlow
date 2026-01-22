@@ -29,6 +29,11 @@ const io = new Server(httpServer, {
 setIO(io);
 
 io.on("connection", (socket) => {
+    socket.on("joinRestaurant", (restaurantId) => {
+        socket.join(restaurantId.toString());
+        console.log(`Restaurant ${restaurantId} joined their room`);
+    });
+
     socket.on("disconnect", () => {});
 });
 

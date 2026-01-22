@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getAdminTickets, updateTicketStatus } from "../../utils/api";
 import {
     Search, Filter, ExternalLink, MessageSquare,
     CheckCircle2, XCircle, Clock, AlertCircle, RefreshCw
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { io } from "socket.io-client";
 
 const AdminSupportTickets = () => {
     const [tickets, setTickets] = useState([]);
@@ -12,13 +13,28 @@ const AdminSupportTickets = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
 
-    // Modal state
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [adminResponse, setAdminResponse] = useState("");
     const [updating, setUpdating] = useState(false);
+    const socketRef = useRef(null);
 
     useEffect(() => {
         fetchTickets();
+
+        socketRef.current = io(import.meta.env.VITE_SOCKET_URL, {
+            withCredentials: true,
+        });
+
+        socketRef.current.on("newTicket", (newTicket) => {
+            setTickets((prev) => [newTicket, ...prev]);
+            toast.success(`New ticket from ${newTicket.restaurantId?.restaurantName || "Restaurant"}`);
+        });
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
     }, []);
 
     const fetchTickets = async () => {
@@ -96,7 +112,6 @@ const AdminSupportTickets = () => {
                 </button>
             </div>
 
-            {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -124,7 +139,6 @@ const AdminSupportTickets = () => {
                 </div>
             </div>
 
-            {/* Tickets Table */}
             <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
@@ -199,8 +213,7 @@ const AdminSupportTickets = () => {
                     </table>
                 </div>
             </div>
-
-            {/* Manage Ticket Modal */}
+                            
             {selectedTicket && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -253,21 +266,21 @@ const AdminSupportTickets = () => {
                                     <button
                                         onClick={() => handleUpdateStatus("IN_PROGRESS")}
                                         disabled={updating}
-                                        className="px-4 py-2 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 rounded-lg font-medium transition-colors"
+                                        className="px-4 py-2 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 rounded-lg font-medium transition-colors disabled:opacity-50"
                                     >
                                         Mark In Progress
                                     </button>
                                     <button
                                         onClick={() => handleUpdateStatus("RESOLVED")}
                                         disabled={updating}
-                                        className="px-4 py-2 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg font-medium transition-colors"
+                                        className="px-4 py-2 bg-green-500/10 text-green-500 hover:bg-green-500/20 rounded-lg font-medium transition-colors disabled:opacity-50"
                                     >
                                         Resolve & Send
                                     </button>
                                     <button
                                         onClick={() => handleUpdateStatus("CLOSED")}
                                         disabled={updating}
-                                        className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium transition-colors"
+                                        className="px-4 py-2 bg-gray-500/10 text-gray-500 hover:bg-gray-500/20 rounded-lg font-medium transition-colors disabled:opacity-50"
                                     >
                                         Close Ticket
                                     </button>

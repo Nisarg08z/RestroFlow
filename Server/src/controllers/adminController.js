@@ -96,11 +96,18 @@ const approveRestaurant = asyncHandler(async (req, res) => {
 
 const getAllRestaurants = asyncHandler(async (req, res) => {
   const restaurants = await Restaurant.find()
-    .select("-password -refreshToken")
+    .select("-password")
+
+  const restaurantsWithLoginStatus = restaurants.map(restaurant => {
+    const restaurantObj = restaurant.toObject()
+    restaurantObj.isLoggedIn = !!restaurantObj.refreshToken
+    delete restaurantObj.refreshToken
+    return restaurantObj
+  })
 
   return res
     .status(200)
-    .json(new ApiResponse(200, restaurants, "All restaurants fetched"))
+    .json(new ApiResponse(200, restaurantsWithLoginStatus, "All restaurants fetched"))
 })
 
 const refreshAdminToken = asyncHandler(async (req, res) => {
@@ -173,14 +180,18 @@ const getRestaurantById = asyncHandler(async (req, res) => {
   const { restaurantId } = req.params
 
   const restaurant = await Restaurant.findById(restaurantId)
-    .select("-password -refreshToken")
+    .select("-password")
 
   if (!restaurant) {
     throw new ApiError(404, "Restaurant not found")
   }
 
+  const restaurantObj = restaurant.toObject()
+  restaurantObj.isLoggedIn = !!restaurantObj.refreshToken
+  delete restaurantObj.refreshToken
+
   return res.status(200).json(
-    new ApiResponse(200, restaurant, "Restaurant fetched successfully")
+    new ApiResponse(200, restaurantObj, "Restaurant fetched successfully")
   )
 })
 

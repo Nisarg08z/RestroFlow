@@ -1,15 +1,47 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getRestaurantTickets } from "../../utils/api";
 import { Ticket, Clock, Copy } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { io } from "socket.io-client";
 
-const TicketList = ({ refreshTrigger }) => {
+const TicketList = ({ refreshTrigger, restaurant }) => {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
+    const socketRef = useRef(null);
 
     useEffect(() => {
         fetchTickets();
-    }, [refreshTrigger]);
+
+        socketRef.current = io(import.meta.env.VITE_SOCKET_URL, {
+            withCredentials: true,
+        });
+
+        if (restaurant?._id || restaurant?.id) {
+            const restaurantId = (restaurant._id || restaurant.id).toString();
+            socketRef.current.emit('joinRestaurant', restaurantId);
+        }
+
+        socketRef.current.on('ticketUpdate', (data) => {
+            setTickets((prev) =>
+                prev.map((ticket) =>
+                    ticket._id === data.ticketId
+                        ? {
+                              ...ticket,
+                              status: data.status,
+                              adminResponse: data.adminResponse,
+                          }
+                        : ticket
+                )
+            );
+            toast.success(`Ticket ${data.ticketToken} has been updated`);
+        });
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
+    }, [refreshTrigger, restaurant?._id]);
 
     const fetchTickets = async () => {
         try {
@@ -85,6 +117,12 @@ const TicketList = ({ refreshTrigger }) => {
                                     <p className="text-muted-foreground text-sm line-clamp-2 md:line-clamp-1 max-w-2xl">
                                         {ticket.message}
                                     </p>
+                                    {ticket.adminResponse && (
+                                        <div className="mt-2 p-3 bg-primary/5 border-l-2 border-primary rounded-r-lg">
+                                            <p className="text-xs font-semibold text-primary mb-1">Admin Response:</p>
+                                            <p className="text-sm text-foreground">{ticket.adminResponse}</p>
+                                        </div>
+                                    )}
                                     <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
                                         <span className="flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
@@ -96,7 +134,7 @@ const TicketList = ({ refreshTrigger }) => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3">
                                     <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(ticket.status)} border-transparent`}>
                                         {ticket.status.replace("_", " ")}
                                     </span>

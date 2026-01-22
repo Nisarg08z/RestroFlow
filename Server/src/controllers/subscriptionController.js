@@ -8,7 +8,7 @@ import {
   createRenewalInvoice,
   createExtensionInvoice,
 } from "../utils/invoiceUtils.js"
-import { sendPaymentLinkEmail, sendRenewalReminderEmail } from "../utils/paymentEmails.js"
+import { sendPaymentLinkEmail } from "../utils/paymentEmails.js"
 
 const getAllSubscriptions = asyncHandler(async (req, res) => {
   const { status, search } = req.query
@@ -39,7 +39,7 @@ const getAllSubscriptions = asyncHandler(async (req, res) => {
         return sum + (loc.totalTables || 0)
       }, 0) || 0
       
-      let status = "cancelled"
+      let status = "expired"
       if (sub.isActive) {
         if (endDate && endDate < now) {
           status = "expired"
@@ -98,7 +98,7 @@ const getSubscriptionById = asyncHandler(async (req, res) => {
   const now = new Date()
   const endDate = sub.endDate ? new Date(sub.endDate) : null
 
-  let status = "cancelled"
+  let status = "expired"
   if (sub.isActive) {
     if (endDate && endDate < now) {
       status = "expired"
@@ -349,7 +349,7 @@ const updateSubscription = asyncHandler(async (req, res) => {
   const now = new Date()
   const endDateObj = sub.endDate ? new Date(sub.endDate) : null
 
-  let status = "cancelled"
+  let status = "expired"
   if (sub.isActive) {
     if (endDateObj && endDateObj < now) {
       status = "expired"
@@ -487,7 +487,7 @@ const cancelSubscription = asyncHandler(async (req, res) => {
     price: sub.pricePerMonth || 0,
     totalTables,
     pricePerTable: 50,
-    status: "cancelled",
+    status: "expired",
     startDate: sub.startDate ? sub.startDate.toISOString().split("T")[0] : null,
     endDate: endDateObj ? endDateObj.toISOString().split("T")[0] : null,
     autoRenew: false,
@@ -510,14 +510,13 @@ const getSubscriptionStats = asyncHandler(async (req, res) => {
   let activeCount = 0
   let expiringCount = 0
   let expiredCount = 0
-  let cancelledCount = 0
 
   restaurants.forEach((restaurant) => {
     const sub = restaurant.subscription
     if (!sub || !sub.pricePerMonth) return
 
     const endDate = sub.endDate ? new Date(sub.endDate) : null
-    let status = "cancelled"
+    let status = "expired"
 
     if (sub.isActive) {
       if (endDate && endDate < now) {
@@ -543,7 +542,6 @@ const getSubscriptionStats = asyncHandler(async (req, res) => {
     if (status === "active") activeCount++
     else if (status === "expiring") expiringCount++
     else if (status === "expired") expiredCount++
-    else if (status === "cancelled") cancelledCount++
   })
 
   const stats = {
@@ -551,7 +549,6 @@ const getSubscriptionStats = asyncHandler(async (req, res) => {
     activeSubscriptions: activeCount,
     expiringSoon: expiringCount,
     expiredCount: expiredCount,
-    cancelled: cancelledCount,
     totalSubscriptions: restaurants.length,
   }
 

@@ -8,7 +8,6 @@ import {
   Clock,
   MoreVertical,
   Eye,
-  Edit,
   Trash2,
   Power,
   Loader2,
@@ -59,11 +58,8 @@ const RestaurantStatus = () => {
 
   const getRestaurantStatus = (restaurant) => {
     if (restaurant.isBlocked) return "suspended";
-    if (restaurant.status === "APPROVED" && restaurant.subscription?.isActive) {
+    if (restaurant.isLoggedIn === true) {
       return "active";
-    }
-    if (restaurant.status === "APPROVED" && !restaurant.subscription?.isActive) {
-      return "inactive";
     }
     return "inactive";
   };

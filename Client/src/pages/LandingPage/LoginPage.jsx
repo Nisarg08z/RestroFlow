@@ -37,6 +37,7 @@ export default function LoginPage() {
       }
 
       localStorage.setItem("role", "RESTAURANT")
+      localStorage.setItem("showWelcomeAnimation", "true")
       navigate("/restaurant/welcome")
 
     } catch (error) {

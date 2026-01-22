@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Menu, Bell, Building2, X } from "lucide-react";
+import { Menu, Bell, Building2, MessageSquare } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
-import { getAllRestaurantRequests } from "../../utils/api";
+import { getAllRestaurantRequests, getAdminTickets } from "../../utils/api";
 import toast from "react-hot-toast";
 
 const sectionTitles = {
@@ -47,6 +47,22 @@ const AdminHeader = ({ onMenuClick }) => {
       toast.success(`New request from ${newRequest.restaurantName}`);
     });
 
+    socketRef.current.on("newTicket", (newTicket) => {
+      const notification = {
+        id: newTicket._id,
+        type: "ticket",
+        title: "New Support Ticket",
+        message: `${newTicket.restaurantId?.restaurantName || "Restaurant"} submitted a ticket: ${newTicket.subject}`,
+        ticketToken: newTicket.ticketToken,
+        restaurantName: newTicket.restaurantId?.restaurantName,
+        createdAt: newTicket.createdAt,
+        read: false,
+      };
+      setNotifications((prev) => [notification, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+      toast.success(`New ticket from ${newTicket.restaurantId?.restaurantName || "Restaurant"}`);
+    });
+
     return () => {
       if (socketRef.current) {
         socketRef.current.disconnect();
@@ -72,15 +88,29 @@ const AdminHeader = ({ onMenuClick }) => {
     if (location.pathname === "/admin/dashboard/requests") {
       markAllAsRead();
     }
+    if (location.pathname === "/admin/dashboard/support") {
+      markAllAsRead();
+    }
   }, [location.pathname]);
 
   const fetchNotifications = async () => {
     try {
-      const response = await getAllRestaurantRequests({
-        status: "pending",
-      });
-      const pendingRequests = response.data.data || [];
-      const notificationList = pendingRequests.slice(0, 10).map((req) => ({
+      const [requestsRes, ticketsRes] = await Promise.all([
+        getAllRestaurantRequests({ status: "pending" }).catch(() => ({ data: { data: [] } })),
+        getAdminTickets().catch(() => ({ data: { data: [] } })),
+      ]);
+
+      const pendingRequests = requestsRes.data?.data || [];
+      const allTickets = ticketsRes.data?.data || [];
+
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const newTickets = allTickets.filter(
+        ticket => ticket.status === "OPEN" && new Date(ticket.createdAt) > oneDayAgo
+      );
+
+      const readIds = JSON.parse(localStorage.getItem("adminReadNotifications") || "[]");
+
+      const requestNotifications = pendingRequests.slice(0, 5).map((req) => ({
         id: req._id,
         type: "request",
         title: "Restaurant Request",
@@ -89,43 +119,82 @@ const AdminHeader = ({ onMenuClick }) => {
         ownerName: req.ownerName,
         email: req.email,
         createdAt: req.createdAt,
-        read: location.pathname === "/admin/dashboard/requests", // Mark as read if already on page
+        read: readIds.includes(req._id) || location.pathname === "/admin/dashboard/requests",
       }));
-      setNotifications(notificationList);
-      setUnreadCount(
-        location.pathname === "/admin/dashboard/requests" ? 0 : notificationList.length
-      );
+
+      const ticketNotifications = newTickets.slice(0, 5).map((ticket) => ({
+        id: ticket._id,
+        type: "ticket",
+        title: "New Support Ticket",
+        message: `${ticket.restaurantId?.restaurantName || "Restaurant"} submitted: ${ticket.subject}`,
+        ticketToken: ticket.ticketToken,
+        restaurantName: ticket.restaurantId?.restaurantName,
+        createdAt: ticket.createdAt,
+        read: readIds.includes(ticket._id) || location.pathname === "/admin/dashboard/support",
+      }));
+
+      const allNotifications = [...ticketNotifications, ...requestNotifications]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 10);
+
+      setNotifications(allNotifications);
+
+      const unreadCount = allNotifications.filter(n => !n.read).length;
+      setUnreadCount(unreadCount);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     }
   };
 
+  useEffect(() => {
+    if (!showNotifications) {
+      setNotifications((prev) => prev.filter((n) => !n.read));
+    }
+  }, [showNotifications]);
+
   const markAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((notif) =>
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
+    const readIds = JSON.parse(localStorage.getItem("adminReadNotifications") || "[]");
+    if (!readIds.includes(id)) {
+      readIds.push(id);
+      localStorage.setItem("adminReadNotifications", JSON.stringify(readIds));
+    }
+
+    setNotifications((prev) => prev.map((notif) =>
+      notif.id === id ? { ...notif, read: true } : notif
+    ));
     setUnreadCount((prev) => Math.max(0, prev - 1));
   };
 
   const markAllAsRead = () => {
-    setNotifications((prev) =>
-      prev.map((notif) => ({ ...notif, read: true }))
-    );
+    const readIds = JSON.parse(localStorage.getItem("adminReadNotifications") || "[]");
+    const newReadIds = notifications.map(n => n.id);
+    const updatedReadIds = [...new Set([...readIds, ...newReadIds])];
+    localStorage.setItem("adminReadNotifications", JSON.stringify(updatedReadIds));
+
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
   };
 
   const handleNotificationClick = (notification) => {
     markAsRead(notification.id);
-    navigate("/admin/dashboard/requests");
+    if (notification.type === "ticket") {
+      navigate("/admin/dashboard/support");
+    } else {
+      navigate("/admin/dashboard/requests");
+    }
     setShowNotifications(false);
   };
 
   const handleBellClick = () => {
-    setShowNotifications(!showNotifications);
-    if (!showNotifications) {
-      setUnreadCount(0);
+    if (showNotifications) {
+      setShowNotifications(false);
+    } else {
+      setShowNotifications(true);
+      if (notifications.length > 0) {
+        markAllAsRead();
+      } else {
+        setUnreadCount(0);
+      }
     }
   };
 
@@ -134,7 +203,6 @@ const AdminHeader = ({ onMenuClick }) => {
   return (
     <header className="sticky top-0 z-30 bg-sidebar/95 backdrop-blur-sm border-b border-sidebar-border px-4 md:px-6 lg:px-8 py-4">
       <div className="flex items-center justify-between gap-4">
-        {/* Left */}
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
@@ -189,7 +257,11 @@ const AdminHeader = ({ onMenuClick }) => {
                       >
                         <div className="flex items-start gap-3">
                           <div className="w-10 h-10 bg-sidebar-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Building2 className="w-5 h-5 text-sidebar-primary" />
+                            {notification.type === "ticket" ? (
+                              <MessageSquare className="w-5 h-5 text-sidebar-primary" />
+                            ) : (
+                              <Building2 className="w-5 h-5 text-sidebar-primary" />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-sidebar-foreground">
@@ -211,12 +283,24 @@ const AdminHeader = ({ onMenuClick }) => {
                   )}
                 </div>
                 {notifications.length > 0 && (
-                  <div className="p-2 border-t border-sidebar-border">
+                  <div className="p-2 border-t border-sidebar-border flex gap-2">
                     <button
-                      onClick={() => navigate("/admin/dashboard/requests")}
-                      className="w-full text-sm text-sidebar-primary hover:text-sidebar-primary/80 font-medium"
+                      onClick={() => {
+                        navigate("/admin/dashboard/requests");
+                        setShowNotifications(false);
+                      }}
+                      className="flex-1 text-sm text-sidebar-primary hover:text-sidebar-primary/80 font-medium"
                     >
-                      View All Requests
+                      View Requests
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate("/admin/dashboard/support");
+                        setShowNotifications(false);
+                      }}
+                      className="flex-1 text-sm text-sidebar-primary hover:text-sidebar-primary/80 font-medium"
+                    >
+                      View Tickets
                     </button>
                   </div>
                 )}

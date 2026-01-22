@@ -44,7 +44,7 @@ const SupportPage = () => {
                     </div>
 
                     <div className="space-y-6">
-                        <TicketList refreshTrigger={refreshTrigger} />
+                        <TicketList refreshTrigger={refreshTrigger} restaurant={restaurant} />
                     </div>
                 </div>
             </div>

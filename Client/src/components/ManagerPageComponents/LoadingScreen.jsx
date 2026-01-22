@@ -1,5 +1,4 @@
 import React from "react";
-import { Loader2 } from "lucide-react";
 import Logo from "../../assets/logo.png";
 
 const LoadingScreen = ({ restaurant }) => {
@@ -19,13 +18,14 @@ const LoadingScreen = ({ restaurant }) => {
                     <h1 className="text-3xl md:text-4xl font-bold text-foreground animate-pulse">
                         Welcome to RestroFlow
                     </h1>
-                    {restaurant && (
-                        <p className="text-xl text-muted-foreground font-medium fade-in duration-1000">
+                    {restaurant ? (
+                        <p className="text-xl text-muted-foreground font-medium">
                             {restaurant.restaurantName || restaurant.email}
                         </p>
-                    )}
-                    {!restaurant && (
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary mt-4" />
+                    ) : (
+                        <p className="text-xl text-muted-foreground font-medium">
+                            Loading...
+                        </p>
                     )}
                 </div>
             </div>

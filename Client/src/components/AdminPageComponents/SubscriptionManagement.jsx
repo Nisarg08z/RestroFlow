@@ -124,8 +124,14 @@ const SubscriptionManagement = () => {
     if (status === "active") return "bg-green-500/10 text-green-500";
     if (status === "expiring") return "bg-yellow-500/10 text-yellow-500";
     if (status === "expired") return "bg-red-500/10 text-red-500";
-    if (status === "cancelled") return "bg-muted text-muted-foreground";
     return "bg-muted text-muted-foreground";
+  };
+
+  const formatStatusDisplay = (status) => {
+    if (status === "active") return "Active";
+    if (status === "expiring") return "Expiring Soon";
+    if (status === "expired") return "Expired";
+    return status;
   };
 
   const canRenew = (restaurantId) => {
@@ -492,7 +498,6 @@ const SubscriptionManagement = () => {
           <h3 className="text-base md:text-lg font-semibold text-foreground">All Subscriptions</h3>
         </div>
 
-        {/* Mobile Card View */}
         <div className="block md:hidden divide-y divide-border">
           {filteredSubs.length === 0 ? (
             <div className="py-8 text-center px-4">
@@ -518,8 +523,8 @@ const SubscriptionManagement = () => {
                       <p className="text-xs text-muted-foreground truncate">{sub.id}</p>
                     </div>
                   </div>
-                  <span className={`px-2 py-1 text-xs rounded-full capitalize flex-shrink-0 ${statusColor(sub.status)}`}>
-                    {sub.status}
+                  <span className={`px-2 py-1 text-xs rounded-full flex-shrink-0 ${statusColor(sub.status)}`}>
+                    {formatStatusDisplay(sub.status)}
                   </span>
                 </div>
 
@@ -573,7 +578,6 @@ const SubscriptionManagement = () => {
           )}
         </div>
 
-        {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto -mx-4 md:mx-0">
           <div className="inline-block min-w-full align-middle">
             <table className="w-full min-w-[800px]">
@@ -649,8 +653,8 @@ const SubscriptionManagement = () => {
                         </div>
                       </td>
                       <td className="py-3 md:py-4 px-2 md:px-4">
-                        <span className={`px-2 py-1 text-xs rounded-full capitalize ${statusColor(sub.status)}`}>
-                          {sub.status}
+                        <span className={`px-2 py-1 text-xs rounded-full ${statusColor(sub.status)}`}>
+                          {formatStatusDisplay(sub.status)}
                         </span>
                       </td>
                       <td className="py-3 md:py-4 px-2 md:px-4 text-muted-foreground text-xs md:text-sm hidden md:table-cell">
@@ -792,162 +796,126 @@ const SubscriptionManagement = () => {
                       })}
                     </div>
                     <div className="pt-3 border-t border-border bg-muted rounded-lg p-3 sm:p-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          <span className="font-medium text-foreground">Total Tables: </span>
-                          <span className="text-base font-semibold text-foreground">
-                            {locationDetails.reduce((sum, loc) => sum + (loc.editTables || 0), 0)}
-                          </span>
-                        </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          <span className="font-medium text-foreground">Price: </span>
-                          <span className="text-base font-semibold text-primary">₹{calculatedPrice}</span>
-                          <span className="text-muted-foreground">/mo</span>
-                        </p>
+                      <div className="flex justify-between items-center text-sm font-medium text-foreground">
+                        <span>Total Tables</span>
+                        <span>{locationDetails.reduce((sum, loc) => sum + (loc.editTables || 0), 0)}</span>
                       </div>
-                      {locationDetails.reduce((sum, loc) => sum + (loc.editTables || 0), 0) > selectedSub.totalTables && (
-                        <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          Prorated invoice will be created for extra tables
-                        </p>
-                      )}
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-medium text-foreground">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 md:mb-2">
                       Total Tables
                     </label>
                     <input
                       type="number"
-                      min="1"
+                      min="0"
                       max="1000"
                       value={editTotalTables}
                       onChange={(e) => handleTablesChange(e.target.value)}
-                      className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm sm:text-base"
+                      className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Price: ₹{calculatedPrice}/mo (₹{PRICE_PER_TABLE} per table)
-                      {editTotalTables > selectedSub.totalTables && (
-                        <span className="block mt-1 text-yellow-500">
-                          Prorated invoice will be created for extra tables
-                        </span>
-                      )}
-                    </p>
                   </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-medium text-foreground">
-                      Add Months (Extension)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="12"
-                      value={editMonthsToAdd}
-                      onChange={(e) => handleMonthsChange(e.target.value)}
-                      className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="0"
-                    />
-                    {editMonthsToAdd > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        Price: <span className="font-medium text-primary">₹{calculatedExtensionPrice}</span>
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-medium text-foreground">
-                      End Date {editMonthsToAdd > 0 && <span className="text-muted-foreground font-normal text-xs">(auto)</span>}
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 md:mb-2">
+                    Add Months (Optional)
+                  </label>
+                  <select
+                    value={editMonthsToAdd}
+                    onChange={(e) => handleMonthsChange(e.target.value)}
+                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  >
+                    <option value="0">Don't add time</option>
+                    <option value="1">1 Month</option>
+                    <option value="3">3 Months</option>
+                    <option value="6">6 Months</option>
+                    <option value="12">12 Months</option>
+                  </select>
+                </div>
+
+                {editMonthsToAdd === 0 && (
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 md:mb-2">
+                      End Date
                     </label>
                     <input
                       type="date"
-                      value={editEndDate}
+                      value={editEndDate ? new Date(editEndDate).toISOString().split("T")[0] : ""}
                       onChange={(e) => setEditEndDate(e.target.value)}
-                      disabled={editMonthsToAdd > 0}
-                      className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
-                </div>
-                {editMonthsToAdd > 0 && (
-                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2 sm:p-3">
-                    <p className="text-xs text-yellow-500 flex items-center gap-1.5">
-                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                      Payment invoice will be sent to restaurant for {editMonthsToAdd} month(s) extension
-                    </p>
-                  </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="space-y-2 p-3 bg-muted rounded-lg border border-border">
-                    <label className="text-xs sm:text-sm font-medium text-foreground flex items-center justify-between mb-2">
-                      <span>Auto Renew</span>
-                      <button
-                        type="button"
-                        onClick={() => setEditAutoRenew(!editAutoRenew)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card ${editAutoRenew ? "bg-primary" : "bg-border"
-                          }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editAutoRenew ? "translate-x-6" : "translate-x-1"
-                            }`}
-                        />
-                      </button>
-                    </label>
-                    <p className="text-xs text-muted-foreground">
-                      {editAutoRenew
-                        ? "Renewal reminders will be sent automatically"
-                        : "No automatic renewal reminders"}
-                    </p>
+
+                <div className="flex items-center gap-2 md:gap-3 py-2">
+                  <input
+                    type="checkbox"
+                    id="autoRenew"
+                    checked={editAutoRenew}
+                    onChange={(e) => setEditAutoRenew(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="autoRenew" className="text-xs sm:text-sm font-medium text-foreground cursor-pointer">
+                    Enable Auto Renew
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-2 md:gap-3 pb-2">
+                  <input
+                    type="checkbox"
+                    id="sendEmail"
+                    checked={sendPaymentEmail}
+                    onChange={(e) => setSendPaymentEmail(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="sendEmail" className="text-xs sm:text-sm font-medium text-foreground cursor-pointer">
+                    Send Payment Link via Email
+                  </label>
+                </div>
+
+                <div className="bg-muted p-3 sm:p-4 rounded-lg space-y-2 text-xs sm:text-sm">
+                  <div className="flex justify-between items-center text-muted-foreground">
+                    <span>Base Price ({(locationDetails.length > 0 ? locationDetails.reduce((sum, loc) => sum + (loc.editTables || 0), 0) : editTotalTables) || 0} tables)</span>
+                    <span>₹{calculatedPrice}/mo</span>
                   </div>
-                  {(editTotalTables > selectedSub.totalTables || editMonthsToAdd > 0 || locationDetails.some(loc => loc.editTables > loc.totalTables)) && (
-                    <div className="space-y-2 p-3 bg-muted rounded-lg border border-border">
-                      <label className="text-xs sm:text-sm font-medium text-foreground flex items-center justify-between mb-2">
-                        <span>Send Payment Email</span>
-                        <button
-                          type="button"
-                          onClick={() => setSendPaymentEmail(!sendPaymentEmail)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card ${sendPaymentEmail ? "bg-primary" : "bg-border"
-                            }`}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${sendPaymentEmail ? "translate-x-6" : "translate-x-1"
-                              }`}
-                          />
-                        </button>
-                      </label>
-                      <p className="text-xs text-muted-foreground">
-                        {sendPaymentEmail
-                          ? "Payment link will be sent via email"
-                          : "No email sent (for family/special cases)"}
-                      </p>
+                  {calculatedExtensionPrice > 0 && (
+                    <div className="flex justify-between items-center text-muted-foreground">
+                      <span>Extension ({editMonthsToAdd} months)</span>
+                      <span>+₹{calculatedExtensionPrice}</span>
                     </div>
                   )}
+                  <div className="pt-2 border-t border-border flex justify-between items-center font-semibold text-foreground">
+                    <span>New Monthly Total</span>
+                    <span>₹{calculatedPrice}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
+
+                <div className="flex gap-3 mt-6">
                   <button
-                    className="flex-1 bg-primary text-primary-foreground py-2.5 sm:py-2 rounded-lg hover:bg-primary/90 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
-                    onClick={handleSaveChanges}
-                    disabled={updating}
-                  >
-                    {updating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="hidden sm:inline">Saving...</span>
-                        <span className="sm:hidden">Saving</span>
-                      </>
-                    ) : (
-                      "Save Changes"
-                    )}
-                  </button>
-                  <button
-                    className="px-4 py-2.5 sm:py-2 border border-border rounded-lg text-foreground hover:bg-muted disabled:opacity-50 text-sm sm:text-base"
                     onClick={() => {
                       setShowEdit(false);
                       setError(null);
                     }}
-                    disabled={updating}
+                    className="flex-1 px-4 py-2 border border-border rounded-lg text-foreground hover:bg-muted font-medium transition-colors text-xs sm:text-sm"
                   >
                     Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveChanges}
+                    disabled={
+                      updating ||
+                      (editTotalTables === (selectedSub?.totalTables || 0) &&
+                        editEndDate === selectedSub?.endDate &&
+                        editAutoRenew === selectedSub?.autoRenew &&
+                        editMonthsToAdd === 0 &&
+                        locationDetails.every(loc => loc.editTables === loc.totalTables))
+                    }
+                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs sm:text-sm"
+                  >
+                    {updating && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Save Changes
                   </button>
                 </div>
               </div>

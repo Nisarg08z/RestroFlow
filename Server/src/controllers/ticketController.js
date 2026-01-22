@@ -3,17 +3,15 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Ticket } from "../models/ticketModel.js";
 import crypto from "crypto";
-import { sendGenericEmail } from "../utils/emailService.js";
-import { Restaurant } from "../models/restaurantModel.js";
+import { getIO } from "../utils/socket.js";
 
-// Generate a unique token/ID for the ticket
 const generateTicketToken = () => {
     return "TKT-" + crypto.randomBytes(4).toString("hex").toUpperCase();
 };
 
 export const createTicket = asyncHandler(async (req, res) => {
     const { subject, message, priority } = req.body;
-    const restaurantId = req.restaurant._id;
+    const restaurantId = req.user._id;
 
     if (!subject || !message) {
         throw new ApiError(400, "Subject and message are required");
@@ -29,13 +27,38 @@ export const createTicket = asyncHandler(async (req, res) => {
         priority: priority || "MEDIUM",
     });
 
+    const populatedTicket = await Ticket.findById(ticket._id)
+        .populate("restaurantId", "restaurantName email phone");
+
+    try {
+        const io = getIO();
+        if (io) {
+            io.emit('newTicket', {
+                _id: populatedTicket._id,
+                ticketToken: populatedTicket.ticketToken,
+                subject: populatedTicket.subject,
+                message: populatedTicket.message,
+                priority: populatedTicket.priority,
+                status: populatedTicket.status,
+                restaurantId: {
+                    _id: populatedTicket.restaurantId._id,
+                    restaurantName: populatedTicket.restaurantId.restaurantName,
+                    email: populatedTicket.restaurantId.email,
+                },
+                createdAt: populatedTicket.createdAt,
+            });
+        }
+    } catch (error) {
+        console.error("Failed to emit new ticket notification:", error);
+    }
+
     return res
         .status(201)
         .json(new ApiResponse(201, ticket, "Ticket created successfully"));
 });
 
 export const getRestaurantTickets = asyncHandler(async (req, res) => {
-    const restaurantId = req.restaurant._id;
+    const restaurantId = req.user._id;
 
     const tickets = await Ticket.find({ restaurantId }).sort({ createdAt: -1 });
 
@@ -43,8 +66,6 @@ export const getRestaurantTickets = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, tickets, "Tickets fetched successfully"));
 });
-
-// Admin Controllers
 
 export const getAllTickets = asyncHandler(async (req, res) => {
     const tickets = await Ticket.find()
@@ -71,26 +92,23 @@ export const updateTicketStatus = asyncHandler(async (req, res) => {
 
     await ticket.save();
 
-    // Send email notification to restaurant if admin responded or closed
-    if (adminResponse || status === 'RESOLVED' || status === 'CLOSED') {
+    if (adminResponse || status) {
         try {
-            const restaurantEmail = ticket.restaurantId?.email;
-            if (restaurantEmail) {
-                const emailSubject = `Update on Ticket ${ticket.ticketToken}: ${ticket.subject}`;
-                const emailHtml = `
-                    <p>Hello ${ticket.restaurantId.restaurantName},</p>
-                    <p>There is an update on your support ticket <strong>${ticket.ticketToken}</strong>.</p>
-                    <p><strong>Status:</strong> ${ticket.status}</p>
-                    ${adminResponse ? `<p><strong>Admin Response:</strong> ${adminResponse}</p>` : ''}
-                    <p>Thank you,<br>RestroFlow Admin Team</p>
-                `;
-                const emailText = `Update on Ticket ${ticket.ticketToken}\nStatus: ${ticket.status}\n${adminResponse ? `Admin Response: ${adminResponse}` : ''}`;
-
-                await sendGenericEmail(restaurantEmail, emailSubject, emailHtml, emailText);
+            const io = getIO();
+            if (io) {
+                const restaurantId = ticket.restaurantId?._id 
+                    ? ticket.restaurantId._id.toString() 
+                    : ticket.restaurantId?.toString() || ticket.restaurantId;
+                io.to(restaurantId).emit('ticketUpdate', {
+                    ticketId: ticket._id,
+                    ticketToken: ticket.ticketToken,
+                    status: ticket.status,
+                    adminResponse: ticket.adminResponse,
+                    subject: ticket.subject,
+                });
             }
         } catch (error) {
-            console.error("Failed to send ticket update email:", error);
-            // Don't fail the request if email fails
+            console.error("Failed to emit ticket update notification:", error);
         }
     }
 

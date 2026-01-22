@@ -11,7 +11,7 @@ import {
   Loader2,
   Calendar,
 } from "lucide-react";
-import { getAllRestaurants, getAllRestaurantRequests } from "../../utils/api";
+import { getAllRestaurants, getAllRestaurantRequests, getAdminTickets } from "../../utils/api";
 import toast from "react-hot-toast";
 
 const AdminDashboard = () => {
@@ -24,6 +24,7 @@ const AdminDashboard = () => {
     openTickets: 0,
   });
   const [recentRequests, setRecentRequests] = useState([]);
+  const [recentTickets, setRecentTickets] = useState([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -33,13 +34,15 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
 
-      const [restaurantsRes, requestsRes] = await Promise.all([
+      const [restaurantsRes, requestsRes, ticketsRes] = await Promise.all([
         getAllRestaurants().catch(() => ({ data: { data: [] } })),
         getAllRestaurantRequests().catch(() => ({ data: { data: [] } })),
+        getAdminTickets().catch(() => ({ data: { data: [] } })),
       ]);
 
       const restaurants = restaurantsRes.data?.data || [];
       const requests = requestsRes.data?.data || [];
+      const tickets = ticketsRes.data?.data || [];
 
       const totalRestaurants = restaurants.length;
       const pendingRequests = requests.filter((r) => r.status === "pending").length;
@@ -48,17 +51,26 @@ const AdminDashboard = () => {
         (r) => r.subscription?.isActive === true
       ).length;
 
+      const openTickets = tickets.filter(
+        (t) => t.status === "OPEN" || t.status === "IN_PROGRESS"
+      ).length;
+
       setStats({
         totalRestaurants,
         pendingRequests,
         activeSubscriptions,
-        openTickets: 0,
+        openTickets,
       });
 
       const recent = requests
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .slice(0, 5);
       setRecentRequests(recent);
+
+      const recentTicketsList = tickets
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+      setRecentTickets(recentTicketsList);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       toast.error("Failed to load dashboard data");
@@ -105,10 +117,9 @@ const AdminDashboard = () => {
     {
       label: "Open Tickets",
       value: stats.openTickets,
-      change: "Coming Soon",
+      change: "",
       icon: HeadphonesIcon,
       color: "text-purple-500",
-      comingSoon: true,
     },
   ];
 
@@ -231,16 +242,54 @@ const AdminDashboard = () => {
             </button>
           </div>
 
-          <div className="p-6">
-            <div className="h-full flex items-center justify-center bg-muted rounded-lg border border-border py-12">
-              <div className="text-center">
+          <div className="p-6 space-y-4">
+            {recentTickets.length === 0 ? (
+              <div className="text-center py-8">
                 <HeadphonesIcon className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-foreground font-medium mb-1">Coming Soon</p>
-                <p className="text-sm text-muted-foreground">
-                  Support tickets feature will be available soon
-                </p>
+                <p className="text-muted-foreground">No recent tickets</p>
               </div>
-            </div>
+            ) : (
+              recentTickets.map((ticket) => (
+                <div
+                  key={ticket._id}
+                  className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <HeadphonesIcon className="w-5 h-5 text-purple-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {ticket.ticketToken} - {ticket.subject}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {ticket.restaurantId?.restaurantName || "Unknown Restaurant"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right flex-shrink-0 ml-3">
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        ticket.status === "OPEN"
+                          ? "bg-blue-500/10 text-blue-500"
+                          : ticket.status === "IN_PROGRESS"
+                          ? "bg-yellow-500/10 text-yellow-500"
+                          : ticket.status === "RESOLVED"
+                          ? "bg-green-500/10 text-green-500"
+                          : "bg-gray-500/10 text-gray-500"
+                      }`}
+                    >
+                      {ticket.status.replace("_", " ")}
+                    </span>
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatTimeAgo(ticket.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

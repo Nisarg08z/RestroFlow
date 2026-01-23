@@ -58,7 +58,7 @@ const ManagerWelcome = () => {
     };
 
     const handleLocationSelect = (locationId) => {
-        console.log("Selected location:", locationId);
+        navigate(`/restaurant/location/${locationId}`);
     };
 
     const handleLocationAdded = () => {

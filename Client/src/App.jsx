@@ -21,6 +21,9 @@ import NotFound from './pages/NotFound';
 import ManagerWelcome from './pages/ManagerPage/ManagerWelcome';
 import ProfilePage from './pages/ManagerPage/ProfilePage';
 import SupportPage from './pages/ManagerPage/SupportPage';
+import LocationDashboard from './pages/ManagerPage/LocationDashboard';
+import AllQRCodesPage from './pages/ManagerPage/AllQRCodesPage';
+import TableMenu from './pages/TableMenu';
 
 const LandingGate = ({ children }) => {
   const { role, loading } = useContext(AuthContext);
@@ -122,6 +125,24 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="restaurant/location/:locationId"
+            element={
+              <ProtectedRoute requiredRole="RESTAURANT">
+                <LocationDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="restaurant/location/:locationId/qr-codes"
+            element={
+              <ProtectedRoute requiredRole="RESTAURANT">
+                <AllQRCodesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="menu/:restaurantId/:locationId/:tableNumber" element={<TableMenu />} />
 
           <Route path="*" element={<NotFound />} />
 

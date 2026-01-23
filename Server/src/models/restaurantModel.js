@@ -78,6 +78,21 @@ const restaurantSchema = new Schema(
           type: Number,
           required: true,
         },
+        tableQRCodes: [
+          {
+            tableNumber: {
+              type: Number,
+              required: true,
+            },
+            qrImageUrl: {
+              type: String,
+              required: true,
+            },
+            qrPublicId: {
+              type: String,
+            },
+          },
+        ],
         isActive: {
           type: Boolean,
           default: true,

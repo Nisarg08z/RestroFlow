@@ -53,6 +53,12 @@ export const updateRestaurantProfile = (data) =>
 export const updateLocation = (locationId, data) =>
   api.patch(`/restaurant/locations/${locationId}`, data)
 
+export const generateLocationQRCodes = (locationId) =>
+  api.post(`/restaurant/locations/${locationId}/generate-qr`)
+
+export const regenerateTableQRCode = (locationId, tableNumber) =>
+  api.post(`/restaurant/locations/${locationId}/qr/${tableNumber}/regenerate`)
+
 /* ================= ADMIN ================= */
 
 export const adminLogin = (data) =>

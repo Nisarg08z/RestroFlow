@@ -1,0 +1,48 @@
+import React, { useState } from "react";
+import { Power } from "lucide-react";
+
+const RestaurantOpener = ({ onOpen, locationName }) => {
+    const [isHovered, setIsHovered] = useState(false);
+
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[70vh] animate-in fade-in duration-700 p-4">
+            <div className="text-center space-y-8 max-w-md mx-auto">
+                <div className="space-y-2">
+                    <h2 className="text-2xl md:text-4xl font-bold text-foreground">
+                        {locationName} is Closed
+                    </h2>
+                    <p className="text-muted-foreground text-base md:text-lg">
+                        Ready to start the day? Open the restaurant to access billing and management tools.
+                    </p>
+                </div>
+
+                <div
+                    className="relative group cursor-pointer inline-flex justify-center"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    onClick={onOpen}
+                >
+                    <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping opacity-75 duration-[3000ms]" />
+                    <div className="absolute inset-4 bg-primary/20 rounded-full animate-ping opacity-75 animation-delay-500 duration-[3000ms]" />
+
+                    <div className={`
+                        relative w-32 h-32 md:w-40 md:h-40 rounded-full 
+                        flex items-center justify-center 
+                        bg-gradient-to-br from-primary to-primary/80 
+                        shadow-2xl shadow-primary/30 
+                        transition-all duration-500 ease-out border-4 border-background
+                        ${isHovered ? 'scale-105 shadow-primary/50' : 'scale-100'}
+                    `}>
+                        <Power className={`w-12 h-12 md:w-16 md:h-16 text-primary-foreground transition-all duration-500 ${isHovered ? 'opacity-100 scale-110' : 'opacity-90'}`} />
+                    </div>
+                </div>
+
+                <p className="text-sm font-medium text-muted-foreground animate-pulse">
+                    Power On to Begin Operations
+                </p>
+            </div>
+        </div>
+    );
+};
+
+export default RestaurantOpener;

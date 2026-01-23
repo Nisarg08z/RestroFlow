@@ -6,7 +6,9 @@ import jwt from "jsonwebtoken"
 import { generateAccessAndRefreshTokens } from "../utils/generateTokens.js"
 
 import { sendOTPEmail } from "../utils/emailService.js"
-import { createOrder, verifyPayment } from "../utils/razorpay.js";
+import { createOrder, verifyPayment } from "../utils/razorpay.js"
+import QRCode from "qrcode"
+import cloudinary, { uploadImageFromDataUrl } from "../utils/cloudinary.js"
 
 const restaurantLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body
@@ -108,7 +110,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User with this email does not exist")
   }
 
-  // Generate 6 digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString()
 
   restaurant.resetPasswordOTP = otp
@@ -299,7 +300,6 @@ const updateLocation = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Location not found");
   }
 
-  // Update location fields
   if (locationName !== undefined) location.locationName = locationName;
   if (address !== undefined) location.address = address;
   if (city !== undefined) location.city = city;
@@ -320,6 +320,175 @@ const updateLocation = asyncHandler(async (req, res) => {
   );
 });
 
+const generateLocationQRCodes = asyncHandler(async (req, res) => {
+  const { locationId } = req.params
+
+  const restaurant = await Restaurant.findById(req.user._id)
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found")
+  }
+
+  const location = restaurant.locations.id(locationId)
+  if (!location) {
+    throw new ApiError(404, "Location not found")
+  }
+
+  if (!location.totalTables || location.totalTables <= 0) {
+    throw new ApiError(400, "Location has no tables configured")
+  }
+
+  if (!location.tableQRCodes) {
+    location.tableQRCodes = []
+  }
+
+  const existingByTable = new Map(
+    location.tableQRCodes.map((entry) => [entry.tableNumber, entry])
+  )
+
+  const baseUrlFromEnv = process.env.FRONTEND_URL
+  const origin = req.headers.origin
+  const baseUrl =
+    (baseUrlFromEnv && baseUrlFromEnv.trim() !== "")
+      ? baseUrlFromEnv
+      : origin || "http://localhost:5173"
+
+  const created = []
+
+  for (let tableNumber = 1; tableNumber <= location.totalTables; tableNumber++) {
+    if (existingByTable.has(tableNumber)) {
+      continue
+    }
+
+    const tableUrl = `${baseUrl.replace(/\/$/, "")}/menu/${restaurant._id}/${location._id}/${tableNumber}`
+
+    const dataUrl = await QRCode.toDataURL(tableUrl, {
+      width: 512,
+      margin: 2,
+      errorCorrectionLevel: "H",
+    })
+
+    const uploadResult = await uploadImageFromDataUrl(
+      dataUrl,
+      `restroflow/qr-codes/${restaurant._id}/${location._id}`
+    )
+
+    const record = {
+      tableNumber,
+      qrImageUrl: uploadResult.secure_url,
+      qrPublicId: uploadResult.public_id,
+    }
+
+    location.tableQRCodes.push(record)
+    created.push(record)
+  }
+
+  if (location.tableQRCodes.length === location.totalTables) {
+    restaurant.qrCodesGenerated = true
+  }
+
+  await restaurant.save()
+
+  const message =
+    created.length > 0
+      ? "QR codes generated successfully"
+      : "QR codes already exist for all tables in this location"
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      locationId: location._id,
+      totalTables: location.totalTables,
+      createdCount: created.length,
+      tableQRCodes: location.tableQRCodes,
+    }, message)
+  )
+})
+  
+const regenerateTableQRCode = asyncHandler(async (req, res) => {
+  const { locationId, tableNumber } = req.params
+  const tableNum = Number(tableNumber)
+
+  if (!tableNum || Number.isNaN(tableNum) || tableNum <= 0) {
+    throw new ApiError(400, "Valid table number is required")
+  }
+
+  const restaurant = await Restaurant.findById(req.user._id)
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found")
+  }
+
+  const location = restaurant.locations.id(locationId)
+  if (!location) {
+    throw new ApiError(404, "Location not found")
+  }
+
+  if (!location.totalTables || tableNum > location.totalTables) {
+    throw new ApiError(400, "Table number is out of range for this location")
+  }
+
+  if (!location.tableQRCodes) {
+    location.tableQRCodes = []
+  }
+
+  const existingIndex = location.tableQRCodes.findIndex(
+    (entry) => entry.tableNumber === tableNum
+  )
+  const existing = existingIndex >= 0 ? location.tableQRCodes[existingIndex] : null
+
+  if (existing?.qrPublicId) {
+    try {
+      await cloudinary.uploader.destroy(existing.qrPublicId)
+    } catch {
+    }
+  }
+
+  const baseUrlFromEnv = process.env.FRONTEND_URL
+  const origin = req.headers.origin
+  const baseUrl =
+    (baseUrlFromEnv && baseUrlFromEnv.trim() !== "")
+      ? baseUrlFromEnv
+      : origin || "http://localhost:5173"
+
+  const tableUrl = `${baseUrl.replace(/\/$/, "")}/menu/${restaurant._id}/${location._id}/${tableNum}`
+
+  const dataUrl = await QRCode.toDataURL(tableUrl, {
+    width: 512,
+    margin: 2,
+    errorCorrectionLevel: "H",
+  })
+
+  const uploadResult = await uploadImageFromDataUrl(
+    dataUrl,
+    `restroflow/qr-codes/${restaurant._id}/${location._id}`
+  )
+
+  if (existingIndex >= 0) {
+    location.tableQRCodes[existingIndex].qrImageUrl = uploadResult.secure_url
+    location.tableQRCodes[existingIndex].qrPublicId = uploadResult.public_id
+  } else {
+    location.tableQRCodes.push({
+      tableNumber: tableNum,
+      qrImageUrl: uploadResult.secure_url,
+      qrPublicId: uploadResult.public_id,
+    })
+  }
+
+  restaurant.markModified("locations")
+
+  await restaurant.save()
+
+  const updatedRecord =
+    location.tableQRCodes.find((entry) => entry.tableNumber === tableNum) ||
+    {
+      tableNumber: tableNum,
+      qrImageUrl: uploadResult.secure_url,
+      qrPublicId: uploadResult.public_id,
+    }
+
+  return res.status(200).json(
+    new ApiResponse(200, updatedRecord, "Table QR code regenerated successfully")
+  )
+})
+
 export {
   restaurantLogin,
   restaurantLogout,
@@ -332,5 +501,7 @@ export {
   verifyLocationPaymentAndAdd,
   updateRestaurantProfile,
   updateLocation,
+  generateLocationQRCodes,
+  regenerateTableQRCode,
 }
 

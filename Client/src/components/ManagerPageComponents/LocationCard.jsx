@@ -6,13 +6,15 @@ const LocationCard = ({ location, onSelect }) => {
         .filter(Boolean)
         .join(", ") || "No address provided";
 
+    const isActive = location?.isActive === true;
+
     return (
         <div
             onClick={() => onSelect(location._id || location.id)}
             className="group bg-card hover:bg-muted/50 border border-border hover:border-primary/50 cursor-pointer rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative overflow-hidden"
         >
             <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                <div className={`w-2 h-2 rounded-full ${isActive ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"}`} />
             </div>
 
             <div className="space-y-4">
@@ -37,8 +39,8 @@ const LocationCard = ({ location, onSelect }) => {
                             {location.totalTables || 0}
                         </span>
                     </div>
-                    <span className="px-2 py-1 rounded-full bg-green-500/10 text-green-500 font-medium text-xs">
-                        Active
+                    <span className={`px-2 py-1 rounded-full font-medium text-xs ${isActive ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}`}>
+                        {isActive ? "Open" : "Closed"}
                     </span>
                 </div>
             </div>

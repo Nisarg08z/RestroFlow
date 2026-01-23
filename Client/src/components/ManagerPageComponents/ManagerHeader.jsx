@@ -271,14 +271,14 @@ const ManagerHeader = ({ restaurant }) => {
                                                             <MessageSquare className="w-5 h-5 text-primary" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-medium text-foreground">
+                                                            <p className="text-sm font-medium text-foreground line-clamp-1">
                                                                 {notification.title}
                                                             </p>
-                                                            <p className="text-xs text-muted-foreground mt-1">
+                                                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 break-words">
                                                                 {notification.message}
                                                             </p>
                                                             {notification.adminResponse && (
-                                                                <p className="text-xs text-primary mt-1 line-clamp-2">
+                                                                <p className="text-xs text-primary mt-1 line-clamp-2 break-words">
                                                                     Admin: {notification.adminResponse}
                                                                 </p>
                                                             )}

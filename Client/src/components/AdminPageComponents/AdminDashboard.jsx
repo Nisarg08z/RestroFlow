@@ -44,6 +44,9 @@ const AdminDashboard = () => {
       const requests = requestsRes.data?.data || [];
       const tickets = ticketsRes.data?.data || [];
 
+      console.log("Dashboard Debug - Tickets fetched:", tickets);
+      console.log("Dashboard Debug - Open Tickets (OPEN + IN_PROGRESS):", tickets.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS"));
+
       const totalRestaurants = restaurants.length;
       const pendingRequests = requests.filter((r) => r.status === "pending").length;
 
@@ -146,10 +149,10 @@ const AdminDashboard = () => {
               {stat.change && (
                 <span
                   className={`text-xs font-medium ${stat.comingSoon
-                      ? "text-muted-foreground"
-                      : stat.change.startsWith("+")
-                        ? "text-green-500"
-                        : "text-red-500"
+                    ? "text-muted-foreground"
+                    : stat.change.startsWith("+")
+                      ? "text-green-500"
+                      : "text-red-500"
                     }`}
                 >
                   {stat.change}
@@ -210,10 +213,10 @@ const AdminDashboard = () => {
                   <div className="text-right flex-shrink-0 ml-3">
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${req.status === "pending"
-                          ? "bg-yellow-500/10 text-yellow-500"
-                          : req.status === "approved"
-                            ? "bg-green-500/10 text-green-500"
-                            : "bg-red-500/10 text-red-500"
+                        ? "bg-yellow-500/10 text-yellow-500"
+                        : req.status === "approved"
+                          ? "bg-green-500/10 text-green-500"
+                          : "bg-red-500/10 text-red-500"
                         }`}
                     >
                       {req.status}
@@ -270,15 +273,14 @@ const AdminDashboard = () => {
 
                   <div className="text-right flex-shrink-0 ml-3">
                     <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        ticket.status === "OPEN"
+                      className={`px-2 py-1 text-xs rounded-full ${ticket.status === "OPEN"
                           ? "bg-blue-500/10 text-blue-500"
                           : ticket.status === "IN_PROGRESS"
-                          ? "bg-yellow-500/10 text-yellow-500"
-                          : ticket.status === "RESOLVED"
-                          ? "bg-green-500/10 text-green-500"
-                          : "bg-gray-500/10 text-gray-500"
-                      }`}
+                            ? "bg-yellow-500/10 text-yellow-500"
+                            : ticket.status === "RESOLVED"
+                              ? "bg-green-500/10 text-green-500"
+                              : "bg-gray-500/10 text-gray-500"
+                        }`}
                     >
                       {ticket.status.replace("_", " ")}
                     </span>

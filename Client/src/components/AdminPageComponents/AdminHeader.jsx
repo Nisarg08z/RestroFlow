@@ -264,10 +264,10 @@ const AdminHeader = ({ onMenuClick }) => {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-sidebar-foreground">
+                            <p className="text-sm font-medium text-sidebar-foreground line-clamp-1">
                               {notification.title}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 break-words">
                               {notification.message}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">

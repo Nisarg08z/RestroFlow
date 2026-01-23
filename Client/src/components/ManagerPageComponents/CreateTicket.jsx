@@ -32,25 +32,25 @@ const CreateTicket = ({ onSuccess }) => {
 
     return (
         <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-border bg-muted/30">
-                <h2 className="text-xl font-semibold flex items-center gap-2 text-foreground">
-                    <MessageSquare className="w-5 h-5 text-primary" />
+            <div className="p-4 sm:p-5 md:p-6 border-b border-border bg-muted/30">
+                <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2 text-foreground">
+                    <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
                     Send Message to Admin
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                     Create a new support ticket or ask a question.
                 </p>
             </div>
 
-            <div className="p-6">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 sm:p-5 md:p-6">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-foreground">Subject</label>
+                            <label className="text-xs sm:text-sm font-medium text-foreground">Subject</label>
                             <input
                                 type="text"
                                 required
-                                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-foreground"
+                                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-foreground"
                                 placeholder="Brief summary of your issue"
                                 value={formData.subject}
                                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
@@ -58,9 +58,9 @@ const CreateTicket = ({ onSuccess }) => {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-foreground">Priority</label>
+                            <label className="text-xs sm:text-sm font-medium text-foreground">Priority</label>
                             <select
-                                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-foreground"
+                                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-foreground"
                                 value={formData.priority}
                                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                             >
@@ -73,25 +73,26 @@ const CreateTicket = ({ onSuccess }) => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">Message</label>
+                        <label className="text-xs sm:text-sm font-medium text-foreground">Message</label>
                         <textarea
                             required
                             rows={6}
-                            className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-foreground resize-none"
+                            className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-foreground resize-none"
                             placeholder="Describe your issue or question in detail..."
                             value={formData.message}
                             onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         />
                     </div>
 
-                    <div className="flex items-center justify-end gap-3 pt-2">
+                    <div className="flex items-center justify-end gap-2 sm:gap-3 pt-2">
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-colors shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="px-4 sm:px-6 py-2 text-sm sm:text-base bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-colors shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             <Send className="w-4 h-4" />
-                            {loading ? "Sending..." : "Send Message"}
+                            <span className="hidden sm:inline">{loading ? "Sending..." : "Send Message"}</span>
+                            <span className="sm:hidden">{loading ? "Sending..." : "Send"}</span>
                         </button>
                     </div>
                 </form>

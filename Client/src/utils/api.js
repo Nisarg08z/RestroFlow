@@ -59,6 +59,59 @@ export const generateLocationQRCodes = (locationId) =>
 export const regenerateTableQRCode = (locationId, tableNumber) =>
   api.post(`/restaurant/locations/${locationId}/qr/${tableNumber}/regenerate`)
 
+export const getMySubscription = () =>
+  api.get("/restaurant/subscription")
+
+export const renewMySubscription = (data) =>
+  api.post("/restaurant/subscription/renew", data)
+
+export const getMyInvoices = (params = {}) =>
+  api.get("/restaurant/invoices", { params })
+
+/* ================= MENU ================= */
+
+export const getMenu = () =>
+  api.get("/restaurant/menu")
+
+export const addCategory = (data) =>
+  api.post("/restaurant/menu/categories", data)
+
+export const updateCategory = (categoryId, data) =>
+  api.patch(`/restaurant/menu/categories/${categoryId}`, data)
+
+export const deleteCategory = (categoryId) =>
+  api.delete(`/restaurant/menu/categories/${categoryId}`)
+
+export const addMenuItem = (data) =>
+  api.post("/restaurant/menu/items", data)
+
+export const updateMenuItem = (itemId, data) =>
+  api.patch(`/restaurant/menu/items/${itemId}`, data)
+
+export const deleteMenuItem = (itemId) =>
+  api.delete(`/restaurant/menu/items/${itemId}`)
+
+export const getLocationMenu = (locationId) =>
+  api.get(`/restaurant/menu/locations/${locationId}`)
+
+export const hideItemFromLocation = (locationId, data) =>
+  api.post(`/restaurant/menu/locations/${locationId}/hide-item`, data)
+
+export const showItemInLocation = (locationId, data) =>
+  api.post(`/restaurant/menu/locations/${locationId}/show-item`, data)
+
+export const addLocationMenuItem = (locationId, data) =>
+  api.post(`/restaurant/menu/locations/${locationId}/items`, data)
+
+export const updateLocationMenuItem = (locationId, itemId, data) =>
+  api.patch(`/restaurant/menu/locations/${locationId}/items/${itemId}`, data)
+
+export const deleteLocationMenuItem = (locationId, itemId) =>
+  api.delete(`/restaurant/menu/locations/${locationId}/items/${itemId}`)
+
+export const getPublicMenu = (restaurantId, locationId) =>
+  api.get(`/restaurant/public/menu/${restaurantId}/${locationId}`)
+
 /* ================= ADMIN ================= */
 
 export const adminLogin = (data) =>

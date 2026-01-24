@@ -9,6 +9,9 @@ import { sendOTPEmail } from "../utils/emailService.js"
 import { createOrder, verifyPayment } from "../utils/razorpay.js"
 import QRCode from "qrcode"
 import cloudinary, { uploadImageFromDataUrl } from "../utils/cloudinary.js"
+import { isSubscriptionExpired, getSubscriptionStatus } from "../utils/subscriptionUtils.js"
+import { createRenewalInvoice } from "../utils/invoiceUtils.js"
+import { Invoice } from "../models/invoiceModel.js"
 
 const restaurantLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body
@@ -188,6 +191,15 @@ const createLocationPaymentOrder = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Total tables must be greater than 0");
   }
 
+  const restaurant = await Restaurant.findById(req.user._id);
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+
+  if (isSubscriptionExpired(restaurant.subscription)) {
+    throw new ApiError(403, "Your subscription has expired. Please renew your subscription to add new locations.");
+  }
+
   const PRICE_PER_TABLE = 50;
   const amount = Number(totalTables) * PRICE_PER_TABLE;
 
@@ -226,6 +238,10 @@ const verifyLocationPaymentAndAdd = asyncHandler(async (req, res) => {
   const restaurant = await Restaurant.findById(req.user._id);
   if (!restaurant) {
     throw new ApiError(404, "Restaurant not found");
+  }
+
+  if (isSubscriptionExpired(restaurant.subscription)) {
+    throw new ApiError(403, "Your subscription has expired. Please renew your subscription to add new locations.");
   }
 
   const newLocation = {
@@ -298,6 +314,10 @@ const updateLocation = asyncHandler(async (req, res) => {
   const location = restaurant.locations.id(locationId);
   if (!location) {
     throw new ApiError(404, "Location not found");
+  }
+
+  if (isActive === true && isSubscriptionExpired(restaurant.subscription)) {
+    throw new ApiError(403, "Your subscription has expired. Please renew your subscription to open locations.");
   }
 
   if (locationName !== undefined) location.locationName = locationName;
@@ -489,6 +509,108 @@ const regenerateTableQRCode = asyncHandler(async (req, res) => {
   )
 })
 
+const getMySubscription = asyncHandler(async (req, res) => {
+  const restaurant = await Restaurant.findById(req.user._id).select("-password -refreshToken");
+  
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+
+  if (!restaurant.subscription?.pricePerMonth) {
+    throw new ApiError(404, "Subscription not found");
+  }
+
+  const sub = restaurant.subscription;
+  const now = new Date();
+  const endDate = sub.endDate ? new Date(sub.endDate) : null;
+
+  const totalTables = restaurant.locations?.reduce((sum, loc) => {
+    return sum + (loc.totalTables || 0);
+  }, 0) || 0;
+
+  const status = getSubscriptionStatus(sub);
+
+  const subscription = {
+    id: restaurant._id.toString(),
+    restaurantId: restaurant._id.toString(),
+    restaurantName: restaurant.restaurantName,
+    email: restaurant.email,
+    price: sub.pricePerMonth || 0,
+    totalTables,
+    pricePerTable: 50,
+    status,
+    startDate: sub.startDate ? sub.startDate.toISOString().split("T")[0] : null,
+    endDate: endDate ? endDate.toISOString().split("T")[0] : null,
+    autoRenew: sub.isActive || false,
+    isActive: sub.isActive || false,
+    locations: restaurant.locations?.length || 0,
+  };
+
+  return res.status(200).json(
+    new ApiResponse(200, subscription, "Subscription fetched successfully")
+  );
+});
+
+const renewMySubscription = asyncHandler(async (req, res) => {
+  const { months = 1 } = req.body;
+
+  const restaurant = await Restaurant.findById(req.user._id);
+
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+
+  if (!restaurant.subscription?.pricePerMonth) {
+    throw new ApiError(404, "Subscription not found");
+  }
+
+  const totalTables = restaurant.locations?.reduce((sum, loc) => {
+    return sum + (loc.totalTables || 0);
+  }, 0) || 0;
+
+  if (totalTables === 0) {
+    throw new ApiError(400, "Restaurant has no tables configured");
+  }
+
+  const invoice = await createRenewalInvoice(restaurant._id, totalTables, months);
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      invoice: {
+        id: invoice._id,
+        amount: invoice.amount,
+        paymentLink: invoice.paymentLink,
+        paymentLinkToken: invoice.paymentLinkToken,
+        description: invoice.description,
+        dueDate: invoice.dueDate,
+        status: invoice.status,
+        monthsAdded: invoice.monthsAdded,
+      },
+    }, "Renewal invoice created successfully")
+  );
+});
+
+const getMyInvoices = asyncHandler(async (req, res) => {
+  const { status, type } = req.query;
+
+  const query = { restaurantId: req.user._id };
+  
+  if (status) {
+    query.status = status.toUpperCase();
+  }
+  if (type) {
+    query.type = type.toUpperCase();
+  }
+
+  const invoices = await Invoice.find(query)
+    .sort({ createdAt: -1 })
+    .limit(50);
+
+  return res.status(200).json(
+    new ApiResponse(200, invoices, "Invoices fetched successfully")
+  );
+});
+
 export {
   restaurantLogin,
   restaurantLogout,
@@ -503,5 +625,8 @@ export {
   updateLocation,
   generateLocationQRCodes,
   regenerateTableQRCode,
+  getMySubscription,
+  renewMySubscription,
+  getMyInvoices,
 }
 

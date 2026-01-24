@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Power } from "lucide-react";
+import { Power, AlertCircle } from "lucide-react";
 
-const RestaurantOpener = ({ onOpen, locationName }) => {
+const RestaurantOpener = ({ onOpen, locationName, isSubscriptionExpired }) => {
     const [isHovered, setIsHovered] = useState(false);
 
     return (
@@ -11,16 +11,30 @@ const RestaurantOpener = ({ onOpen, locationName }) => {
                     <h2 className="text-2xl md:text-4xl font-bold text-foreground">
                         {locationName} is Closed
                     </h2>
-                    <p className="text-muted-foreground text-base md:text-lg">
-                        Ready to start the day? Open the restaurant to access billing and management tools.
-                    </p>
+                    {isSubscriptionExpired ? (
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 space-y-2">
+                            <div className="flex items-center justify-center gap-2 text-red-500">
+                                <AlertCircle className="w-5 h-5" />
+                                <p className="font-semibold">Subscription Expired</p>
+                            </div>
+                            <p className="text-muted-foreground text-sm">
+                                Your subscription has expired. Please renew your subscription to open this location.
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground text-base md:text-lg">
+                            Ready to start the day? Open the restaurant to access billing and management tools.
+                        </p>
+                    )}
                 </div>
 
                 <div
-                    className="relative group cursor-pointer inline-flex justify-center"
-                    onMouseEnter={() => setIsHovered(true)}
+                    className={`relative group inline-flex justify-center ${
+                        isSubscriptionExpired ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                    }`}
+                    onMouseEnter={() => !isSubscriptionExpired && setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
-                    onClick={onOpen}
+                    onClick={() => !isSubscriptionExpired && onOpen()}
                 >
                     <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping opacity-75 duration-[3000ms]" />
                     <div className="absolute inset-4 bg-primary/20 rounded-full animate-ping opacity-75 animation-delay-500 duration-[3000ms]" />

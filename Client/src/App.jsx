@@ -23,6 +23,7 @@ import ProfilePage from './pages/ManagerPage/ProfilePage';
 import SupportPage from './pages/ManagerPage/SupportPage';
 import LocationDashboard from './pages/ManagerPage/LocationDashboard';
 import AllQRCodesPage from './pages/ManagerPage/AllQRCodesPage';
+import MenuManagement from './pages/ManagerPage/MenuManagement';
 import TableMenu from './pages/TableMenu';
 
 const LandingGate = ({ children }) => {
@@ -122,6 +123,14 @@ const App = () => {
             element={
               <ProtectedRoute requiredRole="RESTAURANT">
                 <SupportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="restaurant/menu"
+            element={
+              <ProtectedRoute requiredRole="RESTAURANT">
+                <MenuManagement />
               </ProtectedRoute>
             }
           />

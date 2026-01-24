@@ -6,6 +6,7 @@ import {
     BarChart3, Package, Users, Loader2
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { isSubscriptionExpired } from "../../utils/subscriptionUtils";
 
 import {
     LocationHeader,
@@ -56,6 +57,12 @@ const LocationDashboard = () => {
 
     const handleOpenRestaurant = async () => {
         if (!locationId) return;
+
+        if (restaurant && isSubscriptionExpired(restaurant.subscription)) {
+            toast.error("Your subscription has expired. Please renew your subscription to open locations.");
+            return;
+        }
+
         setIsOpening(true);
         try {
             await updateLocation(locationId, { isActive: true });
@@ -123,6 +130,7 @@ const LocationDashboard = () => {
                         <RestaurantOpener
                             onOpen={handleOpenRestaurant}
                             locationName={location.locationName}
+                            isSubscriptionExpired={restaurant ? isSubscriptionExpired(restaurant.subscription) : false}
                         />
                     )
                 ) : (

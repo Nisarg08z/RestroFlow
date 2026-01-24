@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, CreditCard, Loader2 } from "lucide-react";
+import { X, Loader2, AlertCircle } from "lucide-react";
 import { createLocationPaymentOrder, verifyLocationPaymentAndAdd } from "../../utils/api";
 import { toast } from "react-hot-toast";
+import { isSubscriptionExpired } from "../../utils/subscriptionUtils";
 
 const PRICE_PER_TABLE = 50;
 
@@ -67,6 +68,11 @@ const AddLocationModal = ({ isOpen, onClose, restaurant, onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (restaurant && isSubscriptionExpired(restaurant.subscription)) {
+            toast.error("Your subscription has expired. Please renew your subscription to add new locations.");
+            return;
+        }
 
         if (!razorpayLoaded || !window.Razorpay) {
             toast.error("Payment gateway is loading. Please wait...");
@@ -170,11 +176,22 @@ const AddLocationModal = ({ isOpen, onClose, restaurant, onSuccess }) => {
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="sticky top-0 bg-card border-b border-border p-4 sm:p-6 flex items-center justify-between z-10">
-                    <div>
+                    <div className="flex-1">
                         <h2 className="text-xl font-bold text-foreground">Add New Location</h2>
                         <p className="text-sm text-muted-foreground mt-1">
                             Enter location details and configure subscription
                         </p>
+                        {restaurant && isSubscriptionExpired(restaurant.subscription) && (
+                            <div className="mt-3 bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start gap-2">
+                                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                    <p className="text-sm font-semibold text-red-500">Subscription Expired</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Please renew your subscription to add new locations.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <button
                         onClick={onClose}
@@ -330,8 +347,8 @@ const AddLocationModal = ({ isOpen, onClose, restaurant, onSuccess }) => {
                         </button>
                         <button
                             type="submit"
-                            disabled={submitting || !razorpayLoaded}
-                            className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-medium transition-colors shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                            disabled={submitting || !razorpayLoaded || (restaurant && isSubscriptionExpired(restaurant.subscription))}
+                            className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-medium transition-colors shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {submitting ? (
                                 <>

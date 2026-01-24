@@ -12,25 +12,42 @@ const ProtectedRoute = ({ children, requiredRole = "ADMIN" }) => {
     const checkAuth = async () => {
       try {
         const role = localStorage.getItem("role");
+        const accessToken = localStorage.getItem("accessToken");
 
-        if (!role || role !== requiredRole) {
+        if (!role || role !== requiredRole || !accessToken) {
           setIsAuthenticated(false);
           setIsLoading(false);
           return;
         }
 
+        let response;
         if (requiredRole === "ADMIN") {
-          await getCurrentAdmin();
+          response = await getCurrentAdmin();
         } else if (requiredRole === "RESTAURANT") {
-          await getCurrentRestaurant();
+          response = await getCurrentRestaurant();
         }
 
-        setIsAuthenticated(true);
+        if (response?.data?.success || response?.data) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
       } catch (error) {
         console.error("Auth check failed:", error);
-        localStorage.removeItem("role");
-        localStorage.removeItem("accessToken");
-        setIsAuthenticated(false);
+        if (error.response?.status === 401) {
+          const stillHasToken = localStorage.getItem("accessToken");
+          const stillHasRole = localStorage.getItem("role");
+          
+          if (stillHasToken && stillHasRole === requiredRole) {
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+          }
+        } else {
+          localStorage.removeItem("role");
+          localStorage.removeItem("accessToken");
+          setIsAuthenticated(false);
+        }
       } finally {
         setIsLoading(false);
       }

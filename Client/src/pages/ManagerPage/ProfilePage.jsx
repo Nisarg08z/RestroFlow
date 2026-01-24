@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentRestaurant, updateRestaurantProfile, updateLocation } from "../../utils/api";
 import { ManagerHeader, LoadingScreen } from "../../components/ManagerPageComponents";
+import SubscriptionManagement from "../../components/AdminPageComponents/SubscriptionManagement";
 import {
     User, Mail, Phone, Building2, Calendar,
     CreditCard, CheckCircle2, FileText,
@@ -45,7 +46,16 @@ const ProfilePage = () => {
             }
         } catch (error) {
             console.error("Failed to fetch restaurant data", error);
-            toast.error("Failed to load profile data");
+            if (error.response?.status !== 401) {
+                toast.error("Failed to load profile data");
+            }
+            if (error.response?.status === 401) {
+                const stillHasToken = localStorage.getItem("accessToken");
+                if (!stillHasToken) {
+                    setLoading(false);
+                    return;
+                }
+            }
         } finally {
             setLoading(false);
         }
@@ -530,7 +540,7 @@ const ProfilePage = () => {
                     </div>
 
                     <div className="space-y-6">
-                        <div className="bg-card border border-border rounded-xl shadow-lg shadow-black/5 overflow-hidden sticky top-24 animate-in fade-in slide-in-from-right-4 duration-700">
+                        <div className="bg-card border border-border rounded-xl shadow-lg shadow-black/5 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-700">
                             <div className="p-6 border-b border-border bg-gradient-to-r from-muted/50 to-muted/10">
                                 <h2 className="text-lg font-semibold flex items-center gap-2">
                                     <CheckCircle2 className="w-5 h-5 text-primary" />
@@ -547,37 +557,21 @@ const ProfilePage = () => {
                                         {restaurant.status}
                                     </span>
                                 </div>
+                            </div>
+                        </div>
 
-                                {restaurant.subscription && (
-                                    <div className="space-y-4 pt-2">
-                                        <div className="flex items-center gap-2 text-foreground font-semibold text-lg">
-                                            <CreditCard className="w-5 h-5 text-primary" />
-                                            Subscription
-                                        </div>
-                                        <div className="p-5 border border-border rounded-xl space-y-4 bg-card shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex justify-between items-center text-sm">
-                                                <span className="text-muted-foreground">Plan Cost</span>
-                                                <span className="font-bold text-foreground text-lg">₹{restaurant.subscription.pricePerMonth}<span className="text-xs font-normal text-muted-foreground">/mo</span></span>
-                                            </div>
-                                            <div className="w-full h-px bg-border/50" />
-                                            <div className="flex justify-between items-center text-sm">
-                                                <span className="text-muted-foreground">Status</span>
-                                                <span className={`font-bold flex items-center gap-1.5 ${restaurant.subscription.isActive && new Date(restaurant.subscription.endDate) > new Date() ? "text-green-600" : "text-red-600"}`}>
-                                                    <span className={`w-2 h-2 rounded-full ${restaurant.subscription.isActive && new Date(restaurant.subscription.endDate) > new Date() ? "bg-green-600 animate-pulse" : "bg-red-600"}`}></span>
-                                                    {restaurant.subscription.isActive && new Date(restaurant.subscription.endDate) > new Date() ? "Active" : "Inactive"}
-                                                </span>
-                                            </div>
-                                            {restaurant.subscription.endDate && (
-                                                <div className="flex justify-between items-center text-sm bg-muted/30 p-2 rounded-lg -mx-2">
-                                                    <span className="text-muted-foreground">Expires</span>
-                                                    <span className="font-medium text-foreground">
-                                                        {formatDate(restaurant.subscription.endDate)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+                        <div className="bg-card border border-border rounded-xl shadow-lg shadow-black/5 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-700">
+                            <div className="p-6 border-b border-border bg-gradient-to-r from-muted/50 to-muted/10">
+                                <h2 className="text-lg font-semibold flex items-center gap-2">
+                                    <CreditCard className="w-5 h-5 text-primary" />
+                                    Subscription & Payment
+                                </h2>
+                            </div>
+                            <div className="p-6">
+                                <SubscriptionManagement 
+                                    restaurant={restaurant} 
+                                    onUpdate={fetchData}
+                                />
                             </div>
                         </div>
                     </div>

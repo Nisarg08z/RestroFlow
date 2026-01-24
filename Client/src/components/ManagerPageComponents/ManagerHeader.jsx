@@ -213,9 +213,6 @@ const ManagerHeader = ({ restaurant }) => {
     };
 
     const restaurantName = restaurant?.restaurantName || restaurant?.email || "Restaurant";
-    const displayName = restaurantName.length > 20
-        ? restaurantName.substring(0, 20) + "..."
-        : restaurantName;
 
     return (
         <header className="sticky top-0 z-50 w-full bg-card border-b border-border shadow-sm">
@@ -225,6 +222,29 @@ const ManagerHeader = ({ restaurant }) => {
                         <span className="text-xl font-bold text-foreground">
                             {restaurantName}
                         </span>
+                    </div>
+
+                    <div className="hidden md:flex items-center gap-6">
+                        <button
+                            onClick={() => navigate("/restaurant/welcome")}
+                            className={`text-sm font-medium transition-colors ${
+                                location.pathname === "/restaurant/welcome"
+                                    ? "text-primary"
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            Locations
+                        </button>
+                        <button
+                            onClick={() => navigate("/restaurant/menu")}
+                            className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                                location.pathname === "/restaurant/menu"
+                                    ? "text-primary"
+                                    : "text-muted-foreground hover:text-foreground"
+                            }`}
+                        >
+                            Menu
+                        </button>
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4">

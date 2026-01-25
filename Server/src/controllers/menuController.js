@@ -123,9 +123,17 @@ const deleteCategory = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Category not found")
   }
 
+  const categoryName = category.name
+
   menu.globalMenu.items = menu.globalMenu.items.filter(
-    (item) => item.category !== category.name
+    (item) => item.category !== categoryName
   )
+
+  menu.locationMenus.forEach((locationMenu) => {
+    locationMenu.customItems = locationMenu.customItems.filter(
+      (item) => item.category !== categoryName
+    )
+  })
 
   menu.globalMenu.categories = menu.globalMenu.categories.filter(
     (cat) => cat._id.toString() !== categoryId
@@ -134,7 +142,7 @@ const deleteCategory = asyncHandler(async (req, res) => {
   await menu.save()
 
   return res.status(200).json(
-    new ApiResponse(200, menu, "Category deleted successfully")
+    new ApiResponse(200, menu, "Category and all its items deleted successfully")
   )
 })
 
@@ -385,11 +393,15 @@ const getLocationMenu = asyncHandler(async (req, res) => {
     globalItems = globalItems.filter(item => !item.isHidden)
   }
 
-  const locationItems = locationMenu.customItems.map((item) => ({
-    ...item.toObject(),
-    isGlobal: false,
-    isHidden: false,
-  }))
+  const locationItems = locationMenu.customItems.map((item) => {
+    const itemObj = item.toObject()
+    const isHidden = locationMenu.hiddenItems.includes(item._id.toString())
+    return {
+      ...itemObj,
+      isGlobal: false,
+      isHidden: isHidden,
+    }
+  })
 
   const allItems = [...globalItems, ...locationItems]
 
@@ -433,11 +445,6 @@ const hideItemFromLocation = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Menu not found")
   }
 
-  const item = menu.globalMenu.items.id(itemId)
-  if (!item) {
-    throw new ApiError(404, "Menu item not found")
-  }
-
   let locationMenu = menu.locationMenus.find(
     (lm) => lm.locationId === locationId
   )
@@ -450,6 +457,14 @@ const hideItemFromLocation = asyncHandler(async (req, res) => {
       customCategories: [],
     }
     menu.locationMenus.push(locationMenu)
+  }
+
+  // Check if it's a global item or location-specific item
+  const globalItem = menu.globalMenu.items.id(itemId)
+  const locationItem = locationMenu.customItems.id(itemId)
+
+  if (!globalItem && !locationItem) {
+    throw new ApiError(404, "Menu item not found")
   }
 
   if (!locationMenu.hiddenItems.includes(itemId)) {

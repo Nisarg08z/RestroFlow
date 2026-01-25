@@ -11,16 +11,15 @@ import {
     Search,
     Filter,
     Grid,
-    List,
     Package,
     CheckCircle2,
-    XCircle,
     ChefHat,
     LayoutGrid,
     MapPin,
     Sparkles,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    RotateCw
 } from "lucide-react";
 import { ManagerHeader } from "../../components/ManagerPageComponents";
 import {
@@ -40,7 +39,6 @@ import {
 import { toast } from "react-hot-toast";
 
 const MenuManagement = () => {
-    // ---- State Management ----
     const [restaurant, setRestaurant] = useState(null);
     const [menu, setMenu] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -65,12 +63,12 @@ const MenuManagement = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [availabilityFilter, setAvailabilityFilter] = useState("all");
     const [expandedCategories, setExpandedCategories] = useState(new Set());
-    const [deleteDialog, setDeleteDialog] = useState(null); // { itemId, isGlobal, name }
+    const [deleteDialog, setDeleteDialog] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [deleteCategoryDialog, setDeleteCategoryDialog] = useState(null); // { categoryId, name }
+    const [deleteCategoryDialog, setDeleteCategoryDialog] = useState(null);
     const [isDeletingCategory, setIsDeletingCategory] = useState(false);
+    const [isSavingItem, setIsSavingItem] = useState(false);
 
-    // ---- Data Fetching ----
     useEffect(() => {
         fetchData();
     }, []);
@@ -110,7 +108,6 @@ const MenuManagement = () => {
         }
     };
 
-    // ---- Handlers ----
     const handleAddCategory = async () => {
         if (!newCategoryName.trim()) return toast.error("Category name is required");
         try {
@@ -152,6 +149,7 @@ const MenuManagement = () => {
 
     const handleAddItem = async () => {
         if (!itemForm.name.trim() || !itemForm.price || !itemForm.category.trim()) return toast.error("Fill required fields");
+        setIsSavingItem(true);
         try {
             const formData = {
                 name: itemForm.name,
@@ -169,11 +167,14 @@ const MenuManagement = () => {
             }
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to add item");
+        } finally {
+            setIsSavingItem(false);
         }
     };
 
     const handleUpdateItem = async (itemId) => {
         if (!itemForm.name.trim() || !itemForm.price || !itemForm.category.trim()) return toast.error("Fill required fields");
+        setIsSavingItem(true);
         try {
             const formData = {
                 name: itemForm.name,
@@ -192,6 +193,8 @@ const MenuManagement = () => {
             }
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to update item");
+        } finally {
+            setIsSavingItem(false);
         }
     };
 
@@ -199,7 +202,10 @@ const MenuManagement = () => {
         try {
             const res = await deleteMenuItem(itemId);
             if (res.data?.success) {
-                setMenu(res.data.data);
+                await fetchData();
+                if (selectedLocation) {
+                    await fetchLocationMenu(selectedLocation);
+                }
                 toast.success("Item deleted");
             }
         } catch (error) {
@@ -236,6 +242,7 @@ const MenuManagement = () => {
     const handleAddLocationItem = async () => {
         if (!selectedLocation) return toast.error("Select location first");
         if (!itemForm.name.trim() || !itemForm.price || !itemForm.category.trim()) return toast.error("Fill required fields");
+        setIsSavingItem(true);
         try {
             const formData = {
                 name: itemForm.name,
@@ -246,6 +253,7 @@ const MenuManagement = () => {
             };
             const res = await addLocationMenuItem(selectedLocation, formData);
             if (res.data?.success) {
+                await fetchData();
                 await fetchLocationMenu(selectedLocation);
                 resetItemForm();
                 setShowAddItem(false);
@@ -253,15 +261,21 @@ const MenuManagement = () => {
             }
         } catch (error) {
             toast.error("Failed to add location item");
+        } finally {
+            setIsSavingItem(false);
         }
     };
 
-    const handleDeleteLocationItem = async (itemId) => {
-        if (!selectedLocation) return toast.error("Select location first");
+    const handleDeleteLocationItem = async (itemId, locationId = null) => {
+        const targetLocation = locationId || selectedLocation;
+        if (!targetLocation) return toast.error("Location information required");
         try {
-            const res = await deleteLocationMenuItem(selectedLocation, itemId);
+            const res = await deleteLocationMenuItem(targetLocation, itemId);
             if (res.data?.success) {
-                await fetchLocationMenu(selectedLocation);
+                await fetchData();
+                if (targetLocation) {
+                    await fetchLocationMenu(targetLocation);
+                }
                 toast.success("Location item deleted");
             }
         } catch (error) {
@@ -274,6 +288,7 @@ const MenuManagement = () => {
             itemId: item._id,
             isGlobal: item.isGlobal !== false,
             name: item.name || "this item",
+            locationId: item.locationId || null,
         });
     };
 
@@ -292,7 +307,7 @@ const MenuManagement = () => {
             if (deleteDialog.isGlobal) {
                 await handleDeleteItem(deleteDialog.itemId);
             } else {
-                await handleDeleteLocationItem(deleteDialog.itemId);
+                await handleDeleteLocationItem(deleteDialog.itemId, deleteDialog.locationId);
             }
         } finally {
             setIsDeleting(false);
@@ -316,7 +331,6 @@ const MenuManagement = () => {
         }
     };
 
-    // ---- Helpers ----
     const resetItemForm = () => {
         setItemForm({ name: "", description: "", price: "", category: "", image: null, imagePreview: null });
     };
@@ -335,7 +349,6 @@ const MenuManagement = () => {
 
     const isItemHidden = (itemId) => locationMenu?.locationMenu?.hiddenItems?.includes(itemId.toString());
 
-    // ---- Calculation Logic ----
     const getAllItems = useMemo(() => {
         if (!menu) return [];
         let items = menu.globalMenu.items.map(item => {
@@ -354,12 +367,44 @@ const MenuManagement = () => {
                 .filter(item => !item.isGlobal)
                 .map(item => {
                     const itemObj = typeof item.toObject === 'function' ? item.toObject() : item;
-                    return { ...itemObj, isGlobal: false, isHidden: false };
+                    const itemId = itemObj._id?.toString() || itemObj._id;
+                    const isHidden = isItemHidden(itemId);
+                    const locationData = restaurant?.locations?.find(loc => loc._id.toString() === selectedLocation);
+                    return { 
+                        ...itemObj, 
+                        isGlobal: false, 
+                        isHidden,
+                        locationId: selectedLocation,
+                        locationName: locationData?.locationName || 'Unknown Location'
+                    };
                 });
             items = [...items, ...locationItems];
+        } else {
+            if (menu.locationMenus && menu.locationMenus.length > 0 && restaurant?.locations) {
+                menu.locationMenus.forEach(locationMenuData => {
+                    const locationMenuObj = typeof locationMenuData.toObject === 'function' ? locationMenuData.toObject() : locationMenuData;
+                    const locationId = locationMenuObj.locationId;
+                    const locationData = restaurant.locations.find(loc => loc._id.toString() === locationId);
+                    const customItems = locationMenuObj.customItems || [];
+                    
+                    if (locationData && customItems.length > 0) {
+                        const locationItems = customItems.map(item => {
+                            const itemObj = typeof item.toObject === 'function' ? item.toObject() : item;
+                            return {
+                                ...itemObj,
+                                isGlobal: false,
+                                isHidden: false,
+                                locationId: locationId,
+                                locationName: locationData.locationName || 'Unknown Location'
+                            };
+                        });
+                        items = [...items, ...locationItems];
+                    }
+                });
+            }
         }
         return items;
-    }, [menu, locationMenu, selectedLocation]);
+    }, [menu, locationMenu, selectedLocation, restaurant]);
 
     const filteredAndSortedItems = useMemo(() => {
         let filtered = [...getAllItems];
@@ -410,9 +455,13 @@ const MenuManagement = () => {
         (loc) => loc._id.toString() === selectedLocation
     );
 
-    // Group items by category
     const itemsByCategory = useMemo(() => {
         const grouped = {};
+
+        sortedCategories.forEach(cat => {
+            grouped[cat.name] = [];
+        });
+
         filteredAndSortedItems.forEach(item => {
             const category = item.category || 'Uncategorized';
             if (!grouped[category]) {
@@ -420,8 +469,9 @@ const MenuManagement = () => {
             }
             grouped[category].push(item);
         });
+
         return grouped;
-    }, [filteredAndSortedItems]);
+    }, [filteredAndSortedItems, sortedCategories]);
 
     const toggleCategory = (categoryName) => {
         setExpandedCategories(prev => {
@@ -456,7 +506,6 @@ const MenuManagement = () => {
             <ManagerHeader restaurant={restaurant} />
             <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
 
-                {/* ---- Header Section ---- */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
@@ -484,9 +533,7 @@ const MenuManagement = () => {
                     </div>
                 </div>
 
-                {/* ---- Stats & Location Selector ---- */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    {/* Stats */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:col-span-3">
                         <div className="relative overflow-hidden bg-card border border-border p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all group">
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -534,7 +581,6 @@ const MenuManagement = () => {
                         </div>
                     </div>
 
-                    {/* Location Selector */}
                     <div className="bg-card border border-border p-6 rounded-2xl shadow-xl flex flex-col justify-center gap-3 md:col-span-1">
                         <div>
                             <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2 mb-3">
@@ -568,7 +614,6 @@ const MenuManagement = () => {
                     </div>
                 </div>
 
-                {/* ---- Filters & Search ---- */}
                 <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-4">
                     <div className="flex flex-col md:flex-row gap-4 justify-between">
                         <div className="relative flex-1 max-w-lg">
@@ -622,7 +667,7 @@ const MenuManagement = () => {
                     )}
                 </div>
 
-                {filteredAndSortedItems.length === 0 ? (
+                {Object.keys(itemsByCategory).length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-20 bg-card border border-dashed border-border rounded-3xl text-center shadow-sm">
                         <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
                             <Sparkles className="w-10 h-10 text-primary" />
@@ -648,7 +693,7 @@ const MenuManagement = () => {
                             const items = itemsByCategory[categoryName];
                             const isExpanded = expandedCategories.has(categoryName);
                             const categoryObj = sortedCategories.find((c) => c.name === categoryName);
-                            
+
                             return (
                                 <div key={categoryName} className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border">
                                     <div
@@ -693,19 +738,26 @@ const MenuManagement = () => {
 
                                     {isExpanded && (
                                         <div className="border-t border-border">
-                                            {items.map((item) => {
-                                                const hidden = item.isHidden || isItemHidden(item._id);
+                                            {items.length === 0 ? (
+                                                <div className="p-8 text-center text-muted-foreground">
+                                                    <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                                    <p className="text-sm font-medium">No items in this category</p>
+                                                    <p className="text-xs mt-1">Add items to this category or delete it if not needed</p>
+                                                </div>
+                                            ) : (
+                                                items.map((item) => {
+                                                    const hidden = item.isHidden || isItemHidden(item._id);
 
-                                                return (
-                                                    <div
-                                                        key={item._id}
+                                                    return (
+                                                        <div
+                                                            key={item._id}
                                                         className={`group relative border-b border-border last:border-b-0 transition-all duration-300 hover:bg-muted ${hidden && selectedLocation
                                                             ? "opacity-80"
                                                             : ""
                                                             }`}
-                                                    >
-                                                        <div className="flex items-center p-4 gap-5">
-                                                            <div className="w-20 h-20 rounded-xl bg-muted overflow-hidden flex-shrink-0 relative group-hover:ring-2 ring-primary/20 transition-all">
+                                                        >
+                                                            <div className="flex items-center p-4 gap-5">
+                                                                <div className="w-20 h-20 rounded-xl bg-muted overflow-hidden flex-shrink-0 relative group-hover:ring-2 ring-primary/20 transition-all">
                                                                 {item.image?.url ? (
                                                                     <img src={item.image.url} alt={item.name} className={`w-full h-full object-cover ${hidden && selectedLocation ? 'grayscale' : ''}`} />
                                                                 ) : (
@@ -717,42 +769,40 @@ const MenuManagement = () => {
                                                                         <EyeOff className="w-6 h-6 text-white" />
                                                                     </div>
                                                                 )}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-3">
-                                                                <div className="min-w-0 flex-1">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <h3 className="font-bold text-foreground truncate text-lg">{item.name}</h3>
-                                                                        {!item.isGlobal && (
-                                                                            <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground rounded-md shadow-sm">
-                                                                                Loc
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    <p className="text-sm text-primary font-semibold truncate">{item.category}</p>
-                                                                    <p className="text-xs text-muted-foreground truncate mt-1 font-medium">{item.description || "No description"}</p>
                                                                 </div>
+                                                                <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-3">
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                            <h3 className="font-bold text-foreground truncate text-lg">{item.name}</h3>
+                                                                            {!item.isGlobal && (
+                                                                                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground rounded-md shadow-sm" title={item.locationName || "Location-specific item"}>
+                                                                                    {item.locationName ? item.locationName.substring(0, 3).toUpperCase() : "Loc"}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                                            <p className="text-sm text-primary font-semibold truncate">{item.category}</p>
+                                                                        </div>
+                                                                        <p className="text-xs text-muted-foreground truncate mt-1 font-medium">{item.description || "No description"}</p>
+                                                                    </div>
 
-                                                                <div className="flex items-center justify-end gap-3 md:ml-auto w-full md:w-auto">
-                                                                    <span className="font-bold text-xl text-foreground whitespace-nowrap">
-                                                                        {inrFormatter.format(Number(item.price) || 0)}
-                                                                    </span>
+                                                                    <div className="flex items-center justify-end gap-3 md:ml-auto w-full md:w-auto">
+                                                                        <span className="font-bold text-xl text-foreground whitespace-nowrap">
+                                                                            {inrFormatter.format(Number(item.price) || 0)}
+                                                                        </span>
 
-                                                                    {item.isGlobal && (
+                                                                    {selectedLocation && (
                                                                         <button
                                                                             onClick={() => {
-                                                                                if (!selectedLocation) {
-                                                                                    toast.error("Please select a location first");
-                                                                                    return;
-                                                                                }
                                                                                 hidden ? handleShowItem(item._id) : handleHideItem(item._id);
                                                                             }}
-                                                                            className={`p-2 rounded-lg transition-colors ${hidden && selectedLocation
+                                                                            className={`p-2 rounded-lg transition-colors ${hidden
                                                                                 ? "bg-emerald-500 text-white hover:bg-emerald-600"
                                                                                 : "bg-amber-500 text-white hover:bg-amber-600"
-                                                                                } ${!selectedLocation ? "opacity-60" : ""}`}
-                                                                            title={hidden && selectedLocation ? "Unhide" : "Hide"}
+                                                                                }`}
+                                                                            title={hidden ? "Unhide" : "Hide"}
                                                                         >
-                                                                            {hidden && selectedLocation ? (
+                                                                            {hidden ? (
                                                                                 <Eye className="w-4 h-4" />
                                                                             ) : (
                                                                                 <EyeOff className="w-4 h-4" />
@@ -760,16 +810,17 @@ const MenuManagement = () => {
                                                                         </button>
                                                                     )}
 
-                                                                    <div className="flex items-center gap-1">
-                                                                        <button onClick={() => openEditItem(item)} className="p-2 hover:bg-muted rounded-lg text-primary hover:text-primary/80 transition-colors"><Edit className="w-4 h-4" /></button>
-                                                                        <button onClick={() => openDeleteDialog(item)} className="p-2 hover:bg-destructive/10 rounded-lg text-destructive hover:text-destructive/80 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <button onClick={() => openEditItem(item)} className="p-2 hover:bg-muted rounded-lg text-primary hover:text-primary/80 transition-colors"><Edit className="w-4 h-4" /></button>
+                                                                            <button onClick={() => openDeleteDialog(item)} className="p-2 hover:bg-destructive/10 rounded-lg text-destructive hover:text-destructive/80 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                );
-                                            })}
+                                                    );
+                                                })
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -840,6 +891,8 @@ const MenuManagement = () => {
                             <p className="text-xs text-muted-foreground">
                                 {deleteDialog.isGlobal
                                     ? "This will remove it from your global menu."
+                                    : deleteDialog.locationId
+                                    ? `This will remove it from the location only.`
                                     : "This will remove it from the selected location only."}
                             </p>
                             <div className="flex gap-3 pt-2">
@@ -996,24 +1049,37 @@ const MenuManagement = () => {
                             </div>
                         </div>
 
-                        <div className="p-6 border-t border-border bg-muted/50 flex justify-end gap-3 z-10">
-                            <button
-                                onClick={() => { setShowAddItem(false); setShowEditItem(null); }}
-                                className="px-6 py-3 rounded-xl border border-border bg-card text-foreground hover:bg-muted transition-colors font-semibold text-sm shadow-sm"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (showEditItem) handleUpdateItem(showEditItem);
-                                    else if (selectedLocation) handleAddLocationItem();
-                                    else handleAddItem();
-                                }}
-                                className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all transform active:scale-95 font-bold text-sm flex items-center gap-2"
-                            >
-                                <Save className="w-4 h-4" />
-                                {showEditItem ? "Save Changes" : "Create Item"}
-                            </button>
+                        <div className="p-6 border-t border-border bg-muted/50 flex flex-col gap-3 z-10">
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    onClick={() => { setShowAddItem(false); setShowEditItem(null); resetItemForm(); }}
+                                    disabled={isSavingItem}
+                                    className="px-6 py-3 rounded-xl border border-border bg-card text-foreground hover:bg-muted transition-colors font-semibold text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (showEditItem) handleUpdateItem(showEditItem);
+                                        else if (selectedLocation) handleAddLocationItem();
+                                        else handleAddItem();
+                                    }}
+                                    disabled={isSavingItem}
+                                    className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all transform active:scale-95 font-bold text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                >
+                                    {isSavingItem ? (
+                                        <>
+                                            <RotateCw className="w-4 h-4 animate-spin" />
+                                            {showEditItem ? "Saving..." : "Creating..."}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="w-4 h-4" />
+                                            {showEditItem ? "Save Changes" : "Create Item"}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

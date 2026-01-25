@@ -4,6 +4,7 @@ import LoadingScreen from "./LoadingScreen.jsx"
 import ManagerHeader from "./ManagerHeader.jsx"
 import CreateTicket from "./CreateTicket.jsx"
 import TicketList from "./TicketList.jsx"
+import RestaurantSubscription from "./RestaurantSubscription.jsx"
 
 export {
     LocationCard,
@@ -11,5 +12,6 @@ export {
     LoadingScreen,
     ManagerHeader,
     CreateTicket,
-    TicketList
+    TicketList,
+    RestaurantSubscription
 }

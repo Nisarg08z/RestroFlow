@@ -27,10 +27,18 @@ export const AuthProvider = ({ children }) => {
         setUser(null)
         setRole(null)
       }
-    } catch {
-      setUser(null)
-      setRole(null)
-      localStorage.removeItem("role")
+    } catch (error) {
+      const status = error.response?.status
+      
+      if (status === 401 || status === 403) {
+        setUser(null)
+        setRole(null)
+        localStorage.removeItem("role")
+        localStorage.removeItem("accessToken")
+      } else {
+        setUser(null)
+        setRole(null)
+      }
     } finally {
       setLoading(false)
     }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentRestaurant, updateRestaurantProfile, updateLocation } from "../../utils/api";
 import { ManagerHeader, LoadingScreen } from "../../components/ManagerPageComponents";
-import SubscriptionManagement from "../../components/AdminPageComponents/SubscriptionManagement";
+import RestaurantSubscription from "../../components/ManagerPageComponents/RestaurantSubscription";
 import {
     User, Mail, Phone, Building2, Calendar,
     CreditCard, CheckCircle2, FileText,
@@ -568,7 +568,7 @@ const ProfilePage = () => {
                                 </h2>
                             </div>
                             <div className="p-6">
-                                <SubscriptionManagement 
+                                <RestaurantSubscription 
                                     restaurant={restaurant} 
                                     onUpdate={fetchData}
                                 />

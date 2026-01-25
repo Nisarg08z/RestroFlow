@@ -34,18 +34,22 @@ const ProtectedRoute = ({ children, requiredRole = "ADMIN" }) => {
         }
       } catch (error) {
         console.error("Auth check failed:", error);
-        if (error.response?.status === 401) {
+        const status = error.response?.status;
+        
+        if (status === 401 || status === 403) {
           const stillHasToken = localStorage.getItem("accessToken");
           const stillHasRole = localStorage.getItem("role");
           
           if (stillHasToken && stillHasRole === requiredRole) {
             setIsAuthenticated(true);
           } else {
+            localStorage.removeItem("role");
+            localStorage.removeItem("accessToken");
             setIsAuthenticated(false);
           }
+        } else if (status === undefined) {
+          setIsAuthenticated(false);
         } else {
-          localStorage.removeItem("role");
-          localStorage.removeItem("accessToken");
           setIsAuthenticated(false);
         }
       } finally {

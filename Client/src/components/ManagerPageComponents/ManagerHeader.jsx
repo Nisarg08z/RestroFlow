@@ -191,14 +191,14 @@ const ManagerHeader = ({ restaurant }) => {
             localStorage.removeItem("role");
             localStorage.removeItem("showWelcomeAnimation");
             toast.success("Logged out successfully");
-            navigate("/login");
+            navigate("/");
         } catch (error) {
             console.error("Logout error:", error);
             localStorage.removeItem("accessToken");
             localStorage.removeItem("role");
             localStorage.removeItem("showWelcomeAnimation");
             toast.success("Logged out successfully");
-            navigate("/login");
+            navigate("/");
         }
     };
 

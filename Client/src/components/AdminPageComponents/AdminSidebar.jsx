@@ -42,12 +42,12 @@ const AdminSidebar = ({ isOpen, onClose }) => {
       localStorage.removeItem("role");
       localStorage.removeItem("accessToken");
       toast.success("Logged out successfully");
-      navigate("/admin/login", { replace: true });
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
       localStorage.removeItem("role");
       localStorage.removeItem("accessToken");
-      navigate("/admin/login", { replace: true });
+      navigate("/", { replace: true });
     }
   };
   return (

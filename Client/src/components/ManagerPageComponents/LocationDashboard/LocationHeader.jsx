@@ -68,9 +68,6 @@ const LocationHeader = ({
                     <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-3 pt-1">
                         {[
                             { id: 'billing', label: 'Billing', icon: DollarSign },
-                            { id: 'reports', label: 'Reports', icon: BarChart3 },
-                            { id: 'staff', label: 'Staff', icon: Users },
-                            { id: 'inventory', label: 'Inventory', icon: Package },
                             { id: 'settings', label: 'Settings', icon: Settings },
                         ].map((tab) => {
                             const Icon = tab.icon;

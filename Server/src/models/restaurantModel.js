@@ -95,7 +95,7 @@ const restaurantSchema = new Schema(
         ],
         isActive: {
           type: Boolean,
-          default: true,
+          default: false,
         },
         createdAt: {
           type: Date,

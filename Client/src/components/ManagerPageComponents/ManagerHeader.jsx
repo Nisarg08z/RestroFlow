@@ -207,11 +207,6 @@ const ManagerHeader = ({ restaurant }) => {
         navigate("/restaurant/profile");
     };
 
-    const handleSettings = () => {
-        setShowUserMenu(false);
-        toast.info("Settings page coming soon");
-    };
-
     const restaurantName = restaurant?.restaurantName || restaurant?.email || "Restaurant";
 
     return (
@@ -373,14 +368,6 @@ const ManagerHeader = ({ restaurant }) => {
                                     >
                                         <LifeBuoy className="w-4 h-4 text-muted-foreground" />
                                         Help & Support
-                                    </button>
-
-                                    <button
-                                        onClick={handleSettings}
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-                                    >
-                                        <Settings className="w-4 h-4 text-muted-foreground" />
-                                        Settings
                                     </button>
 
                                     <div className="border-t border-border my-1" />

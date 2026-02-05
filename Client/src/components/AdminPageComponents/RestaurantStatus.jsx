@@ -16,7 +16,6 @@ import {
   MapPin,
   DollarSign,
   Calendar,
-  RefreshCw,
 } from "lucide-react";
 import {
   getRestaurantById,
@@ -241,24 +240,15 @@ const RestaurantStatus = () => {
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <button
-            onClick={refreshRestaurants}
-            disabled={loading}
-            className="p-3 rounded-xl bg-card border border-border/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-sm active:scale-95 disabled:opacity-50"
-            title="Refresh Data"
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-
-          <div className="flex items-center gap-2 p-1 bg-card/50 rounded-xl border border-border/50 shadow-sm overflow-x-auto w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-wrap gap-2 p-2 bg-card/50 rounded-xl border border-border/50 shadow-sm">
             {["all", "active", "inactive", "suspended"].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all duration-300 relative whitespace-nowrap ${statusFilter === status
-                  ? "text-primary-foreground bg-primary shadow-md"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                className={`px-4 py-2.5 rounded-xl text-sm font-medium capitalize transition-all duration-300 border whitespace-nowrap ${statusFilter === status
+                  ? "text-primary-foreground bg-primary border-primary shadow-md"
+                  : "text-muted-foreground border-border/50 hover:bg-muted hover:text-foreground hover:border-muted-foreground/30"
                   }`}
               >
                 {status}

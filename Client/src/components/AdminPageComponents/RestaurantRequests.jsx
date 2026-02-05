@@ -244,14 +244,14 @@ const RestaurantRequests = () => {
           />
         </div>
 
-        <div className="flex items-center gap-2 p-1 bg-card/50 rounded-xl border border-border/50 shadow-sm overflow-x-auto w-full md:w-auto">
+        <div className="flex flex-wrap gap-2 p-2 bg-card/50 rounded-xl border border-border/50 shadow-sm">
           {["all", "pending", "approved", "rejected", "completed"].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all duration-300 relative whitespace-nowrap ${filter === status
-                ? "text-primary-foreground bg-primary shadow-md"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              className={`px-4 py-2.5 rounded-xl text-sm font-medium capitalize transition-all duration-300 border whitespace-nowrap ${filter === status
+                ? "text-primary-foreground bg-primary border-primary shadow-md"
+                : "text-muted-foreground border-border/50 hover:bg-muted hover:text-foreground hover:border-muted-foreground/30"
                 }`}
             >
               {status}

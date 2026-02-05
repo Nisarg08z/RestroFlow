@@ -1,25 +1,14 @@
-import { useState } from "react"
 import { Outlet } from "react-router-dom"
-import { AdminSidebar, AdminHeader } from "../components/AdminPageComponents"
+import { AdminHeader } from "../components/AdminPageComponents"
 
 const AdminPageLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
   return (
-    <div className="min-h-screen flex bg-background text-foreground">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <AdminHeader />
 
-      <AdminSidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
-
-      <div className="flex-1 flex flex-col lg:ml-64">
-        <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
-
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 overflow-auto text-muted-foreground">
-          <Outlet />
-        </main>
-      </div>
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 lg:pb-8 animate-in fade-in-50">
+        <Outlet />
+      </main>
     </div>
   )
 }

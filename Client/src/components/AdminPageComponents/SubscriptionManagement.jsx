@@ -11,6 +11,11 @@ import {
   RefreshCw,
   X,
   Loader2,
+  Check,
+  CheckCircle2,
+  Filter,
+  MapPin,
+  TrendingUp,
 } from "lucide-react";
 import {
   getAllSubscriptions,
@@ -54,6 +59,8 @@ const SubscriptionManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSub, setSelectedSub] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
+
+  // Edit State
   const [editEndDate, setEditEndDate] = useState("");
   const [editTotalTables, setEditTotalTables] = useState(0);
   const [editMonthsToAdd, setEditMonthsToAdd] = useState(0);
@@ -61,16 +68,15 @@ const SubscriptionManagement = () => {
   const [sendPaymentEmail, setSendPaymentEmail] = useState(true);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [calculatedExtensionPrice, setCalculatedExtensionPrice] = useState(0);
+
   const [error, setError] = useState(null);
   const [emailNotification, setEmailNotification] = useState(null);
   const [locationDetails, setLocationDetails] = useState([]);
   const [loadingLocations, setLoadingLocations] = useState(false);
 
-
   useEffect(() => {
     fetchData();
   }, []);
-
 
   useEffect(() => {
     if (emailNotification) {
@@ -121,11 +127,18 @@ const SubscriptionManagement = () => {
   );
 
   const statusColor = (status) => {
-    if (status === "active") return "bg-green-500/10 text-green-500";
-    if (status === "expiring") return "bg-yellow-500/10 text-yellow-500";
-    if (status === "expired") return "bg-red-500/10 text-red-500";
-    return "bg-muted text-muted-foreground";
+    if (status === "active") return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+    if (status === "expiring") return "bg-amber-500/10 text-amber-600 border-amber-500/20";
+    if (status === "expired") return "bg-rose-500/10 text-rose-600 border-rose-500/20";
+    return "bg-slate-500/10 text-slate-600 border-slate-500/20";
   };
+
+  const statusBadge = (status) => {
+    if (status === "active") return <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>;
+    if (status === "expiring") return <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>;
+    if (status === "expired") return <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>;
+    return <span className="w-1.5 h-1.5 rounded-full bg-slate-500 mr-1.5"></span>;
+  }
 
   const formatStatusDisplay = (status) => {
     if (status === "active") return "Active";
@@ -137,31 +150,22 @@ const SubscriptionManagement = () => {
   const canRenew = (restaurantId) => {
     const lastRenewalKey = `lastRenewal_${restaurantId}`;
     const lastRenewalTime = localStorage.getItem(lastRenewalKey);
-
     if (!lastRenewalTime) return true;
-
     const lastRenewal = new Date(lastRenewalTime);
     const now = new Date();
-    const diffInMs = now - lastRenewal;
-    const diffInHours = diffInMs / (1000 * 60 * 60);
-
+    const diffInHours = (now - lastRenewal) / (1000 * 60 * 60);
     return diffInHours >= 24;
   };
 
   const getRemainingCooldownHours = (restaurantId) => {
     const lastRenewalKey = `lastRenewal_${restaurantId}`;
     const lastRenewalTime = localStorage.getItem(lastRenewalKey);
-
     if (!lastRenewalTime) return 0;
-
     const lastRenewal = new Date(lastRenewalTime);
     const now = new Date();
-    const diffInMs = now - lastRenewal;
-    const diffInHours = diffInMs / (1000 * 60 * 60);
-
+    const diffInHours = (now - lastRenewal) / (1000 * 60 * 60);
     return Math.max(0, 24 - diffInHours);
   };
-
 
   const handleEditClick = async (sub) => {
     setSelectedSub(sub);
@@ -228,32 +232,26 @@ const SubscriptionManagement = () => {
       const updated = prev.map((loc) =>
         loc._id === locationId ? { ...loc, editTables: numTables } : loc
       );
-
       const newTotal = updated.reduce((sum, loc) => sum + (loc.editTables || 0), 0);
       setCalculatedPrice(calculatePrice(newTotal));
-
       if (editMonthsToAdd > 0) {
         setCalculatedExtensionPrice(calculatePrice(newTotal) * editMonthsToAdd);
       }
-
       return updated;
     });
   };
 
   const handleSaveChanges = async () => {
     if (!selectedSub) return;
-
     try {
       setUpdating(true);
       setError(null);
-
       const updateData = {};
 
       if (locationDetails.length > 0) {
         const hasLocationChanges = locationDetails.some(
           (loc) => loc.editTables !== loc.totalTables
         );
-
         if (hasLocationChanges) {
           updateData.locationUpdates = locationDetails.map((loc) => ({
             locationId: loc._id,
@@ -264,54 +262,33 @@ const SubscriptionManagement = () => {
         updateData.totalTables = editTotalTables;
       }
 
-      if (editMonthsToAdd > 0) {
-        updateData.monthsToAdd = editMonthsToAdd;
-      }
-
-      if (editEndDate && editEndDate !== selectedSub.endDate && !updateData.monthsToAdd) {
-        updateData.endDate = editEndDate;
-      }
-
-      if (editAutoRenew !== selectedSub.autoRenew) {
-        updateData.autoRenew = editAutoRenew;
-      }
+      if (editMonthsToAdd > 0) updateData.monthsToAdd = editMonthsToAdd;
+      if (editEndDate && editEndDate !== selectedSub.endDate && !updateData.monthsToAdd) updateData.endDate = editEndDate;
+      if (editAutoRenew !== selectedSub.autoRenew) updateData.autoRenew = editAutoRenew;
 
       updateData.sendPaymentEmail = sendPaymentEmail;
 
       const response = await updateSubscription(selectedSub.restaurantId, updateData);
 
       if (response.data?.success) {
-        if (response.data.data.invoice) {
-          if (sendPaymentEmail && response.data.data.invoice) {
-            setEmailNotification({
-              restaurantName: selectedSub.restaurantName,
-              amount: response.data.data.invoice.amount,
-            });
-          }
-
-          if (locationDetails.some(loc => loc.editTables > loc.totalTables) || editTotalTables > selectedSub.totalTables) {
-            setError(null);
-          }
-
-          if (response.data.data.subscription) {
-            setSubscriptions((prev) =>
-              prev.map((sub) =>
-                sub.id === selectedSub.id
-                  ? { ...sub, ...response.data.data.subscription }
-                  : sub
-              )
-            );
-          }
-        } else {
-          setSubscriptions((prev) =>
-            prev.map((sub) =>
-              sub.id === selectedSub.id
-                ? { ...sub, ...response.data.data.subscription }
-                : sub
-            )
-          );
-          setShowEdit(false);
+        if (response.data.data.invoice && sendPaymentEmail) {
+          setEmailNotification({
+            restaurantName: selectedSub.restaurantName,
+            amount: response.data.data.invoice.amount,
+          });
         }
+
+        if (response.data.data.subscription) {
+          setSubscriptions((prev) =>
+            prev.map((sub) => sub.id === selectedSub.id ? { ...sub, ...response.data.data.subscription } : sub)
+          );
+        } else {
+          // Fallback if full object not returned
+          setShowEdit(false);
+          fetchData();
+          return;
+        }
+        setShowEdit(false);
         fetchData();
       }
     } catch (err) {
@@ -324,20 +301,16 @@ const SubscriptionManagement = () => {
 
   const handleRenew = async (sub) => {
     if (!sub) return;
-
     if (!canRenew(sub.restaurantId)) {
       const remainingHours = getRemainingCooldownHours(sub.restaurantId);
-      const remainingHoursRounded = Math.ceil(remainingHours);
-      setError(`Please wait ${remainingHoursRounded} hour(s) before renewing again.`);
+      setError(`Please wait ${Math.ceil(remainingHours)} hour(s) before renewing again.`);
       return;
     }
 
     try {
       setUpdating(true);
       setError(null);
-
       const response = await renewSubscription(sub.restaurantId, { months: 1 });
-
       if (response.data?.success) {
         const lastRenewalKey = `lastRenewal_${sub.restaurantId}`;
         localStorage.setItem(lastRenewalKey, new Date().toISOString());
@@ -347,12 +320,6 @@ const SubscriptionManagement = () => {
             restaurantName: sub.restaurantName,
             amount: response.data.data.invoice.amount,
           });
-        } else {
-          setSubscriptions((prev) =>
-            prev.map((s) =>
-              s.id === sub.id ? { ...s, ...response.data.data } : s
-            )
-          );
         }
         fetchData();
       }
@@ -367,559 +334,404 @@ const SubscriptionManagement = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[oklch(0.7_0.18_45)]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 p-3 sm:p-4 md:p-0">
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 sm:p-4">
-          <p className="text-red-500 text-xs sm:text-sm break-words">{error}</p>
-        </div>
-      )}
+    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
 
+      {/* Toast Notification */}
       {emailNotification && createPortal(
-        <div className="fixed top-4 right-4 z-[110] bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 sm:p-4 shadow-lg max-w-xs sm:max-w-sm transition-all duration-300 ease-out">
-          <div className="flex items-start gap-2 sm:gap-3">
-            <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-              <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
+        <div className="fixed top-24 right-6 z-[120] bg-white dark:bg-slate-900 border border-border/50 rounded-2xl p-4 shadow-2xl animate-in slide-in-from-right-10 overflow-hidden max-w-sm">
+          <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <CreditCard className="w-5 h-5 text-blue-500" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-blue-500 font-semibold text-xs sm:text-sm mb-1">Email Sent</p>
-              <p className="text-blue-400 text-xs break-words">
-                Payment link sent to <span className="font-medium">{emailNotification.restaurantName}</span>
-              </p>
-              <p className="text-blue-500 font-bold text-xs sm:text-sm mt-1">
-                Amount: ₹{emailNotification.amount}
-              </p>
+            <div className="flex-1">
+              <h4 className="font-bold text-foreground text-sm">Invoice Sent</h4>
+              <p className="text-xs text-muted-foreground mt-1">Payment link sent to <br /><span className="font-medium text-foreground">{emailNotification.restaurantName}</span></p>
+              <p className="text-blue-600 font-bold text-lg mt-2">₹{emailNotification.amount}</p>
             </div>
-            <button
-              onClick={() => setEmailNotification(null)}
-              className="flex-shrink-0 text-blue-400 hover:text-blue-500 transition-colors p-0.5"
-            >
-              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <button onClick={() => setEmailNotification(null)} className="text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>,
         document.body
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-green-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-foreground">₹{stats.totalMRR || 0}</p>
-              <p className="text-xs md:text-sm text-muted-foreground">Monthly Revenue</p>
+      {error && (
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 p-4 rounded-xl flex items-center gap-3 animate-in shake">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm font-medium">{error}</p>
+        </div>
+      )}
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-emerald-500/10 to-teal-600/5 border border-emerald-500/20 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <DollarSign className="w-20 h-20 text-emerald-500" />
+          </div>
+          <div className="relative z-10">
+            <p className="text-xs font-bold text-emerald-600/80 uppercase tracking-widest mb-1">Monthly Revenue</p>
+            <h3 className="text-3xl font-bold text-foreground">₹{stats.totalMRR || 0}</h3>
+            <div className="mt-4 flex items-center gap-2 text-xs text-emerald-600 font-medium bg-emerald-500/10 w-fit px-2 py-1 rounded-lg">
+              <TrendingUp className="w-3 h-3" />
+              <span>Current MRR</span>
             </div>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <CreditCard className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-foreground">
-                {stats.activeSubscriptions || 0}
-              </p>
-              <p className="text-xs md:text-sm text-muted-foreground">Active Subscriptions</p>
+
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-blue-500/10 to-indigo-600/5 border border-blue-500/20 shadow-lg hover:shadow-blue-500/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <CreditCard className="w-20 h-20 text-blue-500" />
+          </div>
+          <div className="relative z-10">
+            <p className="text-xs font-bold text-blue-600/80 uppercase tracking-widest mb-1">Active Plans</p>
+            <h3 className="text-3xl font-bold text-foreground">{stats.activeSubscriptions || 0}</h3>
+            <div className="mt-4 flex items-center gap-2 text-xs text-blue-600 font-medium bg-blue-500/10 w-fit px-2 py-1 rounded-lg">
+              <CheckCircle2 className="w-3 h-3" />
+              <span>Live Restaurants</span>
             </div>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-foreground">
-                {stats.expiringSoon || 0}
-              </p>
-              <p className="text-xs md:text-sm text-muted-foreground">Expiring Soon</p>
+
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-amber-500/10 to-orange-600/5 border border-amber-500/20 shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <AlertCircle className="w-20 h-20 text-amber-500" />
+          </div>
+          <div className="relative z-10">
+            <p className="text-xs font-bold text-amber-600/80 uppercase tracking-widest mb-1">Expiring Soon</p>
+            <h3 className="text-3xl font-bold text-foreground">{stats.expiringSoon || 0}</h3>
+            <div className="mt-4 flex items-center gap-2 text-xs text-amber-600 font-medium bg-amber-500/10 w-fit px-2 py-1 rounded-lg">
+              <Calendar className="w-3 h-3" />
+              <span>Need Renewal</span>
             </div>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-red-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-foreground">
-                {stats.expiredCount || 0}
-              </p>
-              <p className="text-xs md:text-sm text-muted-foreground">Expired</p>
+
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-rose-500/10 to-red-600/5 border border-rose-500/20 shadow-lg hover:shadow-rose-500/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <X className="w-20 h-20 text-rose-500" />
+          </div>
+          <div className="relative z-10">
+            <p className="text-xs font-bold text-rose-600/80 uppercase tracking-widest mb-1">Expired</p>
+            <h3 className="text-3xl font-bold text-foreground">{stats.expiredCount || 0}</h3>
+            <div className="mt-4 flex items-center gap-2 text-xs text-rose-600 font-medium bg-rose-500/10 w-fit px-2 py-1 rounded-lg">
+              <AlertCircle className="w-3 h-3" />
+              <span>Inactive</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-4 md:p-6">
-        <div className="mb-3 md:mb-4">
-          <h3 className="text-base md:text-lg font-semibold text-foreground flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-            <span>All Features Included</span>
-            <span className="text-primary text-xs md:text-sm font-normal">
-              ₹{PRICE_PER_TABLE} per table/month
-            </span>
-          </h3>
-          <p className="text-xs md:text-sm text-muted-foreground">
-            Every subscription includes all features. Pricing is based on the number of tables.
-          </p>
+      {/* Features Overview */}
+      <div className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 md:p-8 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/50 to-transparent"></div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-xl font-bold text-foreground">Standard Plan Features</h3>
+            <p className="text-sm text-muted-foreground mt-1">All subscriptions include premium access</p>
+          </div>
+          <div className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-bold shadow-lg shadow-primary/20">
+            ₹{PRICE_PER_TABLE} <span className="text-primary-foreground/80 font-medium">/ table / month</span>
+          </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-3 gap-x-6">
           {allFeatures.map((feature, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-primary rounded-full flex-shrink-0" />
-              <span className="text-xs md:text-sm text-muted-foreground">{feature}</span>
+            <div key={i} className="flex items-center gap-2 text-sm text-foreground/80">
+              <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              <span>{feature}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      {/* Search Bar */}
+      <div className="flex items-center gap-4 bg-muted/30 p-2 rounded-2xl border border-border/50 backdrop-blur-sm">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
-            placeholder="Search subscriptions..."
+            placeholder="Search subscriptions by restaurant..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 py-2 bg-muted border border-border rounded-lg text-foreground text-sm md:text-base"
+            className="w-full pl-12 pr-4 py-3 bg-card/60 border border-border/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all outline-none"
           />
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="p-3 md:p-4 border-b border-border">
-          <h3 className="text-base md:text-lg font-semibold text-foreground">All Subscriptions</h3>
-        </div>
-
-        <div className="block md:hidden divide-y divide-border">
-          {filteredSubs.length === 0 ? (
-            <div className="py-8 text-center px-4">
-              <p className="text-muted-foreground text-sm">
-                {searchQuery
-                  ? "No subscriptions found matching your search."
-                  : "No subscriptions found."}
-              </p>
-            </div>
-          ) : (
-            filteredSubs.map((sub) => (
-              <div
-                key={sub.id}
-                className="p-4 space-y-3 hover:bg-muted/30"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-5 h-5 text-primary" />
+      {/* Subscriptions Table */}
+      <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-3xl overflow-hidden shadow-xl">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-muted/50 border-b border-border/50">
+                <th className="text-left py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Restaurant</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Usage</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pricing</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Renewal</th>
+                <th className="text-right py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Controls</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {filteredSubs.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-20 text-center text-muted-foreground">
+                    <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Search className="w-8 h-8 text-muted-foreground/50" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground text-sm truncate">{sub.restaurantName}</p>
-                      <p className="text-xs text-muted-foreground truncate">{sub.id}</p>
-                    </div>
-                  </div>
-                  <span className={`px-2 py-1 text-xs rounded-full flex-shrink-0 ${statusColor(sub.status)}`}>
-                    {formatStatusDisplay(sub.status)}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Tables</p>
-                    <p className="font-medium text-foreground">
-                      {sub.totalTables || 0} {sub.locations > 1 && `(${sub.locations} locs)`}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Price</p>
-                    <p className="font-medium text-foreground">₹{sub.price}/mo</p>
-                    <p className="text-xs text-muted-foreground">₹{sub.pricePerTable || PRICE_PER_TABLE}/table</p>
-                  </div>
-                </div>
-
-                {sub.endDate && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Calendar className="w-3 h-3" />
-                    <span>Ends: {new Date(sub.endDate).toLocaleDateString()}</span>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 pt-2">
-                  <button
-                    onClick={() => handleEditClick(sub)}
-                    className="flex-1 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-muted text-foreground flex items-center justify-center gap-1.5"
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                    Edit
-                  </button>
-                  {(sub.status === "expired" || sub.status === "expiring") && (
-                    <button
-                      onClick={() => handleRenew(sub)}
-                      disabled={updating || !canRenew(sub.restaurantId)}
-                      className="flex-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed relative"
-                      title={!canRenew(sub.restaurantId) ? `Please wait ${Math.ceil(getRemainingCooldownHours(sub.restaurantId))} hour(s) before renewing again.` : ""}
-                    >
-                      {updating ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <RefreshCw className="w-3.5 h-3.5" />
-                      )}
-                      Renew
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="hidden md:block overflow-x-auto -mx-4 md:mx-0">
-          <div className="inline-block min-w-full align-middle">
-            <table className="w-full min-w-[800px]">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
-                    Restaurant
-                  </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
-                    Tables
-                  </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
-                    Price
-                  </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
-                    Status
-                  </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground hidden md:table-cell">
-                    End Date
-                  </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground hidden lg:table-cell">
-                    Auto Renew
-                  </th>
-                  <th className="text-right py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
-                    Actions
-                  </th>
+                    No subscriptions found
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredSubs.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="py-8 md:py-12 text-center px-4">
-                      <p className="text-muted-foreground text-sm md:text-base">
-                        {searchQuery
-                          ? "No subscriptions found matching your search."
-                          : "No subscriptions found."}
-                      </p>
+              ) : (
+                filteredSubs.map(sub => (
+                  <tr key={sub.id} className="group hover:bg-muted/30 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                          <Building2 className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-foreground text-sm truncate max-w-[150px]">{sub.restaurantName}</p>
+                          <p className="text-xs text-muted-foreground">ID: {sub.id}</p>
+                        </div>
+                      </div>
                     </td>
-                  </tr>
-                ) : (
-                  filteredSubs.map((sub) => (
-                    <tr
-                      key={sub.id}
-                      className="border-b border-border/50 hover:bg-muted/30"
-                    >
-                      <td className="py-3 md:py-4 px-2 md:px-4">
-                        <div className="flex items-center gap-2 md:gap-3">
-                          <div className="w-8 h-8 md:w-10 md:h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Building2 className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-foreground text-sm md:text-base truncate">{sub.restaurantName}</p>
-                            <p className="text-xs text-muted-foreground truncate">{sub.id}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 md:py-4 px-2 md:px-4 text-foreground">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-sm md:text-base">{sub.totalTables || 0} tables</span>
-                          {sub.locations > 1 && (
-                            <span className="text-xs text-muted-foreground">
-                              {sub.locations} locations
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 md:py-4 px-2 md:px-4 text-foreground font-medium">
-                        <div className="flex flex-col">
-                          <span className="text-sm md:text-base">₹{sub.price}/mo</span>
-                          <span className="text-xs text-muted-foreground font-normal">
-                            ₹{sub.pricePerTable || PRICE_PER_TABLE}/table
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 md:py-4 px-2 md:px-4">
-                        <span className={`px-2 py-1 text-xs rounded-full ${statusColor(sub.status)}`}>
-                          {formatStatusDisplay(sub.status)}
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                          {sub.totalTables || 0} <span className="font-normal text-muted-foreground">tables</span>
                         </span>
-                      </td>
-                      <td className="py-3 md:py-4 px-2 md:px-4 text-muted-foreground text-xs md:text-sm hidden md:table-cell">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {sub.endDate
-                            ? new Date(sub.endDate).toLocaleDateString()
-                            : "N/A"}
-                        </span>
-                      </td>
-                      <td className="py-3 md:py-4 px-2 md:px-4 hidden lg:table-cell">
-                        {sub.autoRenew ? (
-                          <span className="px-2 py-1 text-xs rounded-full bg-green-500/10 text-green-500">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 text-xs rounded-full bg-muted text-muted-foreground">
-                            No
+                        {sub.locations > 1 && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-muted w-fit mt-1 text-muted-foreground">
+                            {sub.locations} Locations
                           </span>
                         )}
-                      </td>
-                      <td className="py-3 md:py-4 px-2 md:px-4 text-right">
-                        <div className="flex items-center justify-end gap-1 md:gap-2 flex-wrap">
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-foreground text-sm">₹{sub.price}/mo</span>
+                        <span className="text-xs text-muted-foreground">₹{sub.pricePerTable || PRICE_PER_TABLE} / table</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${statusColor(sub.status)}`}>
+                        {statusBadge(sub.status)}
+                        {formatStatusDisplay(sub.status)}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col text-sm">
+                        <span className="text-foreground font-medium">
+                          {sub.endDate ? new Date(sub.endDate).toLocaleDateString() : "N/A"}
+                        </span>
+                        {sub.autoRenew && (
+                          <span className="text-xs text-emerald-600 flex items-center gap-1 mt-0.5">
+                            <RefreshCw className="w-3 h-3" /> Auto-on
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEditClick(sub)}
+                          className="p-2 rounded-lg border border-border/50 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+                          title="Edit Subscription"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        {(sub.status === "expired" || sub.status === "expiring") && (
                           <button
-                            onClick={() => handleEditClick(sub)}
-                            className="px-2 md:px-3 py-1 text-xs md:text-sm border border-border rounded-lg hover:bg-muted text-foreground flex items-center gap-1"
+                            onClick={() => handleRenew(sub)}
+                            disabled={updating || !canRenew(sub.restaurantId)}
+                            className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white border border-emerald-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Renew Now"
                           >
-                            <Edit className="w-3 h-3 md:w-4 md:h-4" />
-                            <span className="hidden sm:inline">Edit</span>
+                            {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                           </button>
-                          {(sub.status === "expired" || sub.status === "expiring") && (
-                            <button
-                              onClick={() => handleRenew(sub)}
-                              disabled={updating || !canRenew(sub.restaurantId)}
-                              className="px-2 md:px-3 py-1 text-xs md:text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed relative"
-                              title={!canRenew(sub.restaurantId) ? `Please wait ${Math.ceil(getRemainingCooldownHours(sub.restaurantId))} hour(s) before renewing again.` : ""}
-                            >
-                              {updating ? (
-                                <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
-                              ) : (
-                                <RefreshCw className="w-3 h-3 md:w-4 md:h-4" />
-                              )}
-                              <span className="hidden sm:inline">Renew</span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
+      {/* Edit Modal */}
       {showEdit && createPortal(
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-3 sm:p-4" onClick={() => {
-          setShowEdit(false);
-          setError(null);
-        }}>
-          <div
-            className="bg-card border border-border rounded-xl p-4 sm:p-5 md:p-6 w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300"
+          onClick={() => { setShowEdit(false); setError(null); }}
+        >
+          <div className="bg-background border border-border rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-4 sm:mb-5">
-              <div className="flex justify-between items-start gap-2 mb-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold text-foreground">Edit Subscription</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
-                    {selectedSub?.restaurantName}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowEdit(false);
-                    setError(null);
-                  }}
-                  className="flex-shrink-0 p-1 hover:bg-muted rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-muted-foreground hover:text-foreground" />
-                </button>
+            <div className="px-6 py-4 border-b border-border/50 flex justify-between items-center sticky top-0 bg-background/95 backdrop-blur z-10">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Manage Subscription</h2>
+                <p className="text-sm text-muted-foreground">{selectedSub?.restaurantName}</p>
               </div>
+              <button onClick={() => setShowEdit(false)} className="p-2 rounded-full hover:bg-muted transition">
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
             </div>
-            {selectedSub && (
-              <div className="space-y-3 sm:space-y-4">
-                {loadingLocations ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                ) : locationDetails.length > 0 ? (
-                  <div className="space-y-3">
-                    <label className="text-xs sm:text-sm font-medium text-foreground">
-                      Tables by Location
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {locationDetails.map((loc, index) => {
-                        const isIncreased = loc.editTables > loc.totalTables;
 
-                        return (
-                          <div key={loc._id || index} className="p-3 sm:p-4 bg-muted rounded-lg border border-border flex flex-col">
-                            <div className="mb-3">
-                              <div className="flex items-start justify-between gap-2 mb-1">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs sm:text-sm font-medium text-foreground truncate">
-                                    {loc.locationName || `Location ${index + 1}`}
-                                  </p>
-                                  {loc.address && (
-                                    <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                      {loc.city && loc.state ? `${loc.city}, ${loc.state}` : loc.address}
-                                    </p>
-                                  )}
+            <div className="p-6 md:p-8 space-y-8 flex-1">
+              {loadingLocations ? (
+                <div className="py-20 flex flex-col items-center">
+                  <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                  <p className="mt-4 text-muted-foreground">Loading specific data...</p>
+                </div>
+              ) : (
+                <>
+                  {/* Section 1: Tables & Locations */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <Building2 className="w-4 h-4" /> Capacity & Locations
+                    </h3>
+
+                    {locationDetails.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {locationDetails.map((loc, idx) => {
+                          const isChanged = loc.editTables !== loc.totalTables;
+                          return (
+                            <div key={idx} className={`p-4 rounded-2xl border transition-all ${isChanged ? 'border-primary/50 bg-primary/5' : 'border-border bg-card'}`}>
+                              <div className="flex justify-between items-start mb-3">
+                                <div>
+                                  <p className="font-semibold text-sm">{loc.locationName || `Location ${idx + 1}`}</p>
+                                  <p className="text-xs text-muted-foreground truncate max-w-[150px]">{loc.address || "No address"}</p>
                                 </div>
+                                {isChanged && <span className="text-xs font-bold text-primary px-2 py-1 bg-primary/10 rounded-md">Modified</span>}
                               </div>
-                              <div className="flex items-center justify-between mt-2">
-                                <span className="text-xs text-muted-foreground">
-                                  Current: <span className="font-medium text-foreground">{loc.totalTables || 0}</span>
-                                </span>
-                                {isIncreased && (
-                                  <span className="text-xs text-yellow-500 font-medium">
-                                    +{loc.editTables - loc.totalTables}
-                                  </span>
-                                )}
+                              <div className="flex items-center gap-3">
+                                <label className="text-xs font-medium text-muted-foreground">Tables:</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={loc.editTables || 0}
+                                  onChange={(e) => handleLocationTablesChange(loc._id, e.target.value)}
+                                  className="w-20 px-2 py-1.5 rounded-lg border border-border bg-background text-sm font-semibold focus:ring-2 focus:ring-primary/20 outline-none"
+                                />
                               </div>
                             </div>
-                            <div className="mt-auto">
-                              <input
-                                type="number"
-                                min="0"
-                                max="1000"
-                                value={loc.editTables || 0}
-                                onChange={(e) => handleLocationTablesChange(loc._id, e.target.value)}
-                                className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                                placeholder="0"
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="bg-muted/30 p-4 rounded-2xl border border-border/50">
+                        <label className="text-sm font-medium mb-2 block">Total Tables</label>
+                        <input
+                          type="number" min="0" value={editTotalTables} onChange={(e) => handleTablesChange(e.target.value)}
+                          className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center text-sm font-medium pt-2 px-1">
+                      <span>Total Tables across all locations:</span>
+                      <span className="text-lg font-bold text-primary">
+                        {locationDetails.length > 0
+                          ? locationDetails.reduce((sum, loc) => sum + (loc.editTables || 0), 0)
+                          : editTotalTables
+                        }
+                      </span>
                     </div>
-                    <div className="pt-3 border-t border-border bg-muted rounded-lg p-3 sm:p-4">
-                      <div className="flex justify-between items-center text-sm font-medium text-foreground">
-                        <span>Total Tables</span>
-                        <span>{locationDetails.reduce((sum, loc) => sum + (loc.editTables || 0), 0)}</span>
+                  </div>
+
+                  <div className="h-px bg-border/50"></div>
+
+                  {/* Section 2: Extension & Billing */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <Calendar className="w-4 h-4" /> Extension & Renewal
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Extend Period</label>
+                        <select
+                          value={editMonthsToAdd}
+                          onChange={(e) => handleMonthsChange(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-muted/30 border border-border focus:ring-2 focus:ring-primary/20 outline-none appearance-none"
+                        >
+                          <option value="0">No extension</option>
+                          <option value="1">+1 Month</option>
+                          <option value="3">+3 Months</option>
+                          <option value="6">+6 Months</option>
+                          <option value="12">+1 Year</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Subscription End</label>
+                        <input
+                          type="date"
+                          disabled={editMonthsToAdd > 0}
+                          value={editEndDate ? new Date(editEndDate).toISOString().split("T")[0] : ""}
+                          onChange={(e) => setEditEndDate(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-muted/30 border border-border focus:ring-2 focus:ring-primary/20 outline-none disabled:opacity-50"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                      <label className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:bg-muted/50 cursor-pointer transition flex-1">
+                        <input type="checkbox" checked={editAutoRenew} onChange={e => setEditAutoRenew(e.target.checked)} className="w-5 h-5 rounded text-primary focus:ring-primary" />
+                        <span className="font-medium text-sm">Enable Auto-Renew</span>
+                      </label>
+                      <label className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:bg-muted/50 cursor-pointer transition flex-1">
+                        <input type="checkbox" checked={sendPaymentEmail} onChange={e => setSendPaymentEmail(e.target.checked)} className="w-5 h-5 rounded text-primary focus:ring-primary" />
+                        <span className="font-medium text-sm">Send Invoice Email</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Summary Box */}
+                  <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>New Monthly Base Price</span>
+                        <span>₹{calculatedPrice}</span>
+                      </div>
+                      {calculatedExtensionPrice > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Extension Cost ({editMonthsToAdd}mo)</span>
+                          <span>+ ₹{calculatedExtensionPrice}</span>
+                        </div>
+                      )}
+                      <div className="h-px bg-primary/10 my-2"></div>
+                      <div className="flex justify-between font-bold text-lg text-foreground">
+                        <span>Estimated Total</span>
+                        <span className="text-primary">₹{calculatedPrice + calculatedExtensionPrice}</span>
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 md:mb-2">
-                      Total Tables
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="1000"
-                      value={editTotalTables}
-                      onChange={(e) => handleTablesChange(e.target.value)}
-                      className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                )}
+                </>
+              )}
+            </div>
 
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 md:mb-2">
-                    Add Months (Optional)
-                  </label>
-                  <select
-                    value={editMonthsToAdd}
-                    onChange={(e) => handleMonthsChange(e.target.value)}
-                    className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="0">Don't add time</option>
-                    <option value="1">1 Month</option>
-                    <option value="3">3 Months</option>
-                    <option value="6">6 Months</option>
-                    <option value="12">12 Months</option>
-                  </select>
-                </div>
-
-                {editMonthsToAdd === 0 && (
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 md:mb-2">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      value={editEndDate ? new Date(editEndDate).toISOString().split("T")[0] : ""}
-                      onChange={(e) => setEditEndDate(e.target.value)}
-                      className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 md:gap-3 py-2">
-                  <input
-                    type="checkbox"
-                    id="autoRenew"
-                    checked={editAutoRenew}
-                    onChange={(e) => setEditAutoRenew(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <label htmlFor="autoRenew" className="text-xs sm:text-sm font-medium text-foreground cursor-pointer">
-                    Enable Auto Renew
-                  </label>
-                </div>
-
-                <div className="flex items-center gap-2 md:gap-3 pb-2">
-                  <input
-                    type="checkbox"
-                    id="sendEmail"
-                    checked={sendPaymentEmail}
-                    onChange={(e) => setSendPaymentEmail(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <label htmlFor="sendEmail" className="text-xs sm:text-sm font-medium text-foreground cursor-pointer">
-                    Send Payment Link via Email
-                  </label>
-                </div>
-
-                <div className="bg-muted p-3 sm:p-4 rounded-lg space-y-2 text-xs sm:text-sm">
-                  <div className="flex justify-between items-center text-muted-foreground">
-                    <span>Base Price ({(locationDetails.length > 0 ? locationDetails.reduce((sum, loc) => sum + (loc.editTables || 0), 0) : editTotalTables) || 0} tables)</span>
-                    <span>₹{calculatedPrice}/mo</span>
-                  </div>
-                  {calculatedExtensionPrice > 0 && (
-                    <div className="flex justify-between items-center text-muted-foreground">
-                      <span>Extension ({editMonthsToAdd} months)</span>
-                      <span>+₹{calculatedExtensionPrice}</span>
-                    </div>
-                  )}
-                  <div className="pt-2 border-t border-border flex justify-between items-center font-semibold text-foreground">
-                    <span>New Monthly Total</span>
-                    <span>₹{calculatedPrice}</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 mt-6">
-                  <button
-                    onClick={() => {
-                      setShowEdit(false);
-                      setError(null);
-                    }}
-                    className="flex-1 px-4 py-2 border border-border rounded-lg text-foreground hover:bg-muted font-medium transition-colors text-xs sm:text-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveChanges}
-                    disabled={
-                      updating ||
-                      (editTotalTables === (selectedSub?.totalTables || 0) &&
-                        editEndDate === selectedSub?.endDate &&
-                        editAutoRenew === selectedSub?.autoRenew &&
-                        editMonthsToAdd === 0 &&
-                        locationDetails.every(loc => loc.editTables === loc.totalTables))
-                    }
-                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs sm:text-sm"
-                  >
-                    {updating && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Save Changes
-                  </button>
-                </div>
-              </div>
-            )}
+            <div className="p-6 border-t border-border/50 bg-muted/20 flex gap-3">
+              <button onClick={() => setShowEdit(false)} className="flex-1 py-3 rounded-xl border border-border font-medium hover:bg-muted transition text-sm">
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveChanges}
+                disabled={updating}
+                className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:opacity-90 transition shadow-lg shadow-primary/25 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                Save Changes
+              </button>
+            </div>
           </div>
         </div>,
         document.body

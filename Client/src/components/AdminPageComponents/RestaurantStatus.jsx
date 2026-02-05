@@ -18,6 +18,8 @@ import {
   Calendar,
   DollarSign,
   RefreshCw,
+  Filter,
+  MoreHorizontal
 } from "lucide-react";
 import {
   getAllRestaurants,
@@ -25,19 +27,19 @@ import {
   toggleRestaurantBlock,
   deleteRestaurant,
 } from "../../utils/api";
+import toast from "react-hot-toast";
 
 const RestaurantStatus = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
   const [showDropdown, setShowDropdown] = useState(null);
-  const [dropdownPosition, setDropdownPosition] = useState({});
   const [dropdownCoords, setDropdownCoords] = useState({});
+
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -46,58 +48,6 @@ const RestaurantStatus = () => {
   useEffect(() => {
     fetchRestaurants();
   }, []);
-
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
-
-  const getRestaurantStatus = (restaurant) => {
-    if (restaurant.isBlocked) return "suspended";
-    if (restaurant.isLoggedIn === true) {
-      return "active";
-    }
-    return "inactive";
-  };
-
-  const fetchRestaurants = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await getAllRestaurants();
-      if (response.data?.success) {
-        setRestaurants(response.data.data || []);
-      }
-    } catch (err) {
-      console.error("Error fetching restaurants:", err);
-      setError(err.response?.data?.message || "Failed to fetch restaurants");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleViewDetails = async (restaurant) => {
-    setSelectedRestaurant(restaurant);
-    setShowDetailsModal(true);
-    setDetailsLoading(true);
-    setError(null);
-
-    try {
-      const response = await getRestaurantById(restaurant._id || restaurant.id);
-      if (response.data?.success) {
-        setRestaurantDetails(response.data.data);
-      }
-    } catch (err) {
-      console.error("Error fetching restaurant details:", err);
-      setError(err.response?.data?.message || "Failed to fetch restaurant details");
-    } finally {
-      setDetailsLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (showDetailsModal || showDeleteModal) {
@@ -110,25 +60,63 @@ const RestaurantStatus = () => {
     };
   }, [showDetailsModal, showDeleteModal]);
 
+  const getRestaurantStatus = (restaurant) => {
+    if (restaurant.isBlocked) return "suspended";
+    if (restaurant.isLoggedIn === true) return "active";
+    return "inactive";
+  };
+
+  const fetchRestaurants = async () => {
+    try {
+      setLoading(true);
+      const response = await getAllRestaurants();
+      if (response.data?.success) {
+        setRestaurants(response.data.data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching restaurants:", err);
+      toast.error(err.response?.data?.message || "Failed to fetch restaurants");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewDetails = async (restaurant) => {
+    setSelectedRestaurant(restaurant);
+    setShowDetailsModal(true);
+    setDetailsLoading(true);
+
+    try {
+      const response = await getRestaurantById(restaurant._id || restaurant.id);
+      if (response.data?.success) {
+        setRestaurantDetails(response.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching restaurant details:", err);
+      toast.error(err.response?.data?.message || "Failed to fetch restaurant details");
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
   const handleToggleBlock = async (restaurant) => {
     try {
       setActionLoading(true);
-      setError(null);
       setShowDropdown(null);
 
       const response = await toggleRestaurantBlock(restaurant._id || restaurant.id);
       if (response.data?.success) {
         const isBlocked = response.data.data.isBlocked;
-        setSuccessMessage(
+        toast.success(
           isBlocked
-            ? `${restaurant.restaurantName} has been suspended successfully`
-            : `${restaurant.restaurantName} has been activated successfully`
+            ? `${restaurant.restaurantName} has been suspended`
+            : `${restaurant.restaurantName} has been activated`
         );
         fetchRestaurants();
       }
     } catch (err) {
       console.error("Error toggling restaurant block:", err);
-      setError(err.response?.data?.message || "Failed to update restaurant status");
+      toast.error(err.response?.data?.message || "Failed to update status");
     } finally {
       setActionLoading(false);
     }
@@ -139,21 +127,50 @@ const RestaurantStatus = () => {
 
     try {
       setActionLoading(true);
-      setError(null);
-
       const response = await deleteRestaurant(selectedRestaurant._id || selectedRestaurant.id);
       if (response.data?.success) {
-        setSuccessMessage(`${selectedRestaurant.restaurantName} has been deleted successfully`);
+        toast.success(`${selectedRestaurant.restaurantName} deleted successfully`);
         setShowDeleteModal(false);
         setSelectedRestaurant(null);
         fetchRestaurants();
       }
     } catch (err) {
       console.error("Error deleting restaurant:", err);
-      setError(err.response?.data?.message || "Failed to delete restaurant");
+      toast.error(err.response?.data?.message || "Failed to delete restaurant");
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const toggleDropdown = (restaurantId, event) => {
+    event.stopPropagation();
+
+    if (showDropdown === restaurantId) {
+      setShowDropdown(null);
+      return;
+    }
+
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    const dropdownHeight = 160;
+    const dropdownWidth = 160;
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    let top = buttonRect.bottom + 4;
+    let left = buttonRect.right - dropdownWidth;
+
+    // Adjust if going off screen
+    if (top + dropdownHeight > viewportHeight) {
+      top = buttonRect.top - dropdownHeight - 4;
+    }
+    if (left < 10) left = 10;
+
+    setDropdownCoords({
+      top: top,
+      left: left
+    });
+
+    setShowDropdown(restaurantId);
   };
 
   const filteredRestaurants = restaurants.filter((rest) => {
@@ -172,195 +189,99 @@ const RestaurantStatus = () => {
   const inactiveCount = restaurants.filter((r) => getRestaurantStatus(r) === "inactive").length;
   const suspendedCount = restaurants.filter((r) => getRestaurantStatus(r) === "suspended").length;
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "active":
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-      case "inactive":
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      case "suspended":
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active":
-        return "bg-green-500/10 text-green-500";
-      case "inactive":
-        return "bg-yellow-500/10 text-yellow-500";
-      case "suspended":
-        return "bg-red-500/10 text-red-500";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
-  };
-
-  const getTotalTables = (restaurant) => {
-    return restaurant.locations?.reduce((sum, loc) => sum + (loc.totalTables || 0), 0) || 0;
-  };
-
-  const toggleDropdown = (restaurantId, event) => {
-    if (event) {
-      event.stopPropagation();
-    }
-
-    if (showDropdown === restaurantId) {
-      setShowDropdown(null);
-      setDropdownPosition({});
-      setDropdownCoords({});
-      return;
-    }
-
-    if (event && event.currentTarget) {
-      const buttonRect = event.currentTarget.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const viewportWidth = window.innerWidth;
-      const spaceBelow = viewportHeight - buttonRect.bottom;
-      const spaceAbove = buttonRect.top;
-      const dropdownHeight = 180;
-      const dropdownWidth = 160;
-
-      const isNearBottom = buttonRect.bottom > viewportHeight * 0.7;
-      const shouldOpenUpward = (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) || isNearBottom;
-
-      let left = buttonRect.right - dropdownWidth;
-      if (left < 10) {
-        left = buttonRect.left;
-      }
-      if (left + dropdownWidth > viewportWidth - 10) {
-        left = viewportWidth - dropdownWidth - 10;
-      }
-
-      let top = shouldOpenUpward
-        ? buttonRect.top - dropdownHeight - 4
-        : buttonRect.bottom + 4;
-
-      if (top < 10) {
-        top = buttonRect.bottom + 4;
-      }
-      if (top + dropdownHeight > viewportHeight - 10) {
-        top = buttonRect.top - dropdownHeight - 4;
-      }
-
-      setDropdownPosition({
-        ...dropdownPosition,
-        [restaurantId]: shouldOpenUpward ? 'up' : 'down'
-      });
-
-      setDropdownCoords({
-        ...dropdownCoords,
-        [restaurantId]: {
-          top: `${top}px`,
-          left: `${left}px`,
-          right: 'auto'
-        }
-      });
-    } else {
-      setDropdownPosition({
-        ...dropdownPosition,
-        [restaurantId]: 'down'
-      });
-    }
-
-    setShowDropdown(restaurantId);
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
 
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const getTotalTables = (restaurant) => {
+    return restaurant.locations?.reduce((sum, loc) => sum + (loc.totalTables || 0), 0) || 0;
+  };
 
   return (
-    <div className="space-y-4 md:space-y-6 p-3 sm:p-4 md:p-0">
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 sm:p-4">
-          <p className="text-red-500 text-xs sm:text-sm break-words">{error}</p>
-        </div>
-      )}
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
-      {successMessage && (
-        <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 sm:p-4">
-          <p className="text-green-500 text-xs sm:text-sm break-words">{successMessage}</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4 hover:border-green-500/30 transition-colors">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-green-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-emerald-500/10 to-green-600/5 border border-emerald-500/20 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <CheckCircle2 className="w-24 h-24 text-emerald-500" />
+          </div>
+          <div className="relative z-10">
+            <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <CheckCircle2 className="w-6 h-6 text-white" />
             </div>
-            <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-foreground">{activeCount}</p>
-              <p className="text-xs md:text-sm text-muted-foreground">Active Restaurants</p>
-            </div>
+            <p className="text-sm font-medium text-emerald-600/80 uppercase tracking-widest">Active</p>
+            <h3 className="text-4xl font-bold text-foreground mt-1">{activeCount}</h3>
+            <p className="text-sm text-muted-foreground mt-2">Currently online</p>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4 hover:border-yellow-500/30 transition-colors">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Clock className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
+
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-slate-500/10 to-gray-600/5 border border-slate-500/20 shadow-lg hover:shadow-slate-500/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <Clock className="w-24 h-24 text-slate-500" />
+          </div>
+          <div className="relative z-10">
+            <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-slate-400 to-gray-500 flex items-center justify-center shadow-lg shadow-slate-500/30">
+              <Clock className="w-6 h-6 text-white" />
             </div>
-            <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-foreground">{inactiveCount}</p>
-              <p className="text-xs md:text-sm text-muted-foreground">Inactive Restaurants</p>
-            </div>
+            <p className="text-sm font-medium text-slate-600/80 uppercase tracking-widest">Inactive</p>
+            <h3 className="text-4xl font-bold text-foreground mt-1">{inactiveCount}</h3>
+            <p className="text-sm text-muted-foreground mt-2">Offline or idle</p>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4 hover:border-red-500/30 transition-colors">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-red-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
-              <XCircle className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
+
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-rose-500/10 to-red-600/5 border border-rose-500/20 shadow-lg hover:shadow-rose-500/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <XCircle className="w-24 h-24 text-rose-500" />
+          </div>
+          <div className="relative z-10">
+            <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-rose-400 to-red-500 flex items-center justify-center shadow-lg shadow-rose-500/30">
+              <XCircle className="w-6 h-6 text-white" />
             </div>
-            <div className="min-w-0">
-              <p className="text-xl md:text-2xl font-bold text-foreground">{suspendedCount}</p>
-              <p className="text-xs md:text-sm text-muted-foreground">Suspended Restaurants</p>
-            </div>
+            <p className="text-sm font-medium text-rose-600/80 uppercase tracking-widest">Suspended</p>
+            <h3 className="text-4xl font-bold text-foreground mt-1">{suspendedCount}</h3>
+            <p className="text-sm text-muted-foreground mt-2">Blocked access</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search restaurants by name, owner, or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 py-2 bg-muted border border-border rounded-lg text-foreground text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
+      {/* Control Bar */}
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-2 bg-muted/30 rounded-2xl backdrop-blur-sm border border-border/50">
+        <div className="relative w-full md:w-96 group">
+          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+            <Search className="w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <input
+            placeholder="Search restaurants..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-card/50 border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all shadow-sm"
+          />
+        </div>
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <button
+            onClick={fetchRestaurants}
+            disabled={loading}
+            className="p-3 rounded-xl bg-card border border-border/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            title="Refresh Data"
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+
+          <div className="flex items-center gap-2 p-1 bg-card/50 rounded-xl border border-border/50 shadow-sm overflow-x-auto w-full md:w-auto">
             {["all", "active", "inactive", "suspended"].map((status) => (
               <button
                 key={status}
-                onClick={() => {
-                  setStatusFilter(status);
-                  setShowDropdown(null);
-                }}
-                disabled={actionLoading}
-                className={`px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors capitalize disabled:opacity-50 disabled:cursor-not-allowed ${statusFilter === status
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted border border-border text-foreground hover:bg-border"
+                onClick={() => setStatusFilter(status)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all duration-300 relative whitespace-nowrap ${statusFilter === status
+                  ? "text-primary-foreground bg-primary shadow-md"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
               >
                 {status}
@@ -370,438 +291,385 @@ const RestaurantStatus = () => {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="p-3 md:p-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base md:text-lg font-semibold text-foreground">
-              All Restaurants ({filteredRestaurants.length})
-            </h3>
-            <button
-              onClick={fetchRestaurants}
-              disabled={loading}
-              className="p-1.5 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
-              title="Refresh"
-            >
-              <RefreshCw className={`w-4 h-4 text-muted-foreground ${loading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
+      {/* Restaurants List */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 px-2">
+          <h2 className="text-lg font-semibold text-foreground">Restaurants Listing</h2>
+          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold">
+            {filteredRestaurants.length}
+          </span>
         </div>
 
-        <div className="block md:hidden divide-y divide-border">
-          {filteredRestaurants.length === 0 ? (
-            <div className="py-8 text-center px-4">
-              <p className="text-muted-foreground text-sm">
-                {searchQuery || statusFilter !== "all"
-                  ? "No restaurants found matching your filters."
-                  : "No restaurants found."}
-              </p>
-            </div>
-          ) : (
-            filteredRestaurants.map((restaurant) => {
-              const status = getRestaurantStatus(restaurant);
-              const totalTables = getTotalTables(restaurant);
-              return (
-                <div
-                  key={restaurant._id || restaurant.id}
-                  className="p-4 space-y-3 hover:bg-muted/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Building2 className="w-5 h-5 text-primary" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-foreground text-sm truncate">
-                          {restaurant.restaurantName}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">{restaurant.ownerName}</p>
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <button
-                        onClick={(e) => toggleDropdown(restaurant._id || restaurant.id, e)}
-                        disabled={actionLoading}
-                        className="p-1.5 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
-                      >
-                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Status</p>
-                      <div className="flex items-center gap-1.5">
-                        {getStatusIcon(status)}
-                        <span className={`px-2 py-1 text-xs rounded-full capitalize ${getStatusColor(status)}`}>
-                          {status}
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Tables</p>
-                      <p className="font-medium text-foreground">{totalTables}</p>
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-muted-foreground">
-                    <p className="truncate flex items-center gap-1">
-                      <Mail className="w-3 h-3" />
-                      {restaurant.email}
-                    </p>
-                    <p className="mt-1 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      Joined: {restaurant.createdAt ? formatDate(restaurant.createdAt) : "N/A"}
-                    </p>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        <div className="hidden md:block overflow-x-auto">
-          <div className="inline-block min-w-full align-middle">
-            <table className="w-full min-w-[800px]">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
-                    Restaurant
-                  </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
-                    Status
-                  </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
-                    Tables
-                  </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground hidden lg:table-cell">
-                    Email
-                  </th>
-                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground hidden lg:table-cell">
-                    Joined
-                  </th>
-                  <th className="text-right py-2 md:py-3 px-2 md:px-4 text-xs md:text-sm font-medium text-muted-foreground">
-                    Manage
-                  </th>
+        <div className="hidden md:block bg-card/90 backdrop-blur-sm border border-border/50 rounded-3xl overflow-hidden shadow-xl">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-muted/50 border-b border-border/50">
+                <th className="text-left py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Restaurant</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tables</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Joined</th>
+                <th className="text-right py-4 px-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="py-20 text-center text-muted-foreground">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
+                    Loading restaurants...
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredRestaurants.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="py-8 md:py-12 text-center px-4">
-                      <p className="text-muted-foreground text-sm md:text-base">
-                        {searchQuery || statusFilter !== "all"
-                          ? "No restaurants found matching your filters."
-                          : "No restaurants found."}
-                      </p>
+              ) : filteredRestaurants.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-20 text-center text-muted-foreground">
+                    <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Building2 className="w-8 h-8 text-muted-foreground/50" />
+                    </div>
+                    No restaurants found matching your criteria
+                  </td>
+                </tr>
+              ) : filteredRestaurants.map((restaurant) => {
+                const status = getRestaurantStatus(restaurant);
+                const totalTables = getTotalTables(restaurant);
+                return (
+                  <tr key={restaurant._id} className="group hover:bg-muted/30 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${status === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
+                            status === 'suspended' ? 'bg-rose-500/10 text-rose-600' :
+                              'bg-slate-500/10 text-slate-600'
+                          }`}>
+                          <Building2 className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-foreground text-base">{restaurant.restaurantName}</p>
+                          <p className="text-sm text-muted-foreground">{restaurant.ownerName}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${status === 'active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                          status === 'suspended' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
+                            'bg-slate-500/10 text-slate-600 border-slate-500/20'
+                        }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${status === 'active' ? 'bg-emerald-500' :
+                            status === 'suspended' ? 'bg-rose-500' :
+                              'bg-slate-500'
+                          }`} />
+                        <span className="capitalize">{status}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-semibold text-foreground">{totalTables}</span>
+                      <span className="text-muted-foreground ml-1">tables</span>
+                    </td>
+                    <td className="py-4 px-6 text-sm">
+                      <div className="flex flex-col gap-1">
+                        <span className="flex items-center gap-1 text-muted-foreground"><Mail className="w-3.5 h-3.5" /> {restaurant.email}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-muted-foreground font-medium">
+                      {restaurant.createdAt ? new Date(restaurant.createdAt).toLocaleDateString() : "N/A"}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <div className="relative inline-block">
+                        <button
+                          onClick={(e) => toggleDropdown(restaurant._id || restaurant.id, e)}
+                          className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+                        >
+                          <MoreVertical className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  filteredRestaurants.map((restaurant) => {
-                    const status = getRestaurantStatus(restaurant);
-                    const totalTables = getTotalTables(restaurant);
-                    return (
-                      <tr
-                        key={restaurant._id || restaurant.id}
-                        className="border-b border-border/50 hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="py-3 md:py-4 px-2 md:px-4">
-                          <div className="flex items-center gap-2 md:gap-3">
-                            <div className="w-8 h-8 md:w-10 md:h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Building2 className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-foreground text-sm md:text-base truncate">
-                                {restaurant.restaurantName}
-                              </p>
-                              <p className="text-xs text-muted-foreground truncate">{restaurant.ownerName}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 md:py-4 px-2 md:px-4">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(status)}
-                            <span className={`px-2 py-1 text-xs rounded-full capitalize ${getStatusColor(status)}`}>
-                              {status}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 md:py-4 px-2 md:px-4 text-foreground font-medium">
-                          <span className="text-sm md:text-base">{totalTables}</span>
-                        </td>
-                        <td className="py-3 md:py-4 px-2 md:px-4 text-muted-foreground text-xs md:text-sm hidden lg:table-cell">
-                          <span className="truncate block max-w-[200px]">{restaurant.email}</span>
-                        </td>
-                        <td className="py-3 md:py-4 px-2 md:px-4 text-muted-foreground text-xs md:text-sm hidden lg:table-cell">
-                          {restaurant.createdAt ? formatDate(restaurant.createdAt) : "N/A"}
-                        </td>
-                        <td className="py-3 md:py-4 px-2 md:px-4 text-right">
-                          <div className="relative inline-block">
-                            <button
-                              onClick={(e) => toggleDropdown(restaurant._id || restaurant.id, e)}
-                              disabled={actionLoading}
-                              className="p-1.5 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
-                            >
-                              <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile List Style */}
+        <div className="block md:hidden space-y-4">
+          {loading ? (
+            <div className="py-12 text-center text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
+              Loading...
+            </div>
+          ) : filteredRestaurants.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground bg-card rounded-2xl border border-border border-dashed">
+              No restaurants found
+            </div>
+          ) : filteredRestaurants.map((restaurant) => {
+            const status = getRestaurantStatus(restaurant);
+            return (
+              <div key={restaurant._id} className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+                <div className={`absolute left-0 top-0 bottom-0 w-1 ${status === 'active' ? 'bg-emerald-500' :
+                    status === 'suspended' ? 'bg-rose-500' :
+                      'bg-slate-500'
+                  }`} />
+
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2.5 rounded-xl ${status === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
+                        status === 'suspended' ? 'bg-rose-500/10 text-rose-600' :
+                          'bg-slate-500/10 text-slate-600'
+                      }`}>
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">{restaurant.restaurantName}</h3>
+                      <p className="text-xs text-muted-foreground">{restaurant.ownerName}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => toggleDropdown(restaurant._id || restaurant.id, e)}
+                    className="p-2 -mr-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3 text-sm border-t border-border/50 pt-3 mt-3">
+                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${status === 'active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                      status === 'suspended' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
+                        'bg-slate-500/10 text-slate-600 border-slate-500/20'
+                    }`}>
+                    {status}
+                  </div>
+                  <span className="text-muted-foreground text-xs flex items-center gap-1 ml-auto">
+                    <Calendar className="w-3.5 h-3.5" /> {restaurant.createdAt ? new Date(restaurant.createdAt).toLocaleDateString() : "N/A"}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      {showDetailsModal && createPortal(
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]"
-
-          onClick={() => {
-            setShowDetailsModal(false);
-            setRestaurantDetails(null);
-            setError(null);
-          }}
-        >
+      {/* Dropdown Menu */}
+      {showDropdown && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(null)}></div>
           <div
-            className="bg-card border border-border rounded-xl p-4 sm:p-5 md:p-6 w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed z-50 w-44 bg-popover/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            style={{
+              top: dropdownCoords.top,
+              left: dropdownCoords.left
+            }}
           >
-            <div className="mb-4 sm:mb-5">
-              <div className="flex justify-between items-start gap-2 mb-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold text-foreground">Restaurant Details</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
-                    {selectedRestaurant?.restaurantName}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowDetailsModal(false);
-                    setRestaurantDetails(null);
-                    setError(null);
-                  }}
-                  className="flex-shrink-0 p-1 hover:bg-muted rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-muted-foreground hover:text-foreground" />
-                </button>
-              </div>
-            </div>
-
-            {detailsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : restaurantDetails ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Left Column */}
-                <div className="space-y-4">
-                  <div className="bg-muted rounded-lg p-4">
-                    <h4 className="text-sm font-semibold text-foreground mb-3">Basic Information</h4>
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Restaurant Name</p>
-                        <p className="text-sm text-foreground font-medium">{restaurantDetails.restaurantName}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Owner Name</p>
-                        <p className="text-sm text-foreground font-medium">{restaurantDetails.ownerName}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          Email
-                        </p>
-                        <p className="text-sm text-foreground font-medium break-all">{restaurantDetails.email}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          Phone
-                        </p>
-                        <p className="text-sm text-foreground font-medium">{restaurantDetails.phone || "N/A"}</p>
-                      </div>
-                      {restaurantDetails.gstNumber && (
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">GST Number</p>
-                          <p className="text-sm text-foreground font-medium">{restaurantDetails.gstNumber}</p>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          Joined Date
-                        </p>
-                        <p className="text-sm text-foreground font-medium">
-                          {restaurantDetails.createdAt ? formatDate(restaurantDetails.createdAt) : "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-muted rounded-lg p-4">
-                    <h4 className="text-sm font-semibold text-foreground mb-3">Status</h4>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(getRestaurantStatus(restaurantDetails))}
-                      <span
-                        className={`px-3 py-1.5 text-sm rounded-full capitalize ${getStatusColor(
-                          getRestaurantStatus(restaurantDetails)
-                        )}`}
-                      >
-                        {getRestaurantStatus(restaurantDetails)}
-                      </span>
-                      {restaurantDetails.isBlocked && (
-                        <span className="text-xs text-red-500">(Blocked)</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {restaurantDetails.subscription && (
-                    <div className="bg-muted rounded-lg p-4">
-                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <DollarSign className="w-4 h-4" />
-                        Subscription Information
-                      </h4>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Monthly Price</p>
-                          <p className="text-sm text-foreground font-medium">
-                            ₹{restaurantDetails.subscription.pricePerMonth || 0}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Subscription Status</p>
-                          <p className="text-sm text-foreground font-medium">
-                            {restaurantDetails.subscription.isActive ? "Active" : "Inactive"}
-                          </p>
-                        </div>
-                        {restaurantDetails.subscription.startDate && (
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1">Start Date</p>
-                            <p className="text-sm text-foreground font-medium">
-                              {formatDate(restaurantDetails.subscription.startDate)}
-                            </p>
-                          </div>
-                        )}
-                        {restaurantDetails.subscription.endDate && (
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1">End Date</p>
-                            <p className="text-sm text-foreground font-medium">
-                              {formatDate(restaurantDetails.subscription.endDate)}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  {restaurantDetails.locations && restaurantDetails.locations.length > 0 && (
-                    <div className="bg-muted rounded-lg p-4">
-                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        Locations ({restaurantDetails.locations.length})
-                      </h4>
-                      <div className="space-y-3">
-                        {restaurantDetails.locations.map((loc, index) => (
-                          <div
-                            key={loc._id || index}
-                            className="p-3 bg-card rounded-lg border border-border"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground">
-                                  {loc.locationName || `Location ${index + 1}`}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1 break-words">
-                                  {loc.address}, {loc.city}, {loc.state} {loc.zipCode}
-                                </p>
-                              </div>
-                              <span className="text-sm font-medium text-primary ml-2 flex-shrink-0">
-                                {loc.totalTables || 0} tables
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="bg-muted rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-foreground">Total Tables</p>
-                      <p className="text-lg font-bold text-primary">
-                        {getTotalTables(restaurantDetails)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground text-sm">Failed to load restaurant details</p>
-              </div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {showDeleteModal && selectedRestaurant && createPortal(
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-3 sm:p-4"
-          onClick={() => {
-            setShowDeleteModal(false);
-            setSelectedRestaurant(null);
-          }}
-        >
-          <div
-            className="bg-card border border-border rounded-xl p-4 sm:p-5 md:p-6 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center">
-                  <Trash2 className="w-5 h-5 text-red-500" />
-                </div>
-                <h3 className="text-base sm:text-lg font-semibold text-foreground">Delete Restaurant</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete <span className="font-medium text-foreground">{selectedRestaurant.restaurantName}</span>? This action cannot be undone.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <button
-                onClick={handleDelete}
-                disabled={actionLoading}
-                className="flex-1 bg-red-500 text-white py-2.5 sm:py-2 rounded-lg hover:bg-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base transition-colors"
-              >
-                {actionLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="hidden sm:inline">Deleting...</span>
-                    <span className="sm:hidden">Deleting</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </>
-                )}
-              </button>
+            <div className="p-1 space-y-0.5">
               <button
                 onClick={() => {
-                  setShowDeleteModal(false);
-                  setSelectedRestaurant(null);
+                  handleViewDetails(restaurants.find(r => (r._id || r.id) === showDropdown));
+                  setShowDropdown(null);
                 }}
-                disabled={actionLoading}
-                className="px-4 py-2.5 sm:py-2 border border-border rounded-lg text-foreground hover:bg-muted disabled:opacity-50 text-sm sm:text-base transition-colors"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
               >
-                Cancel
+                <Eye className="w-4 h-4 text-primary" />
+                View Details
+              </button>
+
+              {(() => {
+                const restaurant = restaurants.find(r => (r._id || r.id) === showDropdown);
+                if (!restaurant) return null;
+                const status = getRestaurantStatus(restaurant);
+                return (
+                  <button
+                    onClick={() => {
+                      handleToggleBlock(restaurant);
+                      setShowDropdown(null);
+                    }}
+                    disabled={actionLoading}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-muted ${status === 'suspended' ? 'text-emerald-600' : 'text-rose-600'
+                      }`}
+                  >
+                    <Power className="w-4 h-4" />
+                    {status === 'suspended' ? 'Activate' : 'Suspend'}
+                  </button>
+                );
+              })()}
+
+              <div className="my-1 border-t border-border/50"></div>
+              <button
+                onClick={() => {
+                  setSelectedRestaurant(restaurants.find(r => (r._id || r.id) === showDropdown));
+                  setShowDeleteModal(true);
+                  setShowDropdown(null);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-lg transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Details Modal */}
+      {showDetailsModal && selectedRestaurant && createPortal(
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300"
+          onClick={() => setShowDetailsModal(false)}
+        >
+          <div
+            className="bg-background border border-border/50 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-6 py-4 border-b border-border/50 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">{selectedRestaurant.restaurantName}</h2>
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    ID: {selectedRestaurant._id}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="p-2 rounded-full hover:bg-muted transition-colors"
+              >
+                <X className="w-6 h-6 text-muted-foreground" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 md:p-8">
+              {detailsLoading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                  <p className="mt-4 text-muted-foreground">Loading details...</p>
+                </div>
+              ) : restaurantDetails ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div className="bg-muted/30 p-5 rounded-2xl border border-border/50">
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Building2 className="w-5 h-5 text-primary" />
+                        Basic Info
+                      </h3>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Owner</p>
+                            <p className="font-medium mt-0.5">{restaurantDetails.ownerName}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Joined</p>
+                            <p className="font-medium mt-0.5">{formatDate(restaurantDetails.createdAt)}</p>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Email</p>
+                          <p className="font-medium mt-0.5 flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5" />
+                            {restaurantDetails.email}
+                          </p>
+                        </div>
+                        <div className="flex gap-4">
+                          <div className="flex-1">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Phone</p>
+                            <p className="font-medium mt-0.5">{restaurantDetails.phone || "N/A"}</p>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">GST</p>
+                            <p className="font-medium mt-0.5">{restaurantDetails.gstNumber || "N/A"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {restaurantDetails.subscription && (
+                      <div className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 p-5 rounded-2xl border border-indigo-500/10">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
+                          <DollarSign className="w-5 h-5" />
+                          Subscription
+                        </h3>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-muted-foreground">Price/Month</span>
+                            <span className="text-lg font-bold">₹{restaurantDetails.subscription.pricePerMonth}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-muted-foreground">Status</span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${restaurantDetails.subscription.isActive
+                                ? "bg-green-500/10 text-green-600"
+                                : "bg-gray-500/10 text-gray-600"
+                              }`}>
+                              {restaurantDetails.subscription.isActive ? "ACTIVE" : "INACTIVE"}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div className="bg-background/50 p-2 rounded-lg">
+                              <p className="text-xs text-muted-foreground">Start Date</p>
+                              <p className="font-medium">{formatDate(restaurantDetails.subscription.startDate)}</p>
+                            </div>
+                            <div className="bg-background/50 p-2 rounded-lg">
+                              <p className="text-xs text-muted-foreground">End Date</p>
+                              <p className="font-medium">{formatDate(restaurantDetails.subscription.endDate)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="bg-muted/30 p-5 rounded-2xl border border-border/50 h-full">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <MapPin className="w-5 h-5 text-primary" />
+                          Locations
+                        </h3>
+                        <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded-lg">
+                          {getTotalTables(restaurantDetails)} Tables Total
+                        </span>
+                      </div>
+
+                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        {restaurantDetails.locations?.length > 0 ? (
+                          restaurantDetails.locations.map((loc, idx) => (
+                            <div key={idx} className="bg-card p-4 rounded-xl border border-border shadow-sm">
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="font-semibold">{loc.locationName}</h4>
+                                <span className="text-xs bg-muted px-2 py-1 rounded-md font-medium">
+                                  {loc.totalTables} tables
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground flex items-start gap-1.5">
+                                <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                                {loc.address}, {loc.city}, {loc.state} - {loc.zipCode}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-10 text-muted-foreground">
+                            No locations found
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-rose-500">
+                  Failed to load details.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-border/50 bg-muted/20 flex justify-end gap-3">
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="px-5 py-2.5 rounded-xl border border-border bg-background hover:bg-muted transition font-medium text-sm"
+              >
+                Close
               </button>
             </div>
           </div>
@@ -809,75 +677,46 @@ const RestaurantStatus = () => {
         document.body
       )}
 
-      {showDropdown && dropdownCoords[showDropdown] && (
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedRestaurant && createPortal(
         <div
-          className="fixed bg-popover border border-border rounded-lg shadow-xl z-50 min-w-[160px] backdrop-blur-sm"
-          style={{
-            top: dropdownCoords[showDropdown].top,
-            left: dropdownCoords[showDropdown].left,
-            right: dropdownCoords[showDropdown].right,
-          }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300"
+          onClick={() => setShowDeleteModal(false)}
         >
-          {(() => {
-            const restaurant = restaurants.find(r => (r._id || r.id) === showDropdown);
-            if (!restaurant) return null;
-            const status = getRestaurantStatus(restaurant);
-            return (
-              <>
+          <div
+            className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">Delete Restaurant?</h3>
+              <p className="text-muted-foreground mb-6">
+                Are you sure you want to delete <span className="font-semibold text-foreground">{selectedRestaurant.restaurantName}</span>?
+                <br />This action cannot be undone.
+              </p>
+
+              <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    handleViewDetails(restaurant);
-                    setShowDropdown(null);
-                    setDropdownPosition({});
-                    setDropdownCoords({});
-                  }}
-                  className="w-full px-3 py-2.5 text-left text-xs sm:text-sm text-popover-foreground hover:bg-muted flex items-center gap-2 transition-colors first:rounded-t-lg"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 py-3 rounded-xl border border-border font-medium hover:bg-muted transition"
                 >
-                  <Eye className="w-4 h-4 flex-shrink-0" />
-                  View Details
+                  Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    setShowDropdown(null);
-                    setDropdownPosition({});
-                    setDropdownCoords({});
-                    handleToggleBlock(restaurant);
-                  }}
+                  onClick={handleDelete}
                   disabled={actionLoading}
-                  className="w-full px-3 py-2.5 text-left text-xs sm:text-sm text-popover-foreground hover:bg-muted flex items-center gap-2 transition-colors disabled:opacity-50"
+                  className="flex-1 py-3 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700 shadow-lg shadow-rose-500/20 transition flex items-center justify-center gap-2"
                 >
-                  <Power className="w-4 h-4 flex-shrink-0" />
-                  {status === "active" || status === "inactive" ? "Suspend" : "Activate"}
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedRestaurant(restaurant);
-                    setShowDeleteModal(true);
-                    setShowDropdown(null);
-                    setDropdownPosition({});
-                    setDropdownCoords({});
-                  }}
-                  disabled={actionLoading}
-                  className="w-full px-3 py-2.5 text-left text-xs sm:text-sm text-red-500 hover:bg-muted flex items-center gap-2 transition-colors disabled:opacity-50 last:rounded-b-lg border-t border-border"
-                >
-                  <Trash2 className="w-4 h-4 flex-shrink-0" />
+                  {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   Delete
                 </button>
-              </>
-            );
-          })()}
-        </div>
-      )}
-
-      {showDropdown && (
-        <div
-          className="fixed inset-0 z-[40]"
-          onClick={() => {
-            setShowDropdown(null);
-            setDropdownPosition({});
-            setDropdownCoords({});
-          }}
-        />
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { getAdminTickets, updateTicketStatus } from "../../utils/api";
 import {
     Search, Filter, ExternalLink, MessageSquare,
-    CheckCircle2, XCircle, Clock, AlertCircle, RefreshCw
+    CheckCircle2, XCircle, Clock, AlertCircle, RefreshCw, Send, X, AlertTriangle, Archive
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { io } from "socket.io-client";
@@ -28,7 +28,19 @@ const AdminSupportTickets = () => {
 
         socketRef.current.on("newTicket", (newTicket) => {
             setTickets((prev) => [newTicket, ...prev]);
-            toast.success(`New ticket from ${newTicket.restaurantId?.restaurantName || "Restaurant"}`);
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-card border border-border shadow-lg rounded-xl p-4 flex items-start gap-4 max-w-sm`}>
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary flex-shrink-0">
+                        <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <p className="font-bold text-foreground">New Support Ticket</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            {newTicket.restaurantId?.restaurantName || "Restaurant"} needs help.
+                        </p>
+                    </div>
+                </div>
+            ), { position: "top-right", duration: 4000 });
         });
 
         return () => {
@@ -100,11 +112,11 @@ const AdminSupportTickets = () => {
 
     const getStatusBadge = (status) => {
         switch (status) {
-            case "OPEN": return "bg-blue-500/10 text-blue-500";
-            case "IN_PROGRESS": return "bg-yellow-500/10 text-yellow-500";
-            case "RESOLVED": return "bg-green-500/10 text-green-500";
-            case "CLOSED": return "bg-gray-500/10 text-gray-500";
-            default: return "bg-gray-500/10 text-gray-500";
+            case "OPEN": return "bg-blue-500/10 text-blue-600 border-blue-500/20";
+            case "IN_PROGRESS": return "bg-amber-500/10 text-amber-600 border-amber-500/20";
+            case "RESOLVED": return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+            case "CLOSED": return "bg-slate-500/10 text-slate-600 border-slate-500/20";
+            default: return "bg-slate-500/10 text-slate-600 border-slate-500/20";
         }
     };
 
@@ -114,258 +126,301 @@ const AdminSupportTickets = () => {
     const closedCount = tickets.filter((t) => t.status === "CLOSED").length;
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-card border border-border rounded-2xl p-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                            <MessageSquare className="w-6 h-6 text-blue-500" />
+        <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-blue-500/10 to-indigo-600/5 border border-blue-500/20 shadow-lg hover:shadow-blue-500/10 transition-all duration-300">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <MessageSquare className="w-20 h-20 text-blue-500" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                            <MessageSquare className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{openCount}</p>
-                            <p className="text-sm text-muted-foreground">Open Tickets</p>
-                        </div>
+                        <p className="text-sm font-medium text-blue-600/80 uppercase tracking-widest">Open Tickets</p>
+                        <h3 className="text-4xl font-bold text-foreground mt-1">{openCount}</h3>
+                        <p className="text-sm text-muted-foreground mt-2">Require attention</p>
                     </div>
                 </div>
-                <div className="bg-card border border-border rounded-2xl p-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center">
-                            <Clock className="w-6 h-6 text-yellow-500" />
+
+                <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-amber-500/10 to-orange-600/5 border border-amber-500/20 shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Clock className="w-20 h-20 text-amber-500" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                            <Clock className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{inProgressCount}</p>
-                            <p className="text-sm text-muted-foreground">In Progress</p>
-                        </div>
+                        <p className="text-sm font-medium text-amber-600/80 uppercase tracking-widest">In Progress</p>
+                        <h3 className="text-4xl font-bold text-foreground mt-1">{inProgressCount}</h3>
+                        <p className="text-sm text-muted-foreground mt-2">Being handled</p>
                     </div>
                 </div>
-                <div className="bg-card border border-border rounded-2xl p-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-                            <CheckCircle2 className="w-6 h-6 text-green-500" />
+
+                <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-emerald-500/10 to-teal-600/5 border border-emerald-500/20 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <CheckCircle2 className="w-20 h-20 text-emerald-500" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                            <CheckCircle2 className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{resolvedCount}</p>
-                            <p className="text-sm text-muted-foreground">Resolved</p>
-                        </div>
+                        <p className="text-sm font-medium text-emerald-600/80 uppercase tracking-widest">Resolved</p>
+                        <h3 className="text-4xl font-bold text-foreground mt-1">{resolvedCount}</h3>
+                        <p className="text-sm text-muted-foreground mt-2">Successfully closed</p>
                     </div>
                 </div>
-                <div className="bg-card border border-border rounded-2xl p-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gray-500/10 rounded-xl flex items-center justify-center">
-                            <XCircle className="w-6 h-6 text-gray-500" />
+
+                <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-slate-500/10 to-gray-600/5 border border-slate-500/20 shadow-lg hover:shadow-slate-500/10 transition-all duration-300">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Archive className="w-20 h-20 text-slate-500" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-slate-400 to-gray-500 flex items-center justify-center shadow-lg shadow-slate-500/30">
+                            <Archive className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">{closedCount}</p>
-                            <p className="text-sm text-muted-foreground">Closed</p>
-                        </div>
+                        <p className="text-sm font-medium text-slate-600/80 uppercase tracking-widest">Closed</p>
+                        <h3 className="text-4xl font-bold text-foreground mt-1">{closedCount}</h3>
+                        <p className="text-sm text-muted-foreground mt-2">Past history</p>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-card border border-border rounded-2xl p-4">
-                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-                    <div className="relative flex-1 min-w-0">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="Search by Token, Subject, or Restaurant..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
+            {/* Control Bar */}
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-2 bg-muted/30 rounded-2xl backdrop-blur-sm border border-border/50">
+                <div className="relative w-full md:w-96 group">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <Search className="w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     </div>
-                    <div className="flex flex-wrap gap-2 md:justify-end">
+                    <input
+                        type="text"
+                        placeholder="Search tickets..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-card/60 border border-border/50 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none transition-all shadow-sm"
+                    />
+                </div>
+
+                <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                    <button
+                        onClick={fetchTickets}
+                        disabled={loading}
+                        className="p-3 rounded-xl bg-card border border-border/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                        title="Refresh Data"
+                    >
+                        <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
+
+                    <div className="flex items-center gap-2 p-1 bg-card/50 rounded-xl border border-border/50 shadow-sm">
                         {["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
-                                disabled={loading}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${statusFilter === status
-                                    ? "bg-primary text-primary-foreground"
-                                    : "border border-border text-foreground hover:bg-muted"
+                                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all duration-300 whitespace-nowrap ${statusFilter === status
+                                    ? "text-primary-foreground bg-primary shadow-md"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                     }`}
                             >
-                                {status.replace("_", " ")}
+                                {status.toLowerCase().replace('_', ' ')}
                             </button>
                         ))}
                     </div>
                 </div>
             </div>
 
-            <div className="bg-card border border-border rounded-2xl">
-                <div className="px-4 py-4 md:px-6 md:py-6 border-b border-border">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-lg md:text-xl font-bold text-foreground">Support Tickets ({filteredTickets.length})</h2>
-                        <button
-                            onClick={fetchTickets}
-                            disabled={loading}
-                            className="p-1.5 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
-                            title="Refresh"
-                        >
-                            <RefreshCw className={`w-4 h-4 text-muted-foreground ${loading ? 'animate-spin' : ''}`} />
-                        </button>
+            {/* Tickets List */}
+            <div className="space-y-4">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <RefreshCw className="w-10 h-10 text-primary animate-spin mb-4" />
+                        <p className="text-muted-foreground">Loading tickets...</p>
                     </div>
-                </div>
-                <div className="px-4 pb-4 pt-4 md:p-6 space-y-4 overflow-x-auto">
-                    {loading ? (
-                        <div className="text-center py-12">
-                            <RefreshCw className="w-12 h-12 text-primary mx-auto mb-3 animate-spin" />
-                            <p className="text-muted-foreground">Loading tickets...</p>
-                        </div>
-                    ) : filteredTickets.length === 0 ? (
-                        <div className="text-center py-12">
-                            <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                            <p className="text-muted-foreground">No tickets found</p>
-                        </div>
-                    ) : (
-                        filteredTickets.map((ticket) => (
+                ) : filteredTickets.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 bg-card rounded-3xl border border-dashed border-border/50">
+                        <MessageSquare className="w-12 h-12 text-muted-foreground/50 mb-4" />
+                        <p className="text-muted-foreground font-medium">No tickets found</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                        {filteredTickets.map((ticket) => (
                             <div
                                 key={ticket._id}
-                                className="p-4 md:p-5 bg-muted rounded-lg border border-border hover:border-primary/50 transition-colors"
+                                className="group relative bg-card border border-border/50 rounded-3xl p-5 hover:shadow-xl hover:border-primary/20 transition-all duration-300"
                             >
-                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                                    <div className="flex items-start gap-3 md:gap-4">
-                                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-primary/10">
-                                            <MessageSquare className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                                        </div>
-                                        <div className="space-y-1 flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="font-mono font-medium text-foreground text-xs sm:text-sm">
-                                                    {ticket.ticketToken}
-                                                </span>
-                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadge(ticket.status)}`}>
-                                                    {ticket.status.replace("_", " ")}
-                                                </span>
-                                            </div>
-                                            <h3 className="font-semibold text-foreground text-sm md:text-base">{ticket.restaurantId?.restaurantName || "Unknown"}</h3>
-                                            <p className="text-xs text-muted-foreground break-all">{ticket.restaurantId?.email}</p>
-                                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-2">
-                                                <span className="font-medium text-foreground line-clamp-2 break-words">
-                                                    {ticket.subject}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
-                                                <span className={`font-medium ${ticket.priority === 'CRITICAL' ? 'text-red-500' :
-                                                    ticket.priority === 'HIGH' ? 'text-orange-500' :
-                                                        'text-blue-500'
-                                                    }`}>
-                                                    {ticket.priority} Priority
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <Clock className="w-3 h-3" />
-                                                    {new Date(ticket.createdAt).toLocaleDateString()}
-                                                </span>
-                                            </div>
+                                <div className="absolute top-5 right-5">
+                                    <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${getStatusBadge(ticket.status)}`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${ticket.status === 'OPEN' ? 'bg-blue-600' :
+                                                ticket.status === 'IN_PROGRESS' ? 'bg-amber-600' :
+                                                    ticket.status === 'RESOLVED' ? 'bg-emerald-600' :
+                                                        'bg-slate-600'
+                                            }`} />
+                                        {ticket.status.replace("_", " ")}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col md:flex-row gap-5">
+                                    <div className="flex-shrink-0">
+                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold shadow-sm ${ticket.status === 'OPEN' ? 'bg-blue-500/10 text-blue-600' :
+                                                ticket.status === 'IN_PROGRESS' ? 'bg-amber-500/10 text-amber-600' :
+                                                    ticket.status === 'RESOLVED' ? 'bg-emerald-500/10 text-emerald-600' :
+                                                        'bg-slate-500/10 text-slate-600'
+                                            }`}>
+                                            #{ticket.ticketToken.slice(-2)}
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2 lg:flex-shrink-0 flex-wrap justify-start lg:justify-end">
+                                    <div className="flex-1 min-w-0 pr-16">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-mono text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                                #{ticket.ticketToken}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                <Clock className="w-3 h-3" /> {new Date(ticket.createdAt).toLocaleDateString()}
+                                            </span>
+                                            {ticket.priority === 'CRITICAL' && (
+                                                <span className="text-xs font-bold text-rose-600 flex items-center gap-0.5 bg-rose-500/10 px-1.5 py-0.5 rounded ml-2">
+                                                    <AlertTriangle className="w-3 h-3" /> Critical
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <h3 className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
+                                            {ticket.subject}
+                                        </h3>
+
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                                            <span className="font-medium text-foreground">{ticket.restaurantId?.restaurantName || "Unknown Restaurant"}</span>
+                                            <span>•</span>
+                                            <span className="truncate">{ticket.restaurantId?.email}</span>
+                                        </div>
+
                                         <button
                                             onClick={() => {
                                                 setSelectedTicket(ticket);
                                                 setAdminResponse(ticket.adminResponse || "");
                                             }}
-                                            className="px-4 py-2 rounded-lg border border-border text-foreground hover:bg-muted transition flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition-all hover:bg-primary/10 px-3 py-1.5 rounded-lg -ml-3"
                                         >
-                                            <MessageSquare className="w-4 h-4" />
-                                            Manage
+                                            View Details & Reply <ExternalLink className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                        ))
-                    )}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
+            {/* Ticket Management Modal */}
             {selectedTicket && createPortal(
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 md:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
                     onClick={() => setSelectedTicket(null)}
                 >
                     <div
-                        className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                        className="bg-background border border-border/50 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="p-4 md:p-6 border-b border-border flex justify-between items-start gap-3">
-                            <div className="flex-1 min-w-0">
-                                <h2 className="text-lg md:text-xl font-bold text-foreground flex items-center gap-2 flex-wrap">
-                                    <MessageSquare className="w-5 h-5 text-primary flex-shrink-0" />
-                                    <span className="break-all">Manage Ticket {selectedTicket.ticketToken}</span>
-                                </h2>
-                                <p className="text-sm text-muted-foreground mt-1 break-all">
-                                    From {selectedTicket.restaurantId?.restaurantName}
+                        {/* Header */}
+                        <div className="p-6 border-b border-border/50 bg-background/95 backdrop-blur flex justify-between items-start gap-4 sticky top-0 z-10">
+                            <div>
+                                <div className="flex items-center gap-3 mb-1">
+                                    <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                                        Ticket #{selectedTicket.ticketToken}
+                                    </h2>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusBadge(selectedTicket.status)}`}>
+                                        {selectedTicket.status.replace("_", " ")}
+                                    </span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    Submitted by <span className="font-semibold text-foreground">{selectedTicket.restaurantId?.restaurantName}</span> on {new Date(selectedTicket.createdAt).toLocaleString()}
                                 </p>
                             </div>
                             <button
                                 onClick={() => setSelectedTicket(null)}
-                                className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 p-1 hover:bg-muted rounded-lg"
+                                className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                             >
-                                <XCircle className="w-5 h-5" />
+                                <X className="w-6 h-6" />
                             </button>
                         </div>
 
-                        <div className="p-4 md:p-6 overflow-y-auto flex-1 space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <p className="text-xs text-muted-foreground">Subject</p>
-                                    <p className="text-sm font-medium text-foreground break-words">{selectedTicket.subject}</p>
+                        {/* Body */}
+                        <div className="p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <div className="md:col-span-2 space-y-2">
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Subject</label>
+                                    <div className="p-4 bg-muted/30 rounded-2xl border border-border/50 text-foreground font-medium text-lg leading-snug">
+                                        {selectedTicket.subject}
+                                    </div>
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs text-muted-foreground">Priority</p>
-                                    <p className={`text-sm font-medium ${selectedTicket.priority === 'CRITICAL' ? 'text-red-500' :
-                                        selectedTicket.priority === 'HIGH' ? 'text-orange-500' :
-                                            'text-blue-500'
-                                        }`}>
-                                        {selectedTicket.priority}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">Message</p>
-                                <p className="text-sm text-foreground bg-muted p-3 rounded-lg whitespace-pre-wrap break-words">{selectedTicket.message}</p>
-                            </div>
-
-                            <div className="space-y-4 pt-4 border-t border-border">
-                                <h3 className="font-semibold text-foreground text-sm md:text-base">Admin Response & Action</h3>
-
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-foreground">Reply to Restaurant</label>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Priority Level</label>
+                                    <div className={`p-4 rounded-2xl border flex items-center gap-2 font-bold ${selectedTicket.priority === 'CRITICAL' ? 'bg-rose-500/10 border-rose-500/20 text-rose-600' :
+                                            selectedTicket.priority === 'HIGH' ? 'bg-orange-500/10 border-orange-500/20 text-orange-600' :
+                                                'bg-blue-500/10 border-blue-500/20 text-blue-600'
+                                        }`}>
+                                        <AlertCircle className="w-5 h-5" />
+                                        {selectedTicket.priority}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 mb-8">
+                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Message Content</label>
+                                <div className="p-6 bg-muted/30 rounded-3xl border border-border/50 text-foreground whitespace-pre-wrap leading-relaxed">
+                                    {selectedTicket.message}
+                                </div>
+                            </div>
+
+                            <div className="relative">
+                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                    <div className="w-full border-t border-border"></div>
+                                </div>
+                                <div className="relative flex justify-center">
+                                    <span className="bg-background px-3 text-sm text-muted-foreground font-medium">Admin Actions</span>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-foreground">Response to Restaurant</label>
                                     <textarea
                                         rows={6}
-                                        className="w-full px-4 py-3 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                                        placeholder="Type your response here..."
+                                        className="w-full px-5 py-4 rounded-2xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none transition-all"
+                                        placeholder="Type your official response here..."
                                         value={adminResponse}
                                         onChange={(e) => setAdminResponse(e.target.value)}
                                     />
                                 </div>
+                            </div>
+                        </div>
 
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <button
-                                        onClick={() => handleUpdateStatus("IN_PROGRESS")}
-                                        disabled={updating}
-                                        className="flex-1 border border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 px-4 py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
-                                    >
-                                        <Clock className="w-4 h-4" />
-                                        <span>Mark In Progress</span>
-                                    </button>
-                                    <button
-                                        onClick={() => handleUpdateStatus("RESOLVED")}
-                                        disabled={updating}
-                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
-                                    >
-                                        <CheckCircle2 className="w-4 h-4" />
-                                        <span>Resolve & Send</span>
-                                    </button>
-                                    <button
-                                        onClick={() => handleUpdateStatus("CLOSED")}
-                                        disabled={updating}
-                                        className="flex-1 border border-gray-500/50 text-gray-500 hover:bg-gray-500/10 px-4 py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base"
-                                    >
-                                        <XCircle className="w-4 h-4" />
-                                        <span>Close Ticket</span>
-                                    </button>
-                                </div>
+                        {/* Footer */}
+                        <div className="p-6 border-t border-border/50 bg-muted/20 flex flex-col sm:flex-row gap-3">
+                            <button
+                                onClick={() => handleUpdateStatus("IN_PROGRESS")}
+                                disabled={updating}
+                                className="flex-1 py-3 px-4 rounded-xl border border-amber-500/30 text-amber-600 hover:bg-amber-500/10 font-bold transition disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                <Clock className="w-4 h-4" />
+                                Mark In Progress
+                            </button>
+                            <div className="flex-1 flex gap-3">
+                                <button
+                                    onClick={() => handleUpdateStatus("CLOSED")}
+                                    disabled={updating}
+                                    className="flex-1 py-3 px-4 rounded-xl border border-border text-muted-foreground hover:bg-muted font-bold transition disabled:opacity-50"
+                                >
+                                    Close
+                                </button>
+                                <button
+                                    onClick={() => handleUpdateStatus("RESOLVED")}
+                                    disabled={updating}
+                                    className="flex-[2] py-3 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 font-bold shadow-lg shadow-emerald-500/20 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {updating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                    Resolve & Send
+                                </button>
                             </div>
                         </div>
                     </div>

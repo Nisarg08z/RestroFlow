@@ -10,6 +10,10 @@ import {
   ArrowRight,
   Loader2,
   Calendar,
+  Activity,
+  CheckCircle2,
+  Clock,
+  ExternalLink
 } from "lucide-react";
 import { getAllRestaurants, getAllRestaurantRequests, getAdminTickets } from "../../utils/api";
 import toast from "react-hot-toast";
@@ -44,8 +48,7 @@ const AdminDashboard = () => {
       const requests = requestsRes.data?.data || [];
       const tickets = ticketsRes.data?.data || [];
 
-      console.log("Dashboard Debug - Tickets fetched:", tickets);
-      console.log("Dashboard Debug - Open Tickets (OPEN + IN_PROGRESS):", tickets.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS"));
+      // console.log("Dashboard Debug - Tickets fetched:", tickets);
 
       const totalRestaurants = restaurants.length;
       const pendingRequests = requests.filter((r) => r.status === "pending").length;
@@ -88,230 +91,230 @@ const AdminDashboard = () => {
     const diffInSeconds = Math.floor((now - past) / 1000);
 
     if (diffInSeconds < 60) return "Just now";
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
     return past.toLocaleDateString();
   };
 
-  const statsCards = [
-    {
-      label: "Total Restaurants",
-      value: stats.totalRestaurants,
-      change: "",
-      icon: Building2,
-      color: "text-primary",
-    },
-    {
-      label: "Pending Requests",
-      value: stats.pendingRequests,
-      change: "",
-      icon: Inbox,
-      color: "text-yellow-500",
-    },
-    {
-      label: "Active Subscriptions",
-      value: stats.activeSubscriptions,
-      change: "",
-      icon: CreditCard,
-      color: "text-blue-500",
-      comingSoon: true,
-    },
-    {
-      label: "Open Tickets",
-      value: stats.openTickets,
-      change: "",
-      icon: HeadphonesIcon,
-      color: "text-purple-500",
-    },
-  ];
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsCards.map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-card border border-border rounded-xl p-6"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center`}>
-                <stat.icon className={`w-6 h-6 ${stat.color}`} />
-              </div>
-              {stat.change && (
-                <span
-                  className={`text-xs font-medium ${stat.comingSoon
-                    ? "text-muted-foreground"
-                    : stat.change.startsWith("+")
-                      ? "text-green-500"
-                      : "text-red-500"
-                    }`}
-                >
-                  {stat.change}
-                </span>
-              )}
-            </div>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
-            <p className="text-3xl font-bold text-foreground mb-1">
-              {stat.value}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {stat.label}
-            </p>
-          </div>
-        ))}
+      {/* Welcome Section */}
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+            Dashboard Overview
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Snapshot of platform performance and activities
+          </p>
+        </div>
+        <div className="hidden md:flex items-center gap-2 text-xs font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full border border-border/50">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          System Operational
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card border border-border rounded-xl">
-          <div className="flex items-center justify-between p-6 pb-2">
-            <h2 className="text-lg font-semibold text-foreground">
-              Recent Requests
-            </h2>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Restaurants */}
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-primary/10 to-purple-600/5 border border-primary/20 shadow-lg hover:shadow-primary/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <Building2 className="w-24 h-24 text-primary" />
+          </div>
+          <div className="relative z-10">
+            <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center shadow-lg shadow-primary/30">
+              <Building2 className="w-6 h-6 text-white" />
+            </div>
+            <p className="text-sm font-medium text-primary/80 uppercase tracking-widest">Total Restaurants</p>
+            <h3 className="text-4xl font-bold text-foreground mt-1">{stats.totalRestaurants}</h3>
+            <p className="text-sm text-muted-foreground mt-2">Registered partners</p>
+          </div>
+        </div>
+
+        {/* Pending Requests */}
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-amber-500/10 to-orange-600/5 border border-amber-500/20 shadow-lg hover:shadow-amber-500/10 transition-all duration-300 cursor-pointer" onClick={() => navigate("/admin/dashboard/requests")}>
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <Inbox className="w-24 h-24 text-amber-500" />
+          </div>
+          <div className="relative z-10">
+            <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+              <Inbox className="w-6 h-6 text-white" />
+            </div>
+            <p className="text-sm font-medium text-amber-600/80 uppercase tracking-widest">Pending Requests</p>
+            <h3 className="text-4xl font-bold text-foreground mt-1">{stats.pendingRequests}</h3>
+            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              Awaiting approval <ArrowRight className="w-3 h-3" />
+            </p>
+          </div>
+        </div>
+
+        {/* Active Subscriptions */}
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-emerald-500/10 to-teal-600/5 border border-emerald-500/20 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <CreditCard className="w-24 h-24 text-emerald-500" />
+          </div>
+          <div className="relative z-10">
+            <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <CreditCard className="w-6 h-6 text-white" />
+            </div>
+            <p className="text-sm font-medium text-emerald-600/80 uppercase tracking-widest">Active Plans</p>
+            <h3 className="text-4xl font-bold text-foreground mt-1">{stats.activeSubscriptions}</h3>
+            <p className="text-sm text-muted-foreground mt-2">Recurring revenue</p>
+          </div>
+        </div>
+
+        {/* Open Tickets */}
+        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-blue-500/10 to-indigo-600/5 border border-blue-500/20 shadow-lg hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer" onClick={() => navigate("/admin/dashboard/support")}>
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <HeadphonesIcon className="w-24 h-24 text-blue-500" />
+          </div>
+          <div className="relative z-10">
+            <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <HeadphonesIcon className="w-6 h-6 text-white" />
+            </div>
+            <p className="text-sm font-medium text-blue-600/80 uppercase tracking-widest">Open Tickets</p>
+            <h3 className="text-4xl font-bold text-foreground mt-1">{stats.openTickets}</h3>
+            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              Needs attention <ArrowRight className="w-3 h-3" />
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+        {/* Recent Requests */}
+        <div className="bg-card border border-border/50 rounded-3xl shadow-sm overflow-hidden flex flex-col h-full backdrop-blur-sm">
+          <div className="p-6 border-b border-border/50 flex justify-between items-center bg-muted/20">
+            <div>
+              <h3 className="text-lg font-bold text-foreground">Recent Requests</h3>
+              <p className="text-xs text-muted-foreground">Latest sign-ups awaiting action</p>
+            </div>
             <button
               onClick={() => navigate("/admin/dashboard/requests")}
-              className="text-primary flex items-center gap-1 text-sm hover:underline"
+              className="p-2 rounded-xl bg-background border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition shadow-sm"
             >
-              View All <ArrowRight className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4" />
             </button>
           </div>
-
-          <div className="p-6 space-y-4">
+          <div className="flex-1 p-2">
             {recentRequests.length === 0 ? (
-              <div className="text-center py-8">
-                <Inbox className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">No recent requests</p>
+              <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
+                <Inbox className="w-10 h-10 mb-2 opacity-20" />
+                <p className="text-sm">No recent requests</p>
               </div>
             ) : (
-              recentRequests.map((req) => (
-                <div
-                  key={req._id}
-                  className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-5 h-5 text-primary" />
+              <div className="space-y-1">
+                {recentRequests.map((req) => (
+                  <div key={req._id} className="group flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/20 flex items-center justify-center text-orange-600 shadow-sm">
+                      <Building2 className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {req.restaurantName}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {req.email}
-                      </p>
+                      <h4 className="font-semibold text-foreground truncate">{req.restaurantName}</h4>
+                      <p className="text-xs text-muted-foreground truncate">{req.email}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize border ${req.status === 'pending' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                          req.status === 'approved' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                            'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                        }`}>
+                        {req.status}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> {formatTimeAgo(req.createdAt)}
+                      </span>
                     </div>
                   </div>
-
-                  <div className="text-right flex-shrink-0 ml-3">
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${req.status === "pending"
-                        ? "bg-yellow-500/10 text-yellow-500"
-                        : req.status === "approved"
-                          ? "bg-green-500/10 text-green-500"
-                          : "bg-red-500/10 text-red-500"
-                        }`}
-                    >
-                      {req.status}
-                    </span>
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {formatTimeAgo(req.createdAt)}
-                    </p>
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-xl">
-          <div className="flex items-center justify-between p-6 pb-2">
-            <h2 className="text-lg font-semibold text-foreground">
-              Recent Tickets
-            </h2>
+        {/* Recent Tickets */}
+        <div className="bg-card border border-border/50 rounded-3xl shadow-sm overflow-hidden flex flex-col h-full backdrop-blur-sm">
+          <div className="p-6 border-b border-border/50 flex justify-between items-center bg-muted/20">
+            <div>
+              <h3 className="text-lg font-bold text-foreground">Recent Tickets</h3>
+              <p className="text-xs text-muted-foreground">Latest support inquiries</p>
+            </div>
             <button
               onClick={() => navigate("/admin/dashboard/support")}
-              className="text-primary flex items-center gap-1 text-sm hover:underline"
+              className="p-2 rounded-xl bg-background border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition shadow-sm"
             >
-              View All <ArrowRight className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4" />
             </button>
           </div>
-
-          <div className="p-6 space-y-4">
+          <div className="flex-1 p-2">
             {recentTickets.length === 0 ? (
-              <div className="text-center py-8">
-                <HeadphonesIcon className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">No recent tickets</p>
+              <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
+                <HeadphonesIcon className="w-10 h-10 mb-2 opacity-20" />
+                <p className="text-sm">No recent tickets</p>
               </div>
             ) : (
-              recentTickets.map((ticket) => (
-                <div
-                  key={ticket._id}
-                  className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center flex-shrink-0">
-                      <HeadphonesIcon className="w-5 h-5 text-purple-500" />
+              <div className="space-y-1">
+                {recentTickets.map((ticket) => (
+                  <div key={ticket._id} className="group flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/20 dark:to-blue-900/20 flex items-center justify-center text-indigo-600 shadow-sm">
+                      <HeadphonesIcon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {ticket.ticketToken} - {ticket.subject}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {ticket.restaurantId?.restaurantName || "Unknown Restaurant"}
-                      </p>
+                      <h4 className="font-semibold text-foreground truncate flex items-center gap-2">
+                        {ticket.subject}
+                        <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-normal">#{ticket.ticketToken}</span>
+                      </h4>
+                      <p className="text-xs text-muted-foreground truncate">{ticket.restaurantId?.restaurantName || "Unknown"}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize border ${ticket.status === 'OPEN' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
+                          ticket.status === 'IN_PROGRESS' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                            'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                        }`}>
+                        {ticket.status.replace('_', ' ')}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> {formatTimeAgo(ticket.createdAt)}
+                      </span>
                     </div>
                   </div>
-
-                  <div className="text-right flex-shrink-0 ml-3">
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${ticket.status === "OPEN"
-                          ? "bg-blue-500/10 text-blue-500"
-                          : ticket.status === "IN_PROGRESS"
-                            ? "bg-yellow-500/10 text-yellow-500"
-                            : ticket.status === "RESOLVED"
-                              ? "bg-green-500/10 text-green-500"
-                              : "bg-gray-500/10 text-gray-500"
-                        }`}
-                    >
-                      {ticket.status.replace("_", " ")}
-                    </span>
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {formatTimeAgo(ticket.createdAt)}
-                    </p>
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-semibold text-foreground">
-            Restaurant Growth
-          </h2>
+      {/* Analytics Placeholder */}
+      <div className="bg-card border border-border/50 rounded-3xl p-8 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
+        <div className="flex items-center gap-3 mb-6 relative z-10">
+          <div className="p-3 bg-primary/10 rounded-xl">
+            <TrendingUp className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Growth Analytics</h2>
+            <p className="text-sm text-muted-foreground">Monitor platform expansion over time</p>
+          </div>
         </div>
 
-        <div className="h-64 flex items-center justify-center bg-muted rounded-lg border border-border">
-          <div className="text-center">
-            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground">Restaurant growth chart</p>
-            <p className="text-sm text-muted-foreground">
-              Connect analytics to view data
-            </p>
+        <div className="h-48 md:h-64 flex flex-col items-center justify-center bg-muted/30 rounded-2xl border border-dashed border-border/50 relative z-10 backdrop-blur-sm">
+          <div className="p-4 rounded-full bg-background border border-border shadow-sm mb-4">
+            <Activity className="w-8 h-8 text-muted-foreground/50" />
           </div>
+          <p className="text-foreground font-medium">Advanced Analytics Suite</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm text-center">
+            Detailed charts for revenue, user retention, and detailed growth metrics are coming soon.
+          </p>
         </div>
       </div>
     </div>

@@ -13,33 +13,31 @@ import {
   MessageSquare,
   Loader2,
   Send,
-  Filter,
 } from "lucide-react";
 import {
   getAllRestaurantRequests,
   updateRequestStatus,
-  deleteRestaurantRequest,
   sendRestaurantRequestReply,
 } from "../../utils/api";
 import toast from "react-hot-toast";
+import { useAdminData } from "../../context/AdminDataContext";
 
 const RestaurantRequests = () => {
-  const [requests, setRequests] = useState([]);
+  const { requests, setRequests, loading: contextLoading } = useAdminData();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showReply, setShowReply] = useState(false);
   const [replyMessage, setReplyMessage] = useState("");
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [filter, setFilter] = useState("all");
-  const [isLoading, setIsLoading] = useState(true);
   const [processingRequestId, setProcessingRequestId] = useState(null);
   const socketRef = useRef(null);
   const PROCESSING_KEY = "restroflow_request_processing";
 
   useEffect(() => {
-    fetchRequests();
-
     const apiUrl = import.meta.env.VITE_API_URL || "";
     const socketUrl =
       import.meta.env.VITE_SOCKET_URL ||
@@ -49,11 +47,7 @@ const RestaurantRequests = () => {
       withCredentials: true,
     });
 
-    socketRef.current.on("newRestaurantRequest", (newRequest) => {
-      setRequests((prev) => [newRequest, ...prev]);
-      toast.success(`New request from ${newRequest.restaurantName}`);
-    });
-
+    // newRestaurantRequest is handled by AdminHeader (always mounted) to avoid duplicate adds
     socketRef.current.on("requestStatusUpdated", (updatedRequest) => {
       setRequests((prev) =>
         prev.map((req) =>
@@ -71,7 +65,7 @@ const RestaurantRequests = () => {
         socketRef.current.disconnect();
       }
     };
-  }, []);
+  }, [setRequests]);
 
   useEffect(() => {
     try {
@@ -93,36 +87,32 @@ const RestaurantRequests = () => {
     }
   }, []);
 
-  const fetchRequests = async () => {
-    try {
-      setIsLoading(true);
-      const response = await getAllRestaurantRequests({
-        search: searchQuery || undefined,
-      });
-      setRequests(response.data.data || []);
-    } catch (error) {
-      toast.error("Failed to fetch requests");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      return;
     }
-  };
-
-  useEffect(() => {
-    fetchRequests();
-  }, []);
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchRequests();
+    const timeoutId = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const response = await getAllRestaurantRequests({
+          search: searchQuery.trim(),
+        });
+        setSearchResults(response.data.data || []);
+      } catch (error) {
+        toast.error("Failed to search requests");
+      } finally {
+        setSearchLoading(false);
+      }
     }, 500);
-
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const filteredRequests = requests.filter(
+  const displayRequests = searchQuery.trim() ? (searchResults ?? requests) : requests;
+  const filteredRequests = displayRequests.filter(
     (req) => filter === "all" || req.status === filter
   );
+  const isLoading = contextLoading || (searchQuery.trim() ? searchLoading : false);
 
   const handleApprove = async (id) => {
     setProcessingRequestId(id);
@@ -136,7 +126,23 @@ const RestaurantRequests = () => {
         prev.map((req) => (req._id === id ? response.data.data : req))
       );
       setShowDetails(false);
-      toast.success("Request approved and email sent successfully");
+
+      toast.custom((t) => (
+        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} relative w-full max-w-sm overflow-hidden rounded-2xl border border-border/50 bg-background/80 p-4 shadow-2xl backdrop-blur-xl supports-[backdrop-filter]:bg-background/60`}>
+          <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-emerald-500 to-green-600"></div>
+          <div className="flex items-start gap-4">
+            <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+              <Check className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-foreground">Request Approved!</h4>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Welcome email sent to the restaurant owner.
+              </p>
+            </div>
+          </div>
+        </div>
+      ), { duration: 4000 });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to approve request");
     } finally {
@@ -289,9 +295,9 @@ const RestaurantRequests = () => {
                 <div className="p-5 md:p-6 flex flex-col md:flex-row gap-6 items-start md:items-center">
                   {/* Status Indicator Bar */}
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${request.status === 'pending' ? 'bg-amber-500' :
-                      request.status === 'approved' ? 'bg-emerald-500' :
-                        request.status === 'rejected' ? 'bg-rose-500' :
-                          'bg-slate-500'
+                    request.status === 'approved' ? 'bg-emerald-500' :
+                      request.status === 'rejected' ? 'bg-rose-500' :
+                        'bg-slate-500'
                     }`} />
 
                   <div className="flex-shrink-0">
@@ -319,9 +325,9 @@ const RestaurantRequests = () => {
                         </span>
                       ) : (
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold capitalize border ${request.status === "pending" ? "bg-amber-500/10 text-amber-600 border-amber-200/50" :
-                            request.status === "approved" ? "bg-emerald-500/10 text-emerald-600 border-emerald-200/50" :
-                              request.status === "rejected" ? "bg-rose-500/10 text-rose-600 border-rose-200/50" :
-                                "bg-slate-500/10 text-slate-600 border-slate-200/50"
+                          request.status === "approved" ? "bg-emerald-500/10 text-emerald-600 border-emerald-200/50" :
+                            request.status === "rejected" ? "bg-rose-500/10 text-rose-600 border-rose-200/50" :
+                              "bg-slate-500/10 text-slate-600 border-slate-200/50"
                           }`}>
                           {request.status}
                         </span>
@@ -424,8 +430,8 @@ const RestaurantRequests = () => {
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</label>
                   <div className="mt-2">
                     <span className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold capitalize ${selectedRequest.status === "pending" ? "bg-amber-100 text-amber-700" :
-                        selectedRequest.status === "approved" ? "bg-emerald-100 text-emerald-700" :
-                          "bg-rose-100 text-rose-700"
+                      selectedRequest.status === "approved" ? "bg-emerald-100 text-emerald-700" :
+                        "bg-rose-100 text-rose-700"
                       }`}>
                       {selectedRequest.status}
                     </span>
@@ -513,7 +519,22 @@ const RestaurantRequests = () => {
                     try {
                       setIsSendingReply(true);
                       await sendRestaurantRequestReply(selectedRequest._id, { message: replyMessage.trim() });
-                      toast.success("Reply sent successfully");
+                      toast.custom((t) => (
+                        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} relative w-full max-w-sm overflow-hidden rounded-2xl border border-border/50 bg-background/80 p-4 shadow-2xl backdrop-blur-xl supports-[backdrop-filter]:bg-background/60`}>
+                          <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-blue-500 to-indigo-600"></div>
+                          <div className="flex items-start gap-4">
+                            <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600">
+                              <Send className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="text-sm font-bold text-foreground">Reply Sent Successfully</h4>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Your message has been emailed to the owner.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ), { duration: 4000 });
                       setShowReply(false);
                       setReplyMessage("");
                     } catch (e) {

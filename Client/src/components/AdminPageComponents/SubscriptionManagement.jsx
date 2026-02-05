@@ -13,17 +13,14 @@ import {
   Loader2,
   Check,
   CheckCircle2,
-  Filter,
-  MapPin,
   TrendingUp,
 } from "lucide-react";
 import {
-  getAllSubscriptions,
   updateSubscription,
   renewSubscription,
-  getSubscriptionStats,
   getSubscriptionById,
 } from "../../utils/api";
+import { useAdminData } from "../../context/AdminDataContext";
 
 const PRICE_PER_TABLE = 50;
 
@@ -47,14 +44,14 @@ const calculatePrice = (tables) => {
 };
 
 const SubscriptionManagement = () => {
-  const [subscriptions, setSubscriptions] = useState([]);
-  const [stats, setStats] = useState({
-    totalMRR: 0,
-    activeSubscriptions: 0,
-    expiringSoon: 0,
-    expiredCount: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const {
+    subscriptions,
+    subscriptionStats: stats,
+    setSubscriptions,
+    setSubscriptionStats,
+    loading,
+    refreshSubscriptions,
+  } = useAdminData();
   const [updating, setUpdating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSub, setSelectedSub] = useState(null);
@@ -75,10 +72,6 @@ const SubscriptionManagement = () => {
   const [loadingLocations, setLoadingLocations] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
     if (emailNotification) {
       const timer = setTimeout(() => {
         setEmailNotification(null);
@@ -97,30 +90,6 @@ const SubscriptionManagement = () => {
       document.body.style.overflow = "unset";
     };
   }, [showEdit]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [subscriptionsRes, statsRes] = await Promise.all([
-        getAllSubscriptions(),
-        getSubscriptionStats(),
-      ]);
-
-      if (subscriptionsRes.data?.success) {
-        setSubscriptions(subscriptionsRes.data.data || []);
-      }
-
-      if (statsRes.data?.success) {
-        setStats(statsRes.data.data || stats);
-      }
-    } catch (err) {
-      console.error("Error fetching subscriptions:", err);
-      setError(err.response?.data?.message || "Failed to fetch subscriptions");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filteredSubs = subscriptions.filter((sub) =>
     sub.restaurantName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -285,11 +254,11 @@ const SubscriptionManagement = () => {
         } else {
           // Fallback if full object not returned
           setShowEdit(false);
-          fetchData();
+          refreshSubscriptions();
           return;
         }
         setShowEdit(false);
-        fetchData();
+        refreshSubscriptions();
       }
     } catch (err) {
       console.error("Error updating subscription:", err);
@@ -321,7 +290,7 @@ const SubscriptionManagement = () => {
             amount: response.data.data.invoice.amount,
           });
         }
-        fetchData();
+        refreshSubscriptions();
       }
     } catch (err) {
       console.error("Error renewing subscription:", err);
@@ -344,20 +313,46 @@ const SubscriptionManagement = () => {
 
       {/* Toast Notification */}
       {emailNotification && createPortal(
-        <div className="fixed top-24 right-6 z-[120] bg-white dark:bg-slate-900 border border-border/50 rounded-2xl p-4 shadow-2xl animate-in slide-in-from-right-10 overflow-hidden max-w-sm">
-          <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <CreditCard className="w-5 h-5 text-blue-500" />
+        <div className="fixed bottom-6 right-4 sm:right-6 z-[120] w-full max-w-sm animate-in slide-in-from-right-10 duration-500 fade-in">
+          <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-background/80 p-5 shadow-2xl backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+            {/* Glow Effect */}
+            <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl"></div>
+            <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-purple-500/20 blur-3xl"></div>
+
+            <div className="relative flex items-start gap-4">
+              <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 transition-opacity hover:opacity-100"></div>
+                <CreditCard className="h-6 w-6" />
+              </div>
+
+              <div className="flex-1 pt-0.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-base font-bold text-foreground">Invoice Sent! 🚀</h4>
+                  <button
+                    onClick={() => setEmailNotification(null)}
+                    className="ml-2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                  Payment link ({emailNotification.amount}) has been sent to <span className="font-semibold text-foreground">{emailNotification.restaurantName}</span>.
+                </p>
+
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-500/10 px-2 py-1 text-xs font-bold text-blue-600">
+                    <CheckCircle2 className="h-3 w-3" /> Sent Details
+                  </span>
+                  <span className="text-xs text-muted-foreground">Just now</span>
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-foreground text-sm">Invoice Sent</h4>
-              <p className="text-xs text-muted-foreground mt-1">Payment link sent to <br /><span className="font-medium text-foreground">{emailNotification.restaurantName}</span></p>
-              <p className="text-blue-600 font-bold text-lg mt-2">₹{emailNotification.amount}</p>
+
+            {/* Progress Bar (Optional visual) */}
+            <div className="absolute bottom-0 left-0 h-1 w-full bg-muted/50">
+              <div className="h-full w-full origin-left animate-[shrink_5s_linear_forwards] bg-gradient-to-r from-blue-500 to-indigo-600"></div>
             </div>
-            <button onClick={() => setEmailNotification(null)} className="text-muted-foreground hover:text-foreground">
-              <X className="w-4 h-4" />
-            </button>
           </div>
         </div>,
         document.body
@@ -464,8 +459,8 @@ const SubscriptionManagement = () => {
         </div>
       </div>
 
-      {/* Subscriptions Table */}
-      <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-3xl overflow-hidden shadow-xl">
+      {/* Subscriptions Table - Desktop View */}
+      <div className="hidden md:block bg-card/80 backdrop-blur-sm border border-border/50 rounded-3xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -565,6 +560,74 @@ const SubscriptionManagement = () => {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {filteredSubs.length === 0 ? (
+          <div className="py-12 text-center text-muted-foreground bg-card/50 rounded-3xl border border-dashed border-border">
+            <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Search className="w-6 h-6 text-muted-foreground/50" />
+            </div>
+            No subscriptions found
+          </div>
+        ) : (
+          filteredSubs.map(sub => (
+            <div key={sub.id} className="bg-card border border-border/50 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm">
+                    <Building2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground">{sub.restaurantName}</h3>
+                    <p className="text-xs text-muted-foreground">ID: {sub.id}</p>
+                  </div>
+                </div>
+                <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${statusColor(sub.status)}`}>
+                  {statusBadge(sub.status)}
+                  {formatStatusDisplay(sub.status)}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="bg-muted/30 p-3 rounded-2xl border border-border/30">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Current Plan</p>
+                  <div className="font-bold text-foreground">₹{sub.price}<span className="text-xs text-muted-foreground font-normal">/mo</span></div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{sub.totalTables} tables</div>
+                </div>
+                <div className="bg-muted/30 p-3 rounded-2xl border border-border/30">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Renewal</p>
+                  <div className="font-bold text-foreground">{sub.endDate ? new Date(sub.endDate).toLocaleDateString() : "N/A"}</div>
+                  {sub.autoRenew && (
+                    <div className="text-xs text-emerald-600 flex items-center gap-1 mt-0.5">
+                      <RefreshCw className="w-3 h-3" /> Auto-on
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2 border-t border-border/30">
+                <button
+                  onClick={() => handleEditClick(sub)}
+                  className="flex-1 py-2.5 rounded-xl border border-border bg-background hover:bg-muted text-foreground font-medium text-sm flex items-center justify-center gap-2 transition"
+                >
+                  <Edit className="w-4 h-4" /> Manage
+                </button>
+                {(sub.status === "expired" || sub.status === "expiring") && (
+                  <button
+                    onClick={() => handleRenew(sub)}
+                    disabled={updating || !canRenew(sub.restaurantId)}
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-sm shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition disabled:opacity-50"
+                  >
+                    {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    Renew
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Edit Modal */}

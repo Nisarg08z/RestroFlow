@@ -17,6 +17,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AdminDashboard, RestaurantRequests, SubscriptionManagement, RestaurantStatus, AdminSupportTickets } from './components/AdminPageComponents'
 import { Toaster } from 'react-hot-toast';
 import { AuthContext } from './context/AuthContext';
+import { AdminDataProvider } from './context/AdminDataContext';
 import NotFound from './pages/NotFound';
 import ManagerWelcome from './pages/ManagerPage/ManagerWelcome';
 import ProfilePage from './pages/ManagerPage/ProfilePage';
@@ -91,7 +92,9 @@ const App = () => {
             path="admin/dashboard"
             element={
               <ProtectedRoute requiredRole="ADMIN">
-                <AdminPageLayout />
+                <AdminDataProvider>
+                  <AdminPageLayout />
+                </AdminDataProvider>
               </ProtectedRoute>
             }
           >

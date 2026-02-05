@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { getAdminTickets, updateTicketStatus } from "../../utils/api";
+import { updateTicketStatus } from "../../utils/api";
 import {
-    Search, Filter, ExternalLink, MessageSquare,
-    CheckCircle2, XCircle, Clock, AlertCircle, RefreshCw, Send, X, AlertTriangle, Archive
+    Search, ExternalLink, MessageSquare,
+    CheckCircle2, Clock, RefreshCw, Send, X, AlertCircle, AlertTriangle, Archive
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { io } from "socket.io-client";
+import { useAdminData } from "../../context/AdminDataContext";
 
 const AdminSupportTickets = () => {
-    const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { tickets, setTickets, loading, refreshTickets } = useAdminData();
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
 
@@ -20,8 +20,6 @@ const AdminSupportTickets = () => {
     const socketRef = useRef(null);
 
     useEffect(() => {
-        fetchTickets();
-
         socketRef.current = io(import.meta.env.VITE_SOCKET_URL, {
             withCredentials: true,
         });
@@ -29,15 +27,18 @@ const AdminSupportTickets = () => {
         socketRef.current.on("newTicket", (newTicket) => {
             setTickets((prev) => [newTicket, ...prev]);
             toast.custom((t) => (
-                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-card border border-border shadow-lg rounded-xl p-4 flex items-start gap-4 max-w-sm`}>
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary flex-shrink-0">
-                        <MessageSquare className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <p className="font-bold text-foreground">New Support Ticket</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            {newTicket.restaurantId?.restaurantName || "Restaurant"} needs help.
-                        </p>
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} relative w-full max-w-sm overflow-hidden rounded-2xl border border-border/50 bg-background/80 p-4 shadow-2xl backdrop-blur-xl supports-[backdrop-filter]:bg-background/60`}>
+                    <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-purple-500 to-pink-600"></div>
+                    <div className="flex items-start gap-4">
+                        <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600">
+                            <MessageSquare className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="text-sm font-bold text-foreground">New Support Ticket</h4>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                {newTicket.restaurantId?.restaurantName || "Restaurant"} needs help.
+                            </p>
+                        </div>
                     </div>
                 </div>
             ), { position: "top-right", duration: 4000 });
@@ -48,7 +49,7 @@ const AdminSupportTickets = () => {
                 socketRef.current.disconnect();
             }
         };
-    }, []);
+    }, [setTickets]);
 
     useEffect(() => {
         if (selectedTicket) {
@@ -60,21 +61,6 @@ const AdminSupportTickets = () => {
             document.body.style.overflow = "unset";
         };
     }, [selectedTicket]);
-
-    const fetchTickets = async () => {
-        setLoading(true);
-        try {
-            const res = await getAdminTickets();
-            if (res.data?.success) {
-                setTickets(res.data.data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch tickets", error);
-            toast.error("Failed to load tickets");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleUpdateStatus = async (newStatus) => {
         if (!selectedTicket) return;
@@ -203,7 +189,7 @@ const AdminSupportTickets = () => {
 
                 <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
                     <button
-                        onClick={fetchTickets}
+                        onClick={refreshTickets}
                         disabled={loading}
                         className="p-3 rounded-xl bg-card border border-border/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-sm active:scale-95 disabled:opacity-50"
                         title="Refresh Data"
@@ -250,9 +236,9 @@ const AdminSupportTickets = () => {
                                 <div className="absolute top-5 right-5">
                                     <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${getStatusBadge(ticket.status)}`}>
                                         <span className={`w-1.5 h-1.5 rounded-full ${ticket.status === 'OPEN' ? 'bg-blue-600' :
-                                                ticket.status === 'IN_PROGRESS' ? 'bg-amber-600' :
-                                                    ticket.status === 'RESOLVED' ? 'bg-emerald-600' :
-                                                        'bg-slate-600'
+                                            ticket.status === 'IN_PROGRESS' ? 'bg-amber-600' :
+                                                ticket.status === 'RESOLVED' ? 'bg-emerald-600' :
+                                                    'bg-slate-600'
                                             }`} />
                                         {ticket.status.replace("_", " ")}
                                     </div>
@@ -261,9 +247,9 @@ const AdminSupportTickets = () => {
                                 <div className="flex flex-col md:flex-row gap-5">
                                     <div className="flex-shrink-0">
                                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold shadow-sm ${ticket.status === 'OPEN' ? 'bg-blue-500/10 text-blue-600' :
-                                                ticket.status === 'IN_PROGRESS' ? 'bg-amber-500/10 text-amber-600' :
-                                                    ticket.status === 'RESOLVED' ? 'bg-emerald-500/10 text-emerald-600' :
-                                                        'bg-slate-500/10 text-slate-600'
+                                            ticket.status === 'IN_PROGRESS' ? 'bg-amber-500/10 text-amber-600' :
+                                                ticket.status === 'RESOLVED' ? 'bg-emerald-500/10 text-emerald-600' :
+                                                    'bg-slate-500/10 text-slate-600'
                                             }`}>
                                             #{ticket.ticketToken.slice(-2)}
                                         </div>
@@ -284,7 +270,7 @@ const AdminSupportTickets = () => {
                                             )}
                                         </div>
 
-                                        <h3 className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
+                                        <h3 className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors break-words line-clamp-2">
                                             {ticket.subject}
                                         </h3>
 
@@ -349,15 +335,15 @@ const AdminSupportTickets = () => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 <div className="md:col-span-2 space-y-2">
                                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Subject</label>
-                                    <div className="p-4 bg-muted/30 rounded-2xl border border-border/50 text-foreground font-medium text-lg leading-snug">
+                                    <div className="p-4 bg-muted/30 rounded-2xl border border-border/50 text-foreground font-medium text-lg leading-snug break-words break-all">
                                         {selectedTicket.subject}
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Priority Level</label>
                                     <div className={`p-4 rounded-2xl border flex items-center gap-2 font-bold ${selectedTicket.priority === 'CRITICAL' ? 'bg-rose-500/10 border-rose-500/20 text-rose-600' :
-                                            selectedTicket.priority === 'HIGH' ? 'bg-orange-500/10 border-orange-500/20 text-orange-600' :
-                                                'bg-blue-500/10 border-blue-500/20 text-blue-600'
+                                        selectedTicket.priority === 'HIGH' ? 'bg-orange-500/10 border-orange-500/20 text-orange-600' :
+                                            'bg-blue-500/10 border-blue-500/20 text-blue-600'
                                         }`}>
                                         <AlertCircle className="w-5 h-5" />
                                         {selectedTicket.priority}
@@ -367,7 +353,7 @@ const AdminSupportTickets = () => {
 
                             <div className="space-y-2 mb-8">
                                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Message Content</label>
-                                <div className="p-6 bg-muted/30 rounded-3xl border border-border/50 text-foreground whitespace-pre-wrap leading-relaxed">
+                                <div className="p-6 bg-muted/30 rounded-3xl border border-border/50 text-foreground whitespace-pre-wrap leading-relaxed break-words break-all">
                                     {selectedTicket.message}
                                 </div>
                             </div>

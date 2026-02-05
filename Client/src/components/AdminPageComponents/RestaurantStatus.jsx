@@ -13,25 +13,21 @@ import {
   Loader2,
   X,
   Mail,
-  Phone,
   MapPin,
-  Calendar,
   DollarSign,
+  Calendar,
   RefreshCw,
-  Filter,
-  MoreHorizontal
 } from "lucide-react";
 import {
-  getAllRestaurants,
   getRestaurantById,
   toggleRestaurantBlock,
   deleteRestaurant,
 } from "../../utils/api";
 import toast from "react-hot-toast";
+import { useAdminData } from "../../context/AdminDataContext";
 
 const RestaurantStatus = () => {
-  const [restaurants, setRestaurants] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { restaurants, loading, refreshRestaurants } = useAdminData();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showDropdown, setShowDropdown] = useState(null);
@@ -44,10 +40,6 @@ const RestaurantStatus = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [restaurantDetails, setRestaurantDetails] = useState(null);
-
-  useEffect(() => {
-    fetchRestaurants();
-  }, []);
 
   useEffect(() => {
     if (showDetailsModal || showDeleteModal) {
@@ -64,21 +56,6 @@ const RestaurantStatus = () => {
     if (restaurant.isBlocked) return "suspended";
     if (restaurant.isLoggedIn === true) return "active";
     return "inactive";
-  };
-
-  const fetchRestaurants = async () => {
-    try {
-      setLoading(true);
-      const response = await getAllRestaurants();
-      if (response.data?.success) {
-        setRestaurants(response.data.data || []);
-      }
-    } catch (err) {
-      console.error("Error fetching restaurants:", err);
-      toast.error(err.response?.data?.message || "Failed to fetch restaurants");
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleViewDetails = async (restaurant) => {
@@ -112,7 +89,7 @@ const RestaurantStatus = () => {
             ? `${restaurant.restaurantName} has been suspended`
             : `${restaurant.restaurantName} has been activated`
         );
-        fetchRestaurants();
+        refreshRestaurants();
       }
     } catch (err) {
       console.error("Error toggling restaurant block:", err);
@@ -132,7 +109,7 @@ const RestaurantStatus = () => {
         toast.success(`${selectedRestaurant.restaurantName} deleted successfully`);
         setShowDeleteModal(false);
         setSelectedRestaurant(null);
-        fetchRestaurants();
+        refreshRestaurants();
       }
     } catch (err) {
       console.error("Error deleting restaurant:", err);
@@ -266,7 +243,7 @@ const RestaurantStatus = () => {
 
         <div className="flex items-center gap-3 w-full md:w-auto">
           <button
-            onClick={fetchRestaurants}
+            onClick={refreshRestaurants}
             disabled={loading}
             className="p-3 rounded-xl bg-card border border-border/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-sm active:scale-95 disabled:opacity-50"
             title="Refresh Data"
@@ -661,16 +638,6 @@ const RestaurantStatus = () => {
                   Failed to load details.
                 </div>
               )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-6 border-t border-border/50 bg-muted/20 flex justify-end gap-3">
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="px-5 py-2.5 rounded-xl border border-border bg-background hover:bg-muted transition font-medium text-sm"
-              >
-                Close
-              </button>
             </div>
           </div>
         </div>,

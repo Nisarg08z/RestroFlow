@@ -1,89 +1,49 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
   Inbox,
   CreditCard,
   HeadphonesIcon,
-  TrendingUp,
-  Users,
   ArrowRight,
   Loader2,
-  Calendar,
-  Activity,
-  CheckCircle2,
   Clock,
   ExternalLink
 } from "lucide-react";
-import { getAllRestaurants, getAllRestaurantRequests, getAdminTickets } from "../../utils/api";
-import toast from "react-hot-toast";
+import { useAdminData } from "../../context/AdminDataContext";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalRestaurants: 0,
-    pendingRequests: 0,
-    activeSubscriptions: 0,
-    openTickets: 0,
-  });
-  const [recentRequests, setRecentRequests] = useState([]);
-  const [recentTickets, setRecentTickets] = useState([]);
+  const { restaurants, requests, tickets, loading } = useAdminData();
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  const { stats, recentRequests, recentTickets } = useMemo(() => {
+    const totalRestaurants = restaurants.length;
+    const pendingRequests = requests.filter((r) => r.status === "pending").length;
+    const activeSubscriptions = restaurants.filter(
+      (r) => r.subscription?.isActive === true
+    ).length;
+    const openTickets = tickets.filter(
+      (t) => t.status === "OPEN" || t.status === "IN_PROGRESS"
+    ).length;
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
+    const recent = [...requests]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5);
+    const recentTicketsList = [...tickets]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5);
 
-      const [restaurantsRes, requestsRes, ticketsRes] = await Promise.all([
-        getAllRestaurants().catch(() => ({ data: { data: [] } })),
-        getAllRestaurantRequests().catch(() => ({ data: { data: [] } })),
-        getAdminTickets().catch(() => ({ data: { data: [] } })),
-      ]);
-
-      const restaurants = restaurantsRes.data?.data || [];
-      const requests = requestsRes.data?.data || [];
-      const tickets = ticketsRes.data?.data || [];
-
-      // console.log("Dashboard Debug - Tickets fetched:", tickets);
-
-      const totalRestaurants = restaurants.length;
-      const pendingRequests = requests.filter((r) => r.status === "pending").length;
-
-      const activeSubscriptions = restaurants.filter(
-        (r) => r.subscription?.isActive === true
-      ).length;
-
-      const openTickets = tickets.filter(
-        (t) => t.status === "OPEN" || t.status === "IN_PROGRESS"
-      ).length;
-
-      setStats({
+    return {
+      stats: {
         totalRestaurants,
         pendingRequests,
         activeSubscriptions,
         openTickets,
-      });
-
-      const recent = requests
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 5);
-      setRecentRequests(recent);
-
-      const recentTicketsList = tickets
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 5);
-      setRecentTickets(recentTicketsList);
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-      toast.error("Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-    }
-  };
+      },
+      recentRequests: recent,
+      recentTickets: recentTicketsList,
+    };
+  }, [restaurants, requests, tickets]);
 
   const formatTimeAgo = (date) => {
     const now = new Date();
@@ -291,30 +251,6 @@ const AdminDashboard = () => {
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Analytics Placeholder */}
-      <div className="bg-card border border-border/50 rounded-3xl p-8 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
-        <div className="flex items-center gap-3 mb-6 relative z-10">
-          <div className="p-3 bg-primary/10 rounded-xl">
-            <TrendingUp className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground">Growth Analytics</h2>
-            <p className="text-sm text-muted-foreground">Monitor platform expansion over time</p>
-          </div>
-        </div>
-
-        <div className="h-48 md:h-64 flex flex-col items-center justify-center bg-muted/30 rounded-2xl border border-dashed border-border/50 relative z-10 backdrop-blur-sm">
-          <div className="p-4 rounded-full bg-background border border-border shadow-sm mb-4">
-            <Activity className="w-8 h-8 text-muted-foreground/50" />
-          </div>
-          <p className="text-foreground font-medium">Advanced Analytics Suite</p>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm text-center">
-            Detailed charts for revenue, user retention, and detailed growth metrics are coming soon.
-          </p>
         </div>
       </div>
     </div>

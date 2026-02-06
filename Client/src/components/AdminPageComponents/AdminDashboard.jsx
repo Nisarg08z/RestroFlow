@@ -176,7 +176,7 @@ const AdminDashboard = () => {
               <div className="space-y-1">
                 {recentRequests.map((req) => (
                   <div key={req._id} className="group flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/20 flex items-center justify-center text-orange-600 shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/4 flex items-center justify-center text-orange-600 shadow-sm">
                       <Building2 className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -225,7 +225,7 @@ const AdminDashboard = () => {
               <div className="space-y-1">
                 {recentTickets.map((ticket) => (
                   <div key={ticket._id} className="group flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/20 dark:to-blue-900/20 flex items-center justify-center text-indigo-600 shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/20 dark:to-blue-900/4 flex items-center justify-center text-indigo-600 shadow-sm">
                       <HeadphonesIcon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">

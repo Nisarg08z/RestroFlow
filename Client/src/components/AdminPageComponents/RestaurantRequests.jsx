@@ -455,7 +455,7 @@ const RestaurantRequests = () => {
                       className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-semibold transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
                     >
                       <Check className="w-5 h-5" />
-                      Approve Request
+                      Approve
                     </button>
                     <button
                       onClick={() => handleReject(selectedRequest._id)}
@@ -463,7 +463,7 @@ const RestaurantRequests = () => {
                       className="flex items-center justify-center gap-2 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 py-3.5 rounded-xl font-semibold transition-all active:scale-95"
                     >
                       <X className="w-5 h-5" />
-                      Reject Request
+                      Reject
                     </button>
                   </div>
                 )}

@@ -175,7 +175,7 @@ const ProfilePage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background pb-20">
             <ManagerHeader restaurant={restaurant} />
 
             <div className="relative bg-primary/5 pb-24 pt-10 px-4 md:px-8">
@@ -568,8 +568,8 @@ const ProfilePage = () => {
                                 </h2>
                             </div>
                             <div className="p-6">
-                                <RestaurantSubscription 
-                                    restaurant={restaurant} 
+                                <RestaurantSubscription
+                                    restaurant={restaurant}
                                     onUpdate={fetchData}
                                 />
                             </div>

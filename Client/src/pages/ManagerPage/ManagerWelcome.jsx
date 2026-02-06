@@ -70,7 +70,7 @@ const ManagerWelcome = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background pb-20">
             <ManagerHeader restaurant={restaurant} />
             <div className="p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="max-w-6xl mx-auto space-y-8">

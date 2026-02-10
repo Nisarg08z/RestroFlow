@@ -25,7 +25,7 @@ import SupportPage from './pages/ManagerPage/SupportPage';
 import LocationDashboard from './pages/ManagerPage/LocationDashboard';
 import AllQRCodesPage from './pages/ManagerPage/AllQRCodesPage';
 import MenuManagement from './pages/ManagerPage/MenuManagement';
-import TableMenu from './pages/TableMenu';
+import TableMenu from './pages/TableMenu/TableMenu';
 
 const LandingGate = ({ children }) => {
   const { role, loading } = useContext(AuthContext);

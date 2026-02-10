@@ -31,9 +31,11 @@ import restaurantRequestRouter from "./routes/restaurantRequestRoute.js"
 import subscriptionRouter from "./routes/subscriptionRoute.js"
 import invoiceRouter from "./routes/invoiceRoute.js"
 import ticketRouter from "./routes/ticketRoute.js"
+import customerRouter from "./routes/customerRoute.js"
 
 app.use("/api/v1/admin", adminRouter)
 app.use("/api/v1/restaurant", restaurantRouter)
+app.use("/api/v1/customer", customerRouter)
 app.use("/api/v1/requests", restaurantRequestRouter)
 app.use("/api/v1/subscriptions", subscriptionRouter)
 app.use("/api/v1/invoices", invoiceRouter)

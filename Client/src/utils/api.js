@@ -112,6 +112,23 @@ export const deleteLocationMenuItem = (locationId, itemId) =>
 export const getPublicMenu = (restaurantId, locationId) =>
   api.get(`/restaurant/public/menu/${restaurantId}/${locationId}`)
 
+/* ================= CUSTOMER (Table Menu) ================= */
+
+export const sendCustomerOTP = (data) =>
+  api.post("/customer/send-otp", data)
+
+export const verifyCustomerOTP = (data) =>
+  api.post("/customer/verify-otp", data)
+
+export const getCustomerOrders = (restaurantId, locationId, tableNumber, phone) =>
+  api.get("/customer/orders", { params: { restaurantId, locationId, tableNumber, phone } })
+
+export const addToCustomerOrder = (data) =>
+  api.post("/customer/orders/add", data)
+
+export const submitCustomerOrder = (data) =>
+  api.post("/customer/orders/submit", data)
+
 /* ================= ADMIN ================= */
 
 export const adminLogin = (data) =>

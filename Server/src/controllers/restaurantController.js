@@ -12,6 +12,7 @@ import cloudinary, { uploadImageFromDataUrl } from "../utils/cloudinary.js"
 import { isSubscriptionExpired, getSubscriptionStatus } from "../utils/subscriptionUtils.js"
 import { createRenewalInvoice } from "../utils/invoiceUtils.js"
 import { Invoice } from "../models/invoiceModel.js"
+import { CustomerOrder } from "../models/customerOrderModel.js"
 
 const restaurantLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body
@@ -611,6 +612,66 @@ const getMyInvoices = asyncHandler(async (req, res) => {
   );
 });
 
+const getLocationOrders = asyncHandler(async (req, res) => {
+  const { locationId } = req.params;
+  const restaurant = await Restaurant.findById(req.user._id);
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+  const location = restaurant.locations.id(locationId);
+  if (!location) {
+    throw new ApiError(404, "Location not found");
+  }
+  const totalTables = location.totalTables || 0;
+
+  const orders = await CustomerOrder.find({
+    restaurantId: req.user._id,
+    locationId: String(locationId),
+    status: { $in: ["PENDING", "SUBMITTED", "PREPARING", "SERVED"] },
+  })
+    .sort({ createdAt: 1 })
+    .lean();
+
+  const byTable = new Map();
+  for (let t = 1; t <= totalTables; t++) {
+    byTable.set(String(t), { tableNumber: t, amount: 0, orders: [] });
+  }
+  for (const order of orders) {
+    const tableKey = String(order.tableNumber);
+    if (!byTable.has(tableKey)) {
+      byTable.set(tableKey, { tableNumber: Number(order.tableNumber), amount: 0, orders: [] });
+    }
+    const row = byTable.get(tableKey);
+    const orderTotal = (order.items || []).reduce(
+      (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+      0
+    );
+    row.amount += orderTotal;
+    row.orders.push({
+      _id: order._id,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      status: order.status,
+      items: order.items || [],
+      total: orderTotal,
+      createdAt: order.createdAt,
+    });
+  }
+
+  const tableSummaries = Array.from(byTable.entries())
+    .map(([tableNum, data]) => ({
+      tableNumber: data.tableNumber,
+      status: data.orders.length > 0 ? "occupied" : "available",
+      amount: data.amount,
+      orders: data.orders,
+    }))
+    .sort((a, b) => a.tableNumber - b.tableNumber);
+
+  return res.status(200).json(
+    new ApiResponse(200, { totalTables, tables: tableSummaries }, "Location orders fetched")
+  );
+});
+
 export {
   restaurantLogin,
   restaurantLogout,
@@ -628,5 +689,6 @@ export {
   getMySubscription,
   renewMySubscription,
   getMyInvoices,
+  getLocationOrders,
 }
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, ChefHat, Search } from 'lucide-react';
+import { MapPin, ChefHat, Search, History } from 'lucide-react';
 
 const MenuHeader = ({
     data,
@@ -12,7 +12,8 @@ const MenuHeader = ({
     activeCategory,
     setActiveCategory,
     cartItemCount = 0,
-    onCartClick
+    onCartClick,
+    onHistoryClick,
 }) => {
     return (
         <motion.header
@@ -49,18 +50,29 @@ const MenuHeader = ({
                             )}
                         </div>
                     </div>
-                    <button
-                        onClick={onCartClick}
-                        className="relative p-2.5 bg-primary/10 rounded-full flex-shrink-0 hover:bg-primary/20 transition-colors"
-                        aria-label="View order"
-                    >
-                        <ChefHat className="w-6 h-6 text-primary" />
-                        {cartItemCount > 0 && (
-                            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-primary text-primary-foreground text-xs font-bold rounded-full">
-                                {cartItemCount > 99 ? '99+' : cartItemCount}
-                            </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {onHistoryClick && (
+                            <button
+                                onClick={onHistoryClick}
+                                className="p-2.5 bg-muted rounded-full hover:bg-muted/80 transition-colors"
+                                aria-label="Order history"
+                            >
+                                <History className="w-6 h-6 text-muted-foreground" />
+                            </button>
                         )}
-                    </button>
+                        <button
+                            onClick={onCartClick}
+                            className="relative p-2.5 bg-primary/10 rounded-full hover:bg-primary/20 transition-colors"
+                            aria-label="View order"
+                        >
+                            <ChefHat className="w-6 h-6 text-primary" />
+                            {cartItemCount > 0 && (
+                                <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-primary text-primary-foreground text-xs font-bold rounded-full">
+                                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                                </span>
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="relative">
@@ -79,19 +91,19 @@ const MenuHeader = ({
                         <button
                             onClick={() => setActiveCategory("all")}
                             className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all ${activeCategory === "all"
-                                    ? "bg-primary text-primary-foreground shadow-lg"
-                                    : "bg-muted text-foreground hover:bg-muted/80"
+                                ? "bg-primary text-primary-foreground shadow-lg"
+                                : "bg-muted text-foreground hover:bg-muted/80"
                                 }`}
                         >
                             All
                         </button>
-                        {categories.map((cat) => (
+                        {categories.map((cat, idx) => (
                             <button
-                                key={cat._id}
+                                key={cat._id || cat.name || idx}
                                 onClick={() => setActiveCategory(cat.name)}
                                 className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all ${activeCategory === cat.name
-                                        ? "bg-primary text-primary-foreground shadow-lg"
-                                        : "bg-muted text-foreground hover:bg-muted/80"
+                                    ? "bg-primary text-primary-foreground shadow-lg"
+                                    : "bg-muted text-foreground hover:bg-muted/80"
                                     }`}
                             >
                                 {cat.name}

@@ -1,13 +1,3 @@
-/**
- * SMS Service for sending OTP to phone numbers.
- * Uses Twilio when configured. Falls back to console log in development.
- *
- * To enable Twilio, add to .env:
- * TWILIO_ACCOUNT_SID=your_account_sid
- * TWILIO_AUTH_TOKEN=your_auth_token
- * TWILIO_PHONE_NUMBER=+1234567890
- */
-
 export const sendSMSOTP = async (phone, otp) => {
   const message = `Your RestroFlow verification code is: ${otp}. Valid for 10 minutes. Do not share with anyone.`;
 
@@ -35,7 +25,6 @@ export const sendSMSOTP = async (phone, otp) => {
     }
   }
 
-  // Development fallback - log OTP to console
   console.log(`\n========== OTP (Dev Mode) ==========`);
   console.log(`Phone: ${phone}`);
   console.log(`OTP: ${otp}`);

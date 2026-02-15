@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChefHat, Send } from 'lucide-react';
+import { X, ChefHat, Send, Trash2, Minus, Plus } from 'lucide-react';
 
-const CartDrawer = ({ isOpen, onClose, pendingOrder, inrFormatter, onSubmitOrder, submitLoading }) => {
+const CartDrawer = ({ isOpen, onClose, pendingOrder, inrFormatter, onSubmitOrder, submitLoading, onRemoveItem, onUpdateQuantity, removeLoading }) => {
     const items = pendingOrder?.items || [];
     const total = items.reduce(
         (sum, it) => sum + (it.price || 0) * (it.quantity || 1),
@@ -49,23 +49,58 @@ const CartDrawer = ({ isOpen, onClose, pendingOrder, inrFormatter, onSubmitOrder
                                 </div>
                             ) : (
                                 <ul className="space-y-4">
-                                    {items.map((it, idx) => (
-                                        <li key={idx} className="flex justify-between gap-4 py-3 border-b border-border last:border-0">
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-semibold text-foreground">
-                                                    {it.name} × {it.quantity}
-                                                </p>
-                                                {it.specialInstructions && (
-                                                    <p className="text-sm text-muted-foreground mt-0.5 italic">
-                                                        Note: {it.specialInstructions}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <span className="font-semibold text-foreground whitespace-nowrap">
-                                                {inrFormatter.format((it.price || 0) * (it.quantity || 1))}
-                                            </span>
-                                        </li>
-                                    ))}
+                                    {items.map((it, idx) => {
+                                        const qty = it.quantity || 1;
+                                        return (
+                                            <li key={idx} className="flex flex-col gap-2 py-3 border-b border-border last:border-0">
+                                                <div className="flex justify-between gap-3 items-start">
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-semibold text-foreground">{it.name}</p>
+                                                        {it.specialInstructions && (
+                                                            <p className="text-sm text-muted-foreground mt-0.5 italic">
+                                                                Note: {it.specialInstructions}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <span className="font-semibold text-foreground whitespace-nowrap">
+                                                        {inrFormatter.format((it.price || 0) * qty)}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onUpdateQuantity?.(idx, qty - 1)}
+                                                            disabled={removeLoading || qty <= 1}
+                                                            className="p-1.5 rounded-md text-foreground hover:bg-background disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                                            title="Decrease quantity"
+                                                        >
+                                                            <Minus className="w-4 h-4" />
+                                                        </button>
+                                                        <span className="min-w-[24px] text-center text-sm font-semibold">{qty}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onUpdateQuantity?.(idx, qty + 1)}
+                                                            disabled={removeLoading}
+                                                            className="p-1.5 rounded-md text-foreground hover:bg-background disabled:opacity-40 transition-colors"
+                                                            title="Increase quantity"
+                                                        >
+                                                            <Plus className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onRemoveItem?.(idx)}
+                                                        disabled={removeLoading}
+                                                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                                                        title="Remove from cart"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             )}
                         </div>

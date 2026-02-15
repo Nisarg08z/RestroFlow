@@ -53,6 +53,9 @@ export const updateRestaurantProfile = (data) =>
 export const updateLocation = (locationId, data) =>
   api.patch(`/restaurant/locations/${locationId}`, data)
 
+export const getLocationOrders = (locationId) =>
+  api.get(`/restaurant/locations/${locationId}/orders`)
+
 export const generateLocationQRCodes = (locationId) =>
   api.post(`/restaurant/locations/${locationId}/generate-qr`)
 
@@ -128,6 +131,12 @@ export const addToCustomerOrder = (data) =>
 
 export const submitCustomerOrder = (data) =>
   api.post("/customer/orders/submit", data)
+
+export const removeItemFromCustomerOrder = (data) =>
+  api.post("/customer/orders/remove-item", data)
+
+export const updateCartItemQuantity = (data) =>
+  api.patch("/customer/orders/update-quantity", data)
 
 /* ================= ADMIN ================= */
 

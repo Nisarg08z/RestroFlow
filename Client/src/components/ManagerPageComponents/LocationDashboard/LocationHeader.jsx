@@ -1,7 +1,6 @@
 import React from "react";
 import {
-    ArrowLeft, DollarSign, BarChart3, Users,
-    Package, Settings
+    ArrowLeft, DollarSign, Receipt, Settings
 } from "lucide-react";
 
 const LocationHeader = ({
@@ -68,6 +67,7 @@ const LocationHeader = ({
                     <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-3 pt-1">
                         {[
                             { id: 'billing', label: 'Billing', icon: DollarSign },
+                            { id: 'orders', label: 'Orders', icon: Receipt },
                             { id: 'settings', label: 'Settings', icon: Settings },
                         ].map((tab) => {
                             const Icon = tab.icon;

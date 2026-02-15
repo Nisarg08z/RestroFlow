@@ -10,6 +10,8 @@ import {
     getCustomerOrders,
     addToCustomerOrder,
     submitCustomerOrder,
+    removeItemFromCustomerOrder,
+    updateCartItemQuantity,
 } from "../../utils/api";
 
 import LoadingScreen from "../../components/TableMenuComponents/LoadingScreen";
@@ -20,9 +22,9 @@ import PhoneStep from "../../components/TableMenuComponents/PhoneStep";
 import OtpStep from "../../components/TableMenuComponents/OtpStep";
 import MenuHeader from "../../components/TableMenuComponents/MenuHeader";
 import MenuGrid from "../../components/TableMenuComponents/MenuGrid";
-import OrdersHistory from "../../components/TableMenuComponents/OrdersHistory";
 import ItemDetailsModal from "../../components/TableMenuComponents/ItemDetailsModal";
 import CartDrawer from "../../components/TableMenuComponents/CartDrawer";
+import HistoryDrawer from "../../components/TableMenuComponents/HistoryDrawer";
 
 const SESSION_KEY = "restroflow_customer_session";
 
@@ -65,7 +67,9 @@ const TableMenu = () => {
     const [previousOrders, setPreviousOrders] = useState([]);
     const [addToOrderLoading, setAddToOrderLoading] = useState(false);
     const [submitOrderLoading, setSubmitOrderLoading] = useState(false);
+    const [removeFromCartLoading, setRemoveFromCartLoading] = useState(false);
     const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
+    const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
 
     useEffect(() => {
         fetchMenu();
@@ -214,7 +218,14 @@ const TableMenu = () => {
 
     const handleSubmitOrder = async () => {
         const pending = previousOrders.find((o) => o.status === "PENDING");
-        if (!pending || !pending.items?.length) return;
+        if (!pending) {
+            toast.error("No order in cart");
+            return;
+        }
+        if (!pending.items?.length) {
+            toast.error("Your cart is empty. Add items before sending to kitchen.");
+            return;
+        }
         setSubmitOrderLoading(true);
         try {
             const res = await submitCustomerOrder({
@@ -239,9 +250,72 @@ const TableMenu = () => {
         }
     };
 
+    const handleRemoveFromCart = async (itemIndex) => {
+        const pending = previousOrders.find((o) => o.status === "PENDING");
+        if (!pending || !pending._id) return;
+        setRemoveFromCartLoading(true);
+        try {
+            const res = await removeItemFromCustomerOrder({
+                orderId: pending._id,
+                phone: customerPhone,
+                restaurantId,
+                locationId,
+                tableNumber,
+                itemIndex,
+            });
+            if (res.data?.success && res.data.data?.order) {
+                const updated = res.data.data.order;
+                setPreviousOrders((prev) =>
+                    prev.map((o) => (o._id === updated._id ? updated : o))
+                );
+                toast.success("Item removed from cart");
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to remove item");
+        } finally {
+            setRemoveFromCartLoading(false);
+        }
+    };
+
+    const handleUpdateQuantity = async (itemIndex, newQuantity) => {
+        const pending = previousOrders.find((o) => o.status === "PENDING");
+        if (!pending || !pending._id) return;
+        setRemoveFromCartLoading(true);
+        try {
+            const res = await updateCartItemQuantity({
+                orderId: pending._id,
+                phone: customerPhone,
+                restaurantId,
+                locationId,
+                tableNumber,
+                itemIndex,
+                quantity: newQuantity,
+            });
+            if (res.data?.success && res.data.data?.order) {
+                const updated = res.data.data.order;
+                setPreviousOrders((prev) =>
+                    prev.map((o) => (o._id === updated._id ? updated : o))
+                );
+                if (newQuantity < 1) toast.success("Item removed from cart");
+                else toast.success("Quantity updated");
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to update quantity");
+        } finally {
+            setRemoveFromCartLoading(false);
+        }
+    };
+
     const categories = useMemo(() => {
         if (!data?.categories) return [];
-        return [...data.categories].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const sorted = [...data.categories].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const seen = new Set();
+        return sorted.filter((cat) => {
+            const key = (cat.name || "").trim().toLowerCase();
+            if (!key || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
     }, [data]);
 
     const filteredItems = useMemo(() => {
@@ -357,14 +431,10 @@ const TableMenu = () => {
                 setActiveCategory={setActiveCategory}
                 cartItemCount={cartItemCount}
                 onCartClick={() => setCartDrawerOpen(true)}
+                onHistoryClick={() => setHistoryDrawerOpen(true)}
             />
 
             <main className="px-4 py-6 max-w-4xl mx-auto space-y-6">
-                <OrdersHistory
-                    previousOrders={previousOrders}
-                    inrFormatter={inrFormatter}
-                />
-
                 <div className="flex items-center gap-2">
                     <UtensilsCrossed className="w-5 h-5 text-primary" />
                     <h2 className="text-lg font-bold text-foreground">Menu</h2>
@@ -393,6 +463,16 @@ const TableMenu = () => {
                 inrFormatter={inrFormatter}
                 onSubmitOrder={handleSubmitOrder}
                 submitLoading={submitOrderLoading}
+                onRemoveItem={handleRemoveFromCart}
+                onUpdateQuantity={handleUpdateQuantity}
+                removeLoading={removeFromCartLoading}
+            />
+
+            <HistoryDrawer
+                isOpen={historyDrawerOpen}
+                onClose={() => setHistoryDrawerOpen(false)}
+                previousOrders={previousOrders}
+                inrFormatter={inrFormatter}
             />
         </div>
     );

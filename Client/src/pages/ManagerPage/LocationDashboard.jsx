@@ -12,6 +12,7 @@ import {
     LocationHeader,
     RestaurantOpener,
     BillingPOS,
+    OrdersView,
     PlaceholderView,
     LocationSettings
 } from "../../components/ManagerPageComponents/LocationDashboard";
@@ -135,7 +136,8 @@ const LocationDashboard = () => {
                     )
                 ) : (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        {activeTab === 'billing' && <BillingPOS />}
+                        {activeTab === 'billing' && <BillingPOS locationId={locationId} />}
+                        {activeTab === 'orders' && <OrdersView locationId={locationId} />}
                         {activeTab === 'reports' && <PlaceholderView title="Analytics & Reports" icon={BarChart3} />}
                         {activeTab === 'staff' && <PlaceholderView title="Staff Management" icon={Users} />}
                         {activeTab === 'inventory' && <PlaceholderView title="Inventory Management" icon={Package} />}

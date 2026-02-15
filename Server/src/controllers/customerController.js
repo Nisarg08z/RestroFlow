@@ -296,3 +296,113 @@ export const submitOrder = asyncHandler(async (req, res) => {
     new ApiResponse(200, { order: updated }, "Order sent to kitchen!")
   );
 });
+
+export const removeItemFromOrder = asyncHandler(async (req, res) => {
+  const { orderId, phone, restaurantId, locationId, tableNumber, itemIndex } =
+    req.body;
+
+  if (
+    orderId == null ||
+    !phone ||
+    !restaurantId ||
+    !locationId ||
+    !tableNumber ||
+    typeof itemIndex !== "number" ||
+    itemIndex < 0
+  ) {
+    throw new ApiError(
+      400,
+      "orderId, phone, restaurantId, locationId, tableNumber, and itemIndex (non-negative number) are required"
+    );
+  }
+
+  const normalizedPhone = normalizePhone(phone);
+
+  const order = await CustomerOrder.findOne({
+    _id: orderId,
+    restaurantId,
+    locationId,
+    tableNumber,
+    customerPhone: normalizedPhone,
+    status: "PENDING",
+  });
+
+  if (!order) {
+    throw new ApiError(404, "Order not found or not in cart.");
+  }
+
+  if (!order.items || !order.items.length) {
+    throw new ApiError(400, "Cart is already empty.");
+  }
+
+  if (itemIndex >= order.items.length) {
+    throw new ApiError(400, "Invalid item index.");
+  }
+
+  order.items.splice(itemIndex, 1);
+  await order.save();
+
+  const updated = await CustomerOrder.findById(order._id).lean();
+
+  return res.status(200).json(
+    new ApiResponse(200, { order: updated }, "Item removed from cart")
+  );
+});
+
+export const updateItemQuantity = asyncHandler(async (req, res) => {
+  const { orderId, phone, restaurantId, locationId, tableNumber, itemIndex, quantity } =
+    req.body;
+
+  if (
+    orderId == null ||
+    !phone ||
+    !restaurantId ||
+    !locationId ||
+    !tableNumber ||
+    typeof itemIndex !== "number" ||
+    itemIndex < 0 ||
+    typeof quantity !== "number" ||
+    quantity < 0
+  ) {
+    throw new ApiError(
+      400,
+      "orderId, phone, restaurantId, locationId, tableNumber, itemIndex, and quantity (non-negative number) are required"
+    );
+  }
+
+  const normalizedPhone = normalizePhone(phone);
+
+  const order = await CustomerOrder.findOne({
+    _id: orderId,
+    restaurantId,
+    locationId,
+    tableNumber,
+    customerPhone: normalizedPhone,
+    status: "PENDING",
+  });
+
+  if (!order) {
+    throw new ApiError(404, "Order not found or not in cart.");
+  }
+
+  if (!order.items || !order.items.length) {
+    throw new ApiError(400, "Cart is already empty.");
+  }
+
+  if (itemIndex >= order.items.length) {
+    throw new ApiError(400, "Invalid item index.");
+  }
+
+  if (quantity < 1) {
+    order.items.splice(itemIndex, 1);
+  } else {
+    order.items[itemIndex].quantity = quantity;
+  }
+  await order.save();
+
+  const updated = await CustomerOrder.findById(order._id).lean();
+
+  return res.status(200).json(
+    new ApiResponse(200, { order: updated }, quantity < 1 ? "Item removed from cart" : "Quantity updated")
+  );
+});

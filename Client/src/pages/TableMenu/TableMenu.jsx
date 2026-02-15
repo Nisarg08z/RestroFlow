@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { io } from "socket.io-client";
 import { UtensilsCrossed } from "lucide-react";
 
 import {
@@ -8,6 +9,7 @@ import {
     sendCustomerOTP,
     verifyCustomerOTP,
     getCustomerOrders,
+    getAllCustomerOrdersInRestaurant,
     addToCustomerOrder,
     submitCustomerOrder,
     removeItemFromCustomerOrder,
@@ -25,6 +27,8 @@ import MenuGrid from "../../components/TableMenuComponents/MenuGrid";
 import ItemDetailsModal from "../../components/TableMenuComponents/ItemDetailsModal";
 import CartDrawer from "../../components/TableMenuComponents/CartDrawer";
 import HistoryDrawer from "../../components/TableMenuComponents/HistoryDrawer";
+import OrderStatusStep from "../../components/TableMenuComponents/OrderStatusStep";
+import { groupAndAggregateOrders } from "../../utils/orderUtils";
 
 const SESSION_KEY = "restroflow_customer_session";
 
@@ -70,10 +74,41 @@ const TableMenu = () => {
     const [removeFromCartLoading, setRemoveFromCartLoading] = useState(false);
     const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
     const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
+    const [allOrdersInRestaurant, setAllOrdersInRestaurant] = useState([]);
+    const socketRef = useRef(null);
 
     useEffect(() => {
         fetchMenu();
     }, [restaurantId, locationId]);
+
+    const orderIdsKey = previousOrders?.map((o) => o._id).filter(Boolean).join(",") || "";
+    useEffect(() => {
+        if ((step !== "menu" && step !== "orderStatus") || !orderIdsKey) return;
+        const socketUrl = import.meta.env.VITE_SOCKET_URL || "";
+        if (!socketUrl) return;
+        const socket = io(socketUrl, { withCredentials: true });
+        socketRef.current = socket;
+        previousOrders.forEach((order) => {
+            if (order._id) socket.emit("joinOrder", order._id);
+        });
+        socket.on("order:updated", ({ order }) => {
+            if (!order?._id) return;
+            setPreviousOrders((prev) =>
+                prev.map((o) => (o._id === order._id ? order : o))
+            );
+            setAllOrdersInRestaurant((prev) => {
+                const existing = prev.find((o) => o._id === order._id);
+                if (existing) {
+                    return prev.map((o) => (o._id === order._id ? order : o));
+                }
+                return [order, ...prev];
+            });
+        });
+        return () => {
+            socket.disconnect();
+            socketRef.current = null;
+        };
+    }, [step, orderIdsKey]);
 
     const fetchMenu = async () => {
         try {
@@ -163,20 +198,27 @@ const TableMenu = () => {
 
     const fetchOrdersAndGoToMenu = async (phone, name) => {
         try {
-            const res = await getCustomerOrders(restaurantId, locationId, tableNumber, phone);
-            if (res.data?.success && res.data.data?.orders) {
-                setPreviousOrders(res.data.data.orders);
-                setCustomerName(res.data.data.customerName || name);
-                setCustomerPhone(phone);
-                setStep("menu");
+            const [currentTableRes, allOrdersRes] = await Promise.all([
+                getCustomerOrders(restaurantId, locationId, tableNumber, phone),
+                getAllCustomerOrdersInRestaurant(restaurantId, phone).catch(() => ({ data: { success: false, data: { orders: [] } } })),
+            ]);
+            const orders = currentTableRes.data?.success ? currentTableRes.data.data?.orders : null;
+            const allOrders = allOrdersRes.data?.success ? allOrdersRes.data.data?.orders || [] : [];
+            setCustomerName(orders ? currentTableRes.data.data.customerName || name : name);
+            setCustomerPhone(phone);
+            setAllOrdersInRestaurant(allOrders);
+            if (orders && orders.length > 0) {
+                setPreviousOrders(orders);
+                setStep("orderStatus");
             } else {
-                setCustomerName(name);
-                setCustomerPhone(phone);
+                setPreviousOrders([]);
                 setStep("menu");
             }
         } catch (_) {
             setCustomerName(name);
             setCustomerPhone(phone);
+            setPreviousOrders([]);
+            setAllOrdersInRestaurant([]);
             setStep("menu");
         }
     };
@@ -203,6 +245,10 @@ const TableMenu = () => {
             if (res.data?.success) {
                 const updated = res.data.data.order;
                 setPreviousOrders((prev) => {
+                    const rest = prev.filter((o) => o._id !== updated._id);
+                    return [updated, ...rest];
+                });
+                setAllOrdersInRestaurant((prev) => {
                     const rest = prev.filter((o) => o._id !== updated._id);
                     return [updated, ...rest];
                 });
@@ -240,8 +286,16 @@ const TableMenu = () => {
                 setPreviousOrders((prev) =>
                     prev.map((o) => (o._id === updated._id ? updated : o))
                 );
+                setAllOrdersInRestaurant((prev) => {
+                    const existing = prev.find((o) => o._id === updated._id);
+                    if (existing) {
+                        return prev.map((o) => (o._id === updated._id ? updated : o));
+                    }
+                    return [updated, ...prev];
+                });
                 toast.success("Order sent to kitchen!");
                 setCartDrawerOpen(false);
+                setStep("orderStatus");
             }
         } catch (err) {
             toast.error(err.response?.data?.message || "Failed to send order");
@@ -268,6 +322,13 @@ const TableMenu = () => {
                 setPreviousOrders((prev) =>
                     prev.map((o) => (o._id === updated._id ? updated : o))
                 );
+                setAllOrdersInRestaurant((prev) => {
+                    const existing = prev.find((o) => o._id === updated._id);
+                    if (existing) {
+                        return prev.map((o) => (o._id === updated._id ? updated : o));
+                    }
+                    return [updated, ...prev];
+                });
                 toast.success("Item removed from cart");
             }
         } catch (err) {
@@ -296,6 +357,13 @@ const TableMenu = () => {
                 setPreviousOrders((prev) =>
                     prev.map((o) => (o._id === updated._id ? updated : o))
                 );
+                setAllOrdersInRestaurant((prev) => {
+                    const existing = prev.find((o) => o._id === updated._id);
+                    if (existing) {
+                        return prev.map((o) => (o._id === updated._id ? updated : o));
+                    }
+                    return [updated, ...prev];
+                });
                 if (newQuantity < 1) toast.success("Item removed from cart");
                 else toast.success("Quantity updated");
             }
@@ -418,6 +486,19 @@ const TableMenu = () => {
         );
     }
 
+    if (step === "orderStatus") {
+        return (
+            <OrderStatusStep
+                data={data}
+                tableNumber={tableNumber}
+                customerName={customerName}
+                previousOrders={previousOrders}
+                inrFormatter={inrFormatter}
+                onGoToMenu={() => setStep("menu")}
+            />
+        );
+    }
+
     return (
         <div className="min-h-screen bg-background pb-20">
             <MenuHeader
@@ -471,7 +552,7 @@ const TableMenu = () => {
             <HistoryDrawer
                 isOpen={historyDrawerOpen}
                 onClose={() => setHistoryDrawerOpen(false)}
-                previousOrders={previousOrders}
+                previousOrders={allOrdersInRestaurant}
                 inrFormatter={inrFormatter}
             />
         </div>

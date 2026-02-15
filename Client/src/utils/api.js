@@ -56,6 +56,9 @@ export const updateLocation = (locationId, data) =>
 export const getLocationOrders = (locationId) =>
   api.get(`/restaurant/locations/${locationId}/orders`)
 
+export const updateLocationOrderStatus = (locationId, orderId, status) =>
+  api.patch(`/restaurant/locations/${locationId}/orders/${orderId}/status`, { status })
+
 export const generateLocationQRCodes = (locationId) =>
   api.post(`/restaurant/locations/${locationId}/generate-qr`)
 
@@ -125,6 +128,9 @@ export const verifyCustomerOTP = (data) =>
 
 export const getCustomerOrders = (restaurantId, locationId, tableNumber, phone) =>
   api.get("/customer/orders", { params: { restaurantId, locationId, tableNumber, phone } })
+
+export const getAllCustomerOrdersInRestaurant = (restaurantId, phone) =>
+  api.get("/customer/orders/all", { params: { restaurantId, phone } })
 
 export const addToCustomerOrder = (data) =>
   api.post("/customer/orders/add", data)

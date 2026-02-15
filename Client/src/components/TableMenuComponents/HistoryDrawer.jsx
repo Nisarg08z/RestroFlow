@@ -1,10 +1,22 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, History } from 'lucide-react';
+import { X, History, MapPin, Clock } from 'lucide-react';
+import { groupAndAggregateOrders } from '../../utils/orderUtils';
+
+const STATUS_CONFIG = {
+    PENDING: { label: "In cart", className: "bg-muted text-muted-foreground" },
+    SUBMITTED: { label: "Sent to kitchen", className: "bg-amber-500/15 text-amber-700" },
+    PREPARING: { label: "Preparing", className: "bg-blue-500/15 text-blue-700" },
+    SERVED: { label: "Served", className: "bg-green-500/15 text-green-700" },
+    CANCELLED: { label: "Cancelled", className: "bg-red-500/15 text-red-700" },
+};
 
 const HistoryDrawer = ({ isOpen, onClose, previousOrders, inrFormatter }) => {
-    const orders = previousOrders || [];
-    const hasOrders = orders.length > 0;
+    const groupedOrders = useMemo(() => {
+        return groupAndAggregateOrders(previousOrders || []);
+    }, [previousOrders]);
+
+    const hasOrders = groupedOrders.length > 0;
 
     return (
         <AnimatePresence>
@@ -46,51 +58,56 @@ const HistoryDrawer = ({ isOpen, onClose, previousOrders, inrFormatter }) => {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {orders.map((order) => (
-                                        <div
-                                            key={order._id}
-                                            className="bg-background border border-border rounded-xl p-4 space-y-2"
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-xs font-semibold text-primary uppercase">
-                                                    {order.status}
-                                                </span>
-                                                <span className="text-sm text-muted-foreground">
-                                                    {new Date(order.createdAt).toLocaleString()}
-                                                </span>
-                                            </div>
-                                            <ul className="space-y-1">
-                                                {order.items?.map((it, idx) => (
-                                                    <li key={idx} className="flex justify-between text-sm">
-                                                        <div>
-                                                            <span className="text-foreground">
-                                                                {it.name} × {it.quantity}
+                                    {groupedOrders.map((group, idx) => {
+                                        const statusConfig = STATUS_CONFIG[group.latestStatus] || STATUS_CONFIG.PENDING;
+                                        return (
+                                            <div
+                                                key={`${group.tableNumber}_${group.date}_${group.time}_${idx}`}
+                                                className="bg-background border border-border rounded-xl p-4 space-y-3"
+                                            >
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                                                            <span className="font-semibold text-foreground">
+                                                                Table {group.tableNumber}
                                                             </span>
-                                                            {it.specialInstructions && (
-                                                                <p className="text-xs text-muted-foreground italic mt-0.5">
-                                                                    {it.specialInstructions}
-                                                                </p>
-                                                            )}
                                                         </div>
-                                                        <span className="font-medium flex-shrink-0 ml-2">
-                                                            {inrFormatter.format((it.price || 0) * (it.quantity || 1))}
-                                                        </span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                            <div className="pt-2 border-t border-border flex justify-between font-semibold">
-                                                <span>Total</span>
-                                                <span>
-                                                    {inrFormatter.format(
-                                                        order.items?.reduce(
-                                                            (sum, it) => sum + (it.price || 0) * (it.quantity || 1),
-                                                            0
-                                                        ) || 0
-                                                    )}
-                                                </span>
+                                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                            <Clock className="w-3.5 h-3.5" />
+                                                            <span>{group.dateTimeDisplay || `${group.date} at ${group.time}`}</span>
+                                                        </div>
+                                                    </div>
+                                                    <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold shrink-0 ${statusConfig.className}`}>
+                                                        {statusConfig.label}
+                                                    </span>
+                                                </div>
+                                                <ul className="space-y-1.5 pt-2 border-t border-border/50">
+                                                    {group.items.map((item, i) => (
+                                                        <li key={i} className="flex justify-between text-sm">
+                                                            <span className="text-foreground">
+                                                                {item.name}
+                                                                {item.quantity > 1 && (
+                                                                    <span className="text-muted-foreground ml-1">
+                                                                        × {item.quantity}
+                                                                    </span>
+                                                                )}
+                                                                {item.specialInstructions && (
+                                                                    <span className="text-muted-foreground italic ml-1">
+                                                                        (+ note)
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                <div className="pt-2 border-t border-border flex justify-between font-semibold">
+                                                    <span>Total</span>
+                                                    <span>{inrFormatter.format(group.total)}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

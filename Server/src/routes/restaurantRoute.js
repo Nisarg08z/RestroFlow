@@ -17,6 +17,7 @@ import {
   renewMySubscription,
   getMyInvoices,
   getLocationOrders,
+  updateOrderStatus,
 } from "../controllers/restaurantController.js"
 import {
   getMenu,
@@ -50,6 +51,7 @@ router.post("/locations/create-payment-order", verifyRestaurantJWT, createLocati
 router.post("/locations/verify-payment", verifyRestaurantJWT, verifyLocationPaymentAndAdd)
 router.patch("/locations/:locationId", verifyRestaurantJWT, updateLocation)
 router.get("/locations/:locationId/orders", verifyRestaurantJWT, getLocationOrders)
+router.patch("/locations/:locationId/orders/:orderId/status", verifyRestaurantJWT, updateOrderStatus)
 router.post("/locations/:locationId/generate-qr", verifyRestaurantJWT, generateLocationQRCodes)
 router.post("/locations/:locationId/qr/:tableNumber/regenerate", verifyRestaurantJWT, regenerateTableQRCode)
 router.get("/subscription", verifyRestaurantJWT, getMySubscription)

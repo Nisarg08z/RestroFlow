@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { CustomerSession } from "../models/customerSessionModel.js";
 import { CustomerOrder } from "../models/customerOrderModel.js";
 import { sendSMSOTP } from "../utils/smsService.js";
+import { getIO } from "../utils/socket.js";
 import crypto from "crypto";
 
 const generateOTP = () => {
@@ -176,6 +177,27 @@ export const getOrders = asyncHandler(async (req, res) => {
   );
 });
 
+export const getAllOrdersInRestaurant = asyncHandler(async (req, res) => {
+  const { restaurantId, phone } = req.query;
+
+  if (!restaurantId || !phone) {
+    throw new ApiError(400, "restaurantId and phone are required");
+  }
+
+  const normalizedPhone = normalizePhone(phone);
+
+  const orders = await CustomerOrder.find({
+    restaurantId,
+    customerPhone: normalizedPhone,
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return res.status(200).json(
+    new ApiResponse(200, { orders }, "All orders fetched")
+  );
+});
+
 export const addToOrder = asyncHandler(async (req, res) => {
   const { restaurantId, locationId, tableNumber, phone, name, items } =
     req.body;
@@ -291,6 +313,11 @@ export const submitOrder = asyncHandler(async (req, res) => {
   await order.save();
 
   const updated = await CustomerOrder.findById(order._id).lean();
+  const io = getIO();
+  if (io) {
+    io.to(`location:${locationId}`).emit("order:new", { order: updated });
+    io.to(`order:${order._id}`).emit("order:updated", { order: updated });
+  }
 
   return res.status(200).json(
     new ApiResponse(200, { order: updated }, "Order sent to kitchen!")

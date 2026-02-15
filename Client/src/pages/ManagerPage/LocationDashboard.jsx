@@ -13,6 +13,8 @@ import {
     RestaurantOpener,
     BillingPOS,
     OrdersView,
+    ChefView,
+    SectionCards,
     PlaceholderView,
     LocationSettings
 } from "../../components/ManagerPageComponents/LocationDashboard";
@@ -26,6 +28,7 @@ const LocationDashboard = () => {
 
     const [isOpen, setIsOpen] = useState(false);
     const [isOpening, setIsOpening] = useState(false);
+    const [currentView, setCurrentView] = useState('cards');
     const [activeTab, setActiveTab] = useState('billing');
     const [isClosing, setIsClosing] = useState(false);
     const [showBackConfirm, setShowBackConfirm] = useState(false);
@@ -112,6 +115,8 @@ const LocationDashboard = () => {
                 locationName={location.locationName}
                 locationAddress={`${location.address}, ${location.city}`}
                 isOpen={isOpen}
+                currentView={currentView}
+                onBackToCards={currentView !== 'cards' ? () => setCurrentView('cards') : undefined}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 onBack={handleRequestBack}
@@ -135,20 +140,32 @@ const LocationDashboard = () => {
                         />
                     )
                 ) : (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        {activeTab === 'billing' && <BillingPOS locationId={locationId} />}
-                        {activeTab === 'orders' && <OrdersView locationId={locationId} />}
-                        {activeTab === 'reports' && <PlaceholderView title="Analytics & Reports" icon={BarChart3} />}
-                        {activeTab === 'staff' && <PlaceholderView title="Staff Management" icon={Users} />}
-                        {activeTab === 'inventory' && <PlaceholderView title="Inventory Management" icon={Package} />}
-                        {activeTab === 'settings' && (
-                            <LocationSettings
-                                location={location}
-                                restaurantId={restaurant?._id || restaurant?.id}
-                                locationId={locationId}
-                            />
+                    <>
+                        {currentView === 'cards' && (
+                            <SectionCards onSelect={setCurrentView} />
                         )}
-                    </div>
+                        {currentView === 'chef' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <ChefView locationId={locationId} />
+                            </div>
+                        )}
+                        {currentView === 'manager' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                {activeTab === 'billing' && <BillingPOS locationId={locationId} />}
+                                {activeTab === 'orders' && <OrdersView locationId={locationId} />}
+                                {activeTab === 'reports' && <PlaceholderView title="Analytics & Reports" icon={BarChart3} />}
+                                {activeTab === 'staff' && <PlaceholderView title="Staff Management" icon={Users} />}
+                                {activeTab === 'inventory' && <PlaceholderView title="Inventory Management" icon={Package} />}
+                                {activeTab === 'settings' && (
+                                    <LocationSettings
+                                        location={location}
+                                        restaurantId={restaurant?._id || restaurant?.id}
+                                        locationId={locationId}
+                                    />
+                                )}
+                            </div>
+                        )}
+                    </>
                 )}
             </main>
 

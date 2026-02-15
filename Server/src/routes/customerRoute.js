@@ -3,6 +3,7 @@ import {
   sendOTP,
   verifyOTP,
   getOrders,
+  getAllOrdersInRestaurant,
   addToOrder,
   submitOrder,
   removeItemFromOrder,
@@ -18,5 +19,6 @@ router.post("/orders/add", addToOrder);
 router.post("/orders/submit", submitOrder);
 router.post("/orders/remove-item", removeItemFromOrder);
 router.patch("/orders/update-quantity", updateItemQuantity);
+router.get("/orders/all", getAllOrdersInRestaurant);
 
 export default router;

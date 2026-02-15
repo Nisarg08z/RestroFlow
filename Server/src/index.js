@@ -34,6 +34,17 @@ io.on("connection", (socket) => {
         console.log(`Restaurant ${restaurantId} joined their room`);
     });
 
+    socket.on("joinLocation", (locationId) => {
+        const room = `location:${locationId}`;
+        socket.join(room);
+        console.log(`Socket joined location room: ${room}`);
+    });
+
+    socket.on("joinOrder", (orderId) => {
+        const room = `order:${orderId}`;
+        socket.join(room);
+    });
+
     socket.on("disconnect", () => {});
 });
 

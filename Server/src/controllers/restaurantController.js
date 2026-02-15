@@ -13,6 +13,7 @@ import { isSubscriptionExpired, getSubscriptionStatus } from "../utils/subscript
 import { createRenewalInvoice } from "../utils/invoiceUtils.js"
 import { Invoice } from "../models/invoiceModel.js"
 import { CustomerOrder } from "../models/customerOrderModel.js"
+import { getIO } from "../utils/socket.js"
 
 const restaurantLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body
@@ -672,6 +673,45 @@ const getLocationOrders = asyncHandler(async (req, res) => {
   );
 });
 
+const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { locationId, orderId } = req.params;
+  const { status: newStatus } = req.body;
+  const validStatuses = ["PREPARING", "SERVED"];
+  if (!newStatus || !validStatuses.includes(newStatus)) {
+    throw new ApiError(400, "status must be PREPARING or SERVED");
+  }
+  const restaurant = await Restaurant.findById(req.user._id);
+  if (!restaurant) throw new ApiError(404, "Restaurant not found");
+  const location = restaurant.locations.id(locationId);
+  if (!location) throw new ApiError(404, "Location not found");
+
+  const order = await CustomerOrder.findOne({
+    _id: orderId,
+    restaurantId: req.user._id,
+    locationId: String(locationId),
+  });
+  if (!order) throw new ApiError(404, "Order not found");
+
+  if (newStatus === "PREPARING" && order.status !== "SUBMITTED") {
+    throw new ApiError(400, "Only SUBMITTED orders can be marked as PREPARING");
+  }
+  if (newStatus === "SERVED" && order.status !== "PREPARING") {
+    throw new ApiError(400, "Only PREPARING orders can be marked as SERVED");
+  }
+
+  order.status = newStatus;
+  await order.save();
+  const updated = await CustomerOrder.findById(order._id).lean();
+  const io = getIO();
+  if (io) {
+    io.to(`location:${locationId}`).emit("order:updated", { order: updated });
+    io.to(`order:${orderId}`).emit("order:updated", { order: updated });
+  }
+  return res.status(200).json(
+    new ApiResponse(200, { order: updated }, `Order marked as ${newStatus}`)
+  );
+});
+
 export {
   restaurantLogin,
   restaurantLogout,
@@ -690,5 +730,6 @@ export {
   renewMySubscription,
   getMyInvoices,
   getLocationOrders,
+  updateOrderStatus,
 }
 

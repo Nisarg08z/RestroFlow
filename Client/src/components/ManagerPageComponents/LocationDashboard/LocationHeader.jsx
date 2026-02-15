@@ -7,6 +7,8 @@ const LocationHeader = ({
     locationName,
     locationAddress,
     isOpen,
+    currentView,
+    onBackToCards,
     activeTab,
     onTabChange,
     onBack,
@@ -24,13 +26,12 @@ const LocationHeader = ({
                 <div className="flex items-center justify-between py-4">
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={onBack}
+                            onClick={currentView !== 'cards' && onBackToCards ? onBackToCards : onBack}
                             className="group p-2 hover:bg-muted rounded-full transition-all duration-200 border border-transparent hover:border-border"
-                            title="Back to Locations"
+                            title={currentView !== 'cards' ? "Back to sections" : "Back to Locations"}
                         >
                             <ArrowLeft className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
                         </button>
-
                         <div className="flex flex-col">
                             <div className="flex items-center gap-3">
                                 <h1 className="text-xl font-bold text-foreground leading-none tracking-tight">
@@ -50,7 +51,6 @@ const LocationHeader = ({
                             </p>
                         </div>
                     </div>
-
                     <div className="flex items-center gap-3">
                         <div className="hidden md:flex flex-col items-end mr-2">
                             <span className="text-xs font-bold text-foreground">
@@ -63,7 +63,7 @@ const LocationHeader = ({
                     </div>
                 </div>
 
-                {isOpen && (
+                {isOpen && currentView === 'manager' && (
                     <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-3 pt-1">
                         {[
                             { id: 'billing', label: 'Billing', icon: DollarSign },
@@ -77,14 +77,14 @@ const LocationHeader = ({
                                     key={tab.id}
                                     onClick={() => onTabChange(tab.id)}
                                     className={`
-                                        relative group flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ease-out whitespace-nowrap
+                                        flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap
                                         ${isActive
-                                            ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25'
-                                            : 'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
                                         }
                                     `}
                                 >
-                                    <Icon className={`w-4 h-4 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
+                                    <Icon className="w-4 h-4" />
                                     {tab.label}
                                 </button>
                             );

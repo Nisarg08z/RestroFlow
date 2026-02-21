@@ -59,6 +59,9 @@ export const getLocationOrders = (locationId) =>
 export const updateLocationOrderStatus = (locationId, orderId, status) =>
   api.patch(`/restaurant/locations/${locationId}/orders/${orderId}/status`, { status })
 
+export const markOrderAsSeenByChef = (locationId, orderId) =>
+  api.patch(`/restaurant/locations/${locationId}/orders/${orderId}/seen`)
+
 export const generateLocationQRCodes = (locationId) =>
   api.post(`/restaurant/locations/${locationId}/generate-qr`)
 

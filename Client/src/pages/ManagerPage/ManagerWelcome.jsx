@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { getCurrentRestaurant } from "../../utils/api";
-import { Plus } from "lucide-react";
+import { Plus, ChefHat } from "lucide-react";
 import { LocationCard, AddLocationModal, LoadingScreen, ManagerHeader } from "../../components/ManagerPageComponents";
 
 const ManagerWelcome = () => {
@@ -75,13 +75,22 @@ const ManagerWelcome = () => {
             <div className="p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="max-w-6xl mx-auto space-y-8">
                     <div className="space-y-6">
-                        <div className="space-y-2">
-                            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                                Choose Location to Manage
-                            </h2>
-                            <p className="text-muted-foreground text-lg">
-                                Select a location or add a new one to get started
-                            </p>
+                        <div className="space-y-2 flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+                                    Choose Location to Manage
+                                </h2>
+                                <p className="text-muted-foreground text-lg">
+                                    Select a location or add a new one to get started
+                                </p>
+                            </div>
+                            <Link
+                                to="/chef/welcome"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 font-medium text-sm transition-colors"
+                            >
+                                <ChefHat className="w-5 h-5" />
+                                Chef Dashboard
+                            </Link>
                         </div>
 
                         {locations.length > 0 ? (

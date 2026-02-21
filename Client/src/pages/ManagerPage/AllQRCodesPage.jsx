@@ -22,7 +22,7 @@ const AllQRCodesPage = () => {
         if (res.data?.success) {
           const rest = res.data.data;
           setRestaurant(rest);
-          const loc = rest.locations.find((l) => (l._id || l.id) === locationId);
+          const loc = rest.locations.find((l) => String(l._id || l.id) === String(locationId));
           if (!loc) {
             toast.error("Location not found");
             navigate("/restaurant/welcome");

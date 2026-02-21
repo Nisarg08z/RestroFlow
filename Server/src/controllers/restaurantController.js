@@ -182,8 +182,11 @@ const resetPassword = asyncHandler(async (req, res) => {
 })
 
 const getCurrentRestaurant = asyncHandler(async (req, res) => {
-  return res
-    .json(new ApiResponse(200, req.user, "Restaurant fetched"))
+  const restaurant = await Restaurant.findById(req.user._id)
+    .select("-password -refreshToken")
+    .lean();
+  if (!restaurant) throw new ApiError(404, "Restaurant not found");
+  return res.json(new ApiResponse(200, restaurant, "Restaurant fetched"));
 })
 
 const createLocationPaymentOrder = asyncHandler(async (req, res) => {
@@ -656,6 +659,7 @@ const getLocationOrders = asyncHandler(async (req, res) => {
       items: order.items || [],
       total: orderTotal,
       createdAt: order.createdAt,
+      chefViewedAt: order.chefViewedAt || null,
     });
   }
 
@@ -712,6 +716,34 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   );
 });
 
+const markOrderAsSeenByChef = asyncHandler(async (req, res) => {
+  const { locationId, orderId } = req.params;
+  const restaurant = await Restaurant.findById(req.user._id);
+  if (!restaurant) throw new ApiError(404, "Restaurant not found");
+  const location = restaurant.locations.id(locationId);
+  if (!location) throw new ApiError(404, "Location not found");
+
+  const order = await CustomerOrder.findOne({
+    _id: orderId,
+    restaurantId: req.user._id,
+    locationId: String(locationId),
+  });
+  if (!order) throw new ApiError(404, "Order not found");
+
+  order.chefViewedAt = new Date();
+  await order.save();
+  const updated = await CustomerOrder.findById(order._id).lean();
+
+  const io = getIO();
+  if (io) {
+    io.to(`location:${locationId}`).emit("order:updated", { order: updated });
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, { order: updated }, "Order marked as seen")
+  );
+});
+
 export {
   restaurantLogin,
   restaurantLogout,
@@ -731,5 +763,6 @@ export {
   getMyInvoices,
   getLocationOrders,
   updateOrderStatus,
+  markOrderAsSeenByChef,
 }
 

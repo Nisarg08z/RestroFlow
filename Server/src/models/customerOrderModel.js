@@ -59,6 +59,10 @@ const customerOrderSchema = new Schema(
       enum: ["PENDING", "SUBMITTED", "PREPARING", "SERVED", "CANCELLED"],
       default: "PENDING",
     },
+    chefViewedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

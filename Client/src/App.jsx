@@ -20,6 +20,9 @@ import { AuthContext } from './context/AuthContext';
 import { AdminDataProvider } from './context/AdminDataContext';
 import NotFound from './pages/NotFound';
 import ManagerWelcome from './pages/ManagerPage/ManagerWelcome';
+import ChefWelcomePage from './pages/ChefPage/ChefWelcomePage';
+import ChefDashboardPage from './pages/ChefPage/ChefDashboardPage';
+import ChefPageLayout from './Layouts/ChefPageLayout';
 import ProfilePage from './pages/ManagerPage/ProfilePage';
 import SupportPage from './pages/ManagerPage/SupportPage';
 import LocationDashboard from './pages/ManagerPage/LocationDashboard';
@@ -106,7 +109,7 @@ const App = () => {
           </Route>
 
           <Route
-            path="restaurant/welcome"
+            path="/restaurant/welcome"
             element={
               <ProtectedRoute requiredRole="RESTAURANT">
                 <ManagerWelcome />
@@ -114,7 +117,7 @@ const App = () => {
             }
           />
           <Route
-            path="restaurant/profile"
+            path="/restaurant/profile"
             element={
               <ProtectedRoute requiredRole="RESTAURANT">
                 <ProfilePage />
@@ -122,7 +125,7 @@ const App = () => {
             }
           />
           <Route
-            path="restaurant/support"
+            path="/restaurant/support"
             element={
               <ProtectedRoute requiredRole="RESTAURANT">
                 <SupportPage />
@@ -130,7 +133,7 @@ const App = () => {
             }
           />
           <Route
-            path="restaurant/menu"
+            path="/restaurant/menu"
             element={
               <ProtectedRoute requiredRole="RESTAURANT">
                 <MenuManagement />
@@ -138,7 +141,7 @@ const App = () => {
             }
           />
           <Route
-            path="restaurant/location/:locationId"
+            path="/restaurant/location/:locationId"
             element={
               <ProtectedRoute requiredRole="RESTAURANT">
                 <LocationDashboard />
@@ -146,13 +149,26 @@ const App = () => {
             }
           />
           <Route
-            path="restaurant/location/:locationId/qr-codes"
+            path="/restaurant/location/:locationId/qr-codes"
             element={
               <ProtectedRoute requiredRole="RESTAURANT">
                 <AllQRCodesPage />
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/chef"
+            element={
+              <ProtectedRoute requiredRole="RESTAURANT">
+                <ChefPageLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ChefWelcomePage />} />
+            <Route path="welcome" element={<ChefWelcomePage />} />
+            <Route path="kitchen/:locationId" element={<ChefDashboardPage />} />
+          </Route>
 
           <Route path="menu/:restaurantId/:locationId/:tableNumber" element={<TableMenu />} />
 

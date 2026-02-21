@@ -40,9 +40,12 @@ const LocationDashboard = () => {
     const fetchData = async () => {
         try {
             const res = await getCurrentRestaurant();
-            if (res.data?.success) {
-                setRestaurant(res.data.data);
-                const loc = res.data.data.locations.find(l => (l._id || l.id) === locationId);
+            const data = res.data?.success !== false ? (res.data?.data || res.data) : null;
+            if (data && Array.isArray(data.locations)) {
+                setRestaurant(data);
+                const loc = data.locations.find(
+                    (l) => String(l._id ?? l.id ?? "") === String(locationId ?? "")
+                );
                 if (loc) {
                     setLocation(loc);
                     setIsOpen(loc?.isActive === true);
@@ -50,10 +53,14 @@ const LocationDashboard = () => {
                     toast.error("Location not found");
                     navigate("/restaurant/welcome");
                 }
+            } else {
+                toast.error("Could not load locations");
+                navigate("/restaurant/welcome");
             }
         } catch (error) {
             console.error("Failed to fetch data", error);
             toast.error("Failed to load location data");
+            navigate("/restaurant/welcome");
         } finally {
             setLoading(false);
         }

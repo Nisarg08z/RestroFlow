@@ -20,12 +20,13 @@ import { AuthContext } from './context/AuthContext';
 import { AdminDataProvider } from './context/AdminDataContext';
 import NotFound from './pages/NotFound';
 import ManagerWelcome from './pages/ManagerPage/ManagerWelcome';
-import ChefWelcomePage from './pages/ChefPage/ChefWelcomePage';
 import ChefDashboardPage from './pages/ChefPage/ChefDashboardPage';
 import ChefPageLayout from './Layouts/ChefPageLayout';
+import ManagerPageLayout from './Layouts/ManagerPageLayout';
 import ProfilePage from './pages/ManagerPage/ProfilePage';
 import SupportPage from './pages/ManagerPage/SupportPage';
 import LocationDashboard from './pages/ManagerPage/LocationDashboard';
+import ManagerDashboardPage from './pages/ManagerPage/ManagerDashboardPage';
 import AllQRCodesPage from './pages/ManagerPage/AllQRCodesPage';
 import MenuManagement from './pages/ManagerPage/MenuManagement';
 import TableMenu from './pages/TableMenu/TableMenu';
@@ -109,37 +110,17 @@ const App = () => {
           </Route>
 
           <Route
-            path="/restaurant/welcome"
             element={
               <ProtectedRoute requiredRole="RESTAURANT">
-                <ManagerWelcome />
+                <ManagerPageLayout />
               </ProtectedRoute>
             }
-          />
-          <Route
-            path="/restaurant/profile"
-            element={
-              <ProtectedRoute requiredRole="RESTAURANT">
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/restaurant/support"
-            element={
-              <ProtectedRoute requiredRole="RESTAURANT">
-                <SupportPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/restaurant/menu"
-            element={
-              <ProtectedRoute requiredRole="RESTAURANT">
-                <MenuManagement />
-              </ProtectedRoute>
-            }
-          />
+          >
+            <Route path="/restaurant/welcome" element={<ManagerWelcome />} />
+            <Route path="/restaurant/profile" element={<ProfilePage />} />
+            <Route path="/restaurant/support" element={<SupportPage />} />
+            <Route path="/restaurant/menu" element={<MenuManagement />} />
+          </Route>
           <Route
             path="/restaurant/location/:locationId"
             element={
@@ -156,6 +137,14 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/manager/:locationId"
+            element={
+              <ProtectedRoute requiredRole="RESTAURANT">
+                <ManagerDashboardPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/chef"
@@ -165,8 +154,8 @@ const App = () => {
               </ProtectedRoute>
             }
           >
-            <Route index element={<ChefWelcomePage />} />
-            <Route path="welcome" element={<ChefWelcomePage />} />
+            <Route index element={<Navigate to="/restaurant/welcome" replace />} />
+            <Route path="welcome" element={<Navigate to="/restaurant/welcome" replace />} />
             <Route path="kitchen/:locationId" element={<ChefDashboardPage />} />
           </Route>
 

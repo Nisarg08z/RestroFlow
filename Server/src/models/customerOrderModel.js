@@ -56,7 +56,7 @@ const customerOrderSchema = new Schema(
     items: [orderItemSchema],
     status: {
       type: String,
-      enum: ["PENDING", "SUBMITTED", "PREPARING", "SERVED", "CANCELLED"],
+      enum: ["PENDING", "SUBMITTED", "PREPARING", "SERVED", "PAID", "CANCELLED"],
       default: "PENDING",
     },
     chefViewedAt: {

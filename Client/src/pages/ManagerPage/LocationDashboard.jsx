@@ -2,21 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCurrentRestaurant, updateLocation } from "../../utils/api";
 import { LoadingScreen } from "../../components/ManagerPageComponents";
-import {
-    BarChart3, Package, Users, Loader2
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { isSubscriptionExpired } from "../../utils/subscriptionUtils";
 
 import {
     LocationHeader,
     RestaurantOpener,
-    BillingPOS,
-    OrdersView,
-    ChefView,
     SectionCards,
-    PlaceholderView,
-    LocationSettings
 } from "../../components/ManagerPageComponents/LocationDashboard";
 
 const LocationDashboard = () => {
@@ -28,8 +21,6 @@ const LocationDashboard = () => {
 
     const [isOpen, setIsOpen] = useState(false);
     const [isOpening, setIsOpening] = useState(false);
-    const [currentView, setCurrentView] = useState('cards');
-    const [activeTab, setActiveTab] = useState('billing');
     const [isClosing, setIsClosing] = useState(false);
     const [showBackConfirm, setShowBackConfirm] = useState(false);
 
@@ -118,21 +109,20 @@ const LocationDashboard = () => {
 
     return (
         <div className="min-h-screen bg-background pb-8 flex flex-col">
-            <LocationHeader
-                locationName={location.locationName}
-                locationAddress={`${location.address}, ${location.city}`}
-                isOpen={isOpen}
-                currentView={currentView}
-                onBackToCards={currentView !== 'cards' ? () => setCurrentView('cards') : undefined}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                onBack={handleRequestBack}
-            />
+            {isOpen && (
+                <LocationHeader
+                    locationName={location.locationName}
+                    locationAddress={`${location.address}, ${location.city}`}
+                    isOpen={isOpen}
+                    currentView="cards"
+                    onBack={handleRequestBack}
+                />
+            )}
 
-            <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-6">
+            <main className={`flex-1 w-full ${isOpen ? 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6' : ''} flex flex-col`}>
                 {!isOpen ? (
                     isOpening ? (
-                        <div className="flex flex-col items-center justify-center h-[60vh] animate-in fade-in duration-500">
+                        <div className="flex flex-col items-center justify-center flex-1 animate-in fade-in duration-500">
                             <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
                             <h2 className="text-xl font-semibold text-foreground animate-pulse">
                                 Opening {location.locationName}...
@@ -140,39 +130,17 @@ const LocationDashboard = () => {
                             <p className="text-muted-foreground">Synchronizing daily menu and inventory</p>
                         </div>
                     ) : (
-                        <RestaurantOpener
-                            onOpen={handleOpenRestaurant}
-                            locationName={location.locationName}
-                            isSubscriptionExpired={restaurant ? isSubscriptionExpired(restaurant.subscription) : false}
-                        />
+                        <div className="flex-1 flex flex-col">
+                            <RestaurantOpener
+                                onOpen={handleOpenRestaurant}
+                                locationName={location.locationName}
+                                isSubscriptionExpired={restaurant ? isSubscriptionExpired(restaurant.subscription) : false}
+                                onBack={handleRequestBack}
+                            />
+                        </div>
                     )
                 ) : (
-                    <>
-                        {currentView === 'cards' && (
-                            <SectionCards onSelect={setCurrentView} />
-                        )}
-                        {currentView === 'chef' && (
-                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <ChefView locationId={locationId} />
-                            </div>
-                        )}
-                        {currentView === 'manager' && (
-                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                {activeTab === 'billing' && <BillingPOS locationId={locationId} />}
-                                {activeTab === 'orders' && <OrdersView locationId={locationId} />}
-                                {activeTab === 'reports' && <PlaceholderView title="Analytics & Reports" icon={BarChart3} />}
-                                {activeTab === 'staff' && <PlaceholderView title="Staff Management" icon={Users} />}
-                                {activeTab === 'inventory' && <PlaceholderView title="Inventory Management" icon={Package} />}
-                                {activeTab === 'settings' && (
-                                    <LocationSettings
-                                        location={location}
-                                        restaurantId={restaurant?._id || restaurant?.id}
-                                        locationId={locationId}
-                                    />
-                                )}
-                            </div>
-                        )}
-                    </>
+                    <SectionCards locationId={locationId} />
                 )}
             </main>
 

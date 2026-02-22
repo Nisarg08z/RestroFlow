@@ -5,6 +5,7 @@ import ManagerHeader from "./ManagerHeader.jsx"
 import CreateTicket from "./CreateTicket.jsx"
 import TicketList from "./TicketList.jsx"
 import RestaurantSubscription from "./RestaurantSubscription.jsx"
+import TypewriterText from "./TypewriterText.jsx"
 
 export {
     LocationCard,
@@ -13,5 +14,6 @@ export {
     ManagerHeader,
     CreateTicket,
     TicketList,
-    RestaurantSubscription
+    RestaurantSubscription,
+    TypewriterText
 }

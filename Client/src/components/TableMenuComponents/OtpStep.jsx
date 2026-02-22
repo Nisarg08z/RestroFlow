@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Phone, ArrowRight } from 'lucide-react';
 
-const OtpStep = ({ otp, setOtp, onSubmit, onResend, phone, loading, resendLoading }) => {
+const OtpStep = ({ otp, setOtp, onSubmit, onResend, onChangeNumber, phone, loading, resendLoading }) => {
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-6">
             <motion.div
@@ -49,14 +49,29 @@ const OtpStep = ({ otp, setOtp, onSubmit, onResend, phone, loading, resendLoadin
                             </>
                         )}
                     </button>
-                    <button
-                        type="button"
-                        onClick={onResend}
-                        disabled={resendLoading}
-                        className="w-full text-primary font-semibold text-sm hover:underline"
-                    >
-                        Resend OTP
-                    </button>
+                    <div className="flex items-center justify-center gap-4">
+                        <button
+                            type="button"
+                            onClick={onResend}
+                            disabled={resendLoading}
+                            className="text-primary font-semibold text-sm hover:underline"
+                        >
+                            Resend OTP
+                        </button>
+                        {onChangeNumber && (
+                            <>
+                                <span className="text-muted-foreground">•</span>
+                                <button
+                                    type="button"
+                                    onClick={onChangeNumber}
+                                    disabled={loading}
+                                    className="text-primary font-semibold text-sm hover:underline"
+                                >
+                                    Change number
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </form>
             </motion.div>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   CreditCard,
   Loader2,
@@ -11,6 +12,23 @@ import {
 import { jsPDF } from "jspdf";
 import { getMySubscription, renewMySubscription, getMyInvoices } from "../../utils/api";
 import { toast } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
+
+const backdropVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.3 } },
+};
+
+const modalVariants = {
+  hidden: { opacity: 0, scale: 0.95, y: 30 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 300, damping: 25 }
+  },
+  exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.2 } }
+};
 
 const PRICE_PER_TABLE = 50;
 
@@ -59,14 +77,14 @@ const RestaurantSubscription = ({ restaurant, onUpdate }) => {
 
       if (response.data?.success && response.data.data.invoice) {
         const invoice = response.data.data.invoice;
-        
+
         if (invoice.paymentLink) {
           window.open(invoice.paymentLink, "_blank");
           toast.success("Payment link opened in new tab");
         } else {
           toast.success("Renewal invoice created successfully");
         }
-        
+
         setShowMonthsModal(false);
         await fetchSubscription();
         if (onUpdate) onUpdate();
@@ -240,8 +258,8 @@ const RestaurantSubscription = ({ restaurant, onUpdate }) => {
           className="w-full mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RefreshCw className="w-4 h-4" />
-          {subscription.status === "expiring" || subscription.status === "expired" 
-            ? "Renew Subscription" 
+          {subscription.status === "expiring" || subscription.status === "expired"
+            ? "Renew Subscription"
             : "Extend Subscription"}
         </button>
       </div>
@@ -305,73 +323,117 @@ const RestaurantSubscription = ({ restaurant, onUpdate }) => {
       </div>
 
       {/* Months Selection Modal */}
-      {showMonthsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card border border-border rounded-xl p-6 max-w-md w-full space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-foreground">Extend Subscription</h3>
-              <button
+      {createPortal(
+        <AnimatePresence>
+          {showMonthsModal && (
+            <div className="fixed inset-0 z-[120] grid place-items-center p-4" role="dialog" aria-modal="true">
+              <motion.div
+                variants={backdropVariants}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
                 onClick={() => setShowMonthsModal(false)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              />
+              <motion.div
+                variants={modalVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                onClick={(e) => e.stopPropagation()}
+                className="relative bg-card w-full max-w-md rounded-3xl shadow-2xl border border-border overflow-hidden"
               >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-sm text-muted-foreground">
-              Select the number of months to extend your subscription:
-            </p>
-
-            <div className="grid grid-cols-3 gap-3">
-              {[1, 2, 3, 6, 12].map((months) => {
-                const price = totalPrice * months;
-                return (
+                <div className="p-5 border-b border-border flex justify-between items-center bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 sm:p-2.5 bg-primary/10 rounded-xl">
+                      <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+                      Extend Subscription
+                    </h3>
+                  </div>
                   <button
-                    key={months}
-                    onClick={() => setSelectedMonths(months)}
-                    className={`p-4 border-2 rounded-xl transition-all ${
-                      selectedMonths === months
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    onClick={() => setShowMonthsModal(false)}
+                    className="p-2 text-muted-foreground hover:bg-muted hover:text-foreground rounded-full transition-colors group"
                   >
-                    <p className="font-semibold text-foreground">{months} Month{months !== 1 ? "s" : ""}</p>
-                    <p className="text-sm text-muted-foreground mt-1">₹{price}</p>
+                    <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
                   </button>
-                );
-              })}
-            </div>
+                </div>
 
-            <div className="pt-4 border-t border-border flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="text-2xl font-bold text-foreground">₹{totalPrice * selectedMonths}</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowMonthsModal(false)}
-                  className="px-4 py-2 border border-border rounded-lg text-foreground hover:bg-muted font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleRenew(selectedMonths)}
-                  disabled={renewing}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {renewing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Continue"
-                  )}
-                </button>
-              </div>
+                <div className="p-6 space-y-5">
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium">
+                    Select the number of months to extend your service:
+                  </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                    {[1, 2, 3, 6, 12].map((months) => {
+                      const price = totalPrice * months;
+                      const isSelected = selectedMonths === months;
+                      return (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.95 }}
+                          key={months}
+                          onClick={() => setSelectedMonths(months)}
+                          className={`relative overflow-hidden p-4 rounded-2xl border-2 transition-all duration-300 ${isSelected
+                            ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
+                            : "border-border/50 bg-card hover:border-primary/40 hover:bg-muted/30"
+                            }`}
+                        >
+                          {isSelected && (
+                            <motion.div
+                              layoutId="activeMonth"
+                              className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none"
+                            />
+                          )}
+                          <div className="relative z-10 flex flex-col items-center justify-center gap-1 text-center">
+                            <span className={`text-xl sm:text-2xl font-bold font-mono tracking-tight ${isSelected ? "text-primary" : "text-foreground"}`}>
+                              {months}
+                            </span>
+                            <span className={`text-xs font-semibold uppercase tracking-wider ${isSelected ? "text-primary/80" : "text-muted-foreground"}`}>
+                              Month{months !== 1 ? "s" : ""}
+                            </span>
+                            <div className={`mt-2 px-2 py-0.5 rounded-full text-xs font-bold ${isSelected ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted text-muted-foreground"}`}>
+                              ₹{price.toLocaleString()}
+                            </div>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-6 border-t border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Total Amount</p>
+                      <p className="text-3xl font-extrabold text-foreground tracking-tight">
+                        ₹{(totalPrice * selectedMonths).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex w-full sm:w-auto gap-3">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleRenew(selectedMonths)}
+                        disabled={renewing}
+                        className="flex-1 sm:flex-none px-6 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {renewing ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          "Confirm & Pay"
+                        )}
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-          </div>
-        </div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );

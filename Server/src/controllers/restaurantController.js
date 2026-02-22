@@ -13,6 +13,7 @@ import { isSubscriptionExpired, getSubscriptionStatus } from "../utils/subscript
 import { createRenewalInvoice } from "../utils/invoiceUtils.js"
 import { Invoice } from "../models/invoiceModel.js"
 import { CustomerOrder } from "../models/customerOrderModel.js"
+import { CustomerSession } from "../models/customerSessionModel.js"
 import { getIO } from "../utils/socket.js"
 
 const restaurantLogin = asyncHandler(async (req, res) => {
@@ -659,6 +660,7 @@ const getLocationOrders = asyncHandler(async (req, res) => {
       items: order.items || [],
       total: orderTotal,
       createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
       chefViewedAt: order.chefViewedAt || null,
     });
   }
@@ -674,6 +676,65 @@ const getLocationOrders = asyncHandler(async (req, res) => {
 
   return res.status(200).json(
     new ApiResponse(200, { totalTables, tables: tableSummaries }, "Location orders fetched")
+  );
+});
+
+const getLocationPaidOrders = asyncHandler(async (req, res) => {
+  const { locationId } = req.params;
+  const restaurant = await Restaurant.findById(req.user._id);
+  if (!restaurant) throw new ApiError(404, "Restaurant not found");
+  const location = restaurant.locations.id(locationId);
+  if (!location) throw new ApiError(404, "Location not found");
+
+  const orders = await CustomerOrder.find({
+    restaurantId: req.user._id,
+    locationId: String(locationId),
+    status: "PAID",
+  })
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  const byTableAndCustomer = new Map();
+  for (const order of orders) {
+    const tableNum = Number(order.tableNumber);
+    const phone = String(order.customerPhone || "").trim();
+    const key = `${tableNum}|${phone}`;
+    if (!byTableAndCustomer.has(key)) {
+      byTableAndCustomer.set(key, {
+        tableNumber: tableNum,
+        customerName: order.customerName || "",
+        customerPhone: phone,
+        amount: 0,
+        orders: [],
+        paidAt: order.updatedAt,
+      });
+    }
+    const row = byTableAndCustomer.get(key);
+    const orderTotal = (order.items || []).reduce(
+      (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+      0
+    );
+    row.amount += orderTotal;
+    row.orders.push({
+      _id: order._id,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      status: order.status,
+      items: order.items || [],
+      total: orderTotal,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+    });
+    if (!row.paidAt || (order.updatedAt && new Date(order.updatedAt) > new Date(row.paidAt))) {
+      row.paidAt = order.updatedAt;
+    }
+  }
+
+  const paidEntries = Array.from(byTableAndCustomer.values())
+    .sort((a, b) => new Date(b.paidAt || 0) - new Date(a.paidAt || 0));
+
+  return res.status(200).json(
+    new ApiResponse(200, { tables: paidEntries }, "Paid orders fetched")
   );
 });
 
@@ -744,6 +805,60 @@ const markOrderAsSeenByChef = asyncHandler(async (req, res) => {
   );
 });
 
+const normalizePhone = (phone) => {
+  if (!phone) return "";
+  const digits = String(phone).replace(/\D/g, "");
+  return digits.startsWith("91") ? digits : `91${digits}`;
+};
+
+const markTablePaid = asyncHandler(async (req, res) => {
+  const { locationId, tableNumber } = req.params;
+  const { customerPhones } = req.body || {};
+  const restaurant = await Restaurant.findById(req.user._id);
+  if (!restaurant) throw new ApiError(404, "Restaurant not found");
+  const location = restaurant.locations.id(locationId);
+  if (!location) throw new ApiError(404, "Location not found");
+
+  const tableStr = String(tableNumber);
+  const query = {
+    restaurantId: req.user._id,
+    locationId: String(locationId),
+    tableNumber: tableStr,
+    status: { $in: ["PENDING", "SUBMITTED", "PREPARING", "SERVED"] },
+  };
+
+  if (Array.isArray(customerPhones) && customerPhones.length > 0) {
+    const normalizedPhones = customerPhones.map((p) => normalizePhone(p)).filter(Boolean);
+    if (normalizedPhones.length > 0) {
+      query.customerPhone = { $in: normalizedPhones };
+    }
+  }
+
+  const result = await CustomerOrder.updateMany(query, { $set: { status: "PAID" } });
+
+  const sessionQuery = {
+    restaurantId: req.user._id,
+    locationId: String(locationId),
+    tableNumber: tableStr,
+  };
+  if (Array.isArray(customerPhones) && customerPhones.length > 0) {
+    const normalizedPhones = customerPhones.map((p) => normalizePhone(p)).filter(Boolean);
+    if (normalizedPhones.length > 0) {
+      sessionQuery.phone = { $in: normalizedPhones };
+    }
+  }
+  await CustomerSession.deleteMany(sessionQuery);
+
+  const io = getIO();
+  if (io) {
+    io.to(`location:${locationId}`).emit("table:paid", { tableNumber });
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, { modifiedCount: result.modifiedCount }, "Orders marked as paid")
+  );
+});
+
 export {
   restaurantLogin,
   restaurantLogout,
@@ -762,7 +877,9 @@ export {
   renewMySubscription,
   getMyInvoices,
   getLocationOrders,
+  getLocationPaidOrders,
   updateOrderStatus,
   markOrderAsSeenByChef,
+  markTablePaid,
 }
 

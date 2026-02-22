@@ -56,11 +56,17 @@ export const updateLocation = (locationId, data) =>
 export const getLocationOrders = (locationId) =>
   api.get(`/restaurant/locations/${locationId}/orders`)
 
+export const getLocationPaidOrders = (locationId) =>
+  api.get(`/restaurant/locations/${locationId}/orders/paid`)
+
 export const updateLocationOrderStatus = (locationId, orderId, status) =>
   api.patch(`/restaurant/locations/${locationId}/orders/${orderId}/status`, { status })
 
 export const markOrderAsSeenByChef = (locationId, orderId) =>
   api.patch(`/restaurant/locations/${locationId}/orders/${orderId}/seen`)
+
+export const markTablePaid = (locationId, tableNumber, data = {}) =>
+  api.post(`/restaurant/locations/${locationId}/tables/${tableNumber}/paid`, data)
 
 export const generateLocationQRCodes = (locationId) =>
   api.post(`/restaurant/locations/${locationId}/generate-qr`)

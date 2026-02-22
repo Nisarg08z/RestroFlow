@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Receipt, X, Loader2, Banknote, Smartphone, ChevronRight, Printer } from "lucide-react";
-import { getLocationOrders } from "../../../utils/api";
+import { Receipt, X, Loader2, Banknote, Smartphone, ChevronRight, Printer, User, Phone, Check, Percent } from "lucide-react";
+import { getLocationOrders, markTablePaid } from "../../../utils/api";
 import { toast } from "react-hot-toast";
 
 const POLL_INTERVAL_MS = 5000;
@@ -12,6 +12,27 @@ const inrFormatter = new Intl.NumberFormat("en-IN", {
 
 const RESTRO_NAME = "RestroFlow";
 
+/** Merge duplicate items (same name, price, instructions) and sum quantities */
+function mergeDuplicateItems(items) {
+    const map = new Map();
+    for (const it of items) {
+        const key = `${it.name}|${Number(it.price) || 0}|${(it.specialInstructions || "").trim()}`;
+        const qty = Number(it.quantity) || 1;
+        const price = Number(it.price) || 0;
+        const existing = map.get(key);
+        if (existing) {
+            existing.quantity += qty;
+        } else {
+            map.set(key, {
+                name: it.name,
+                price,
+                quantity: qty,
+                specialInstructions: it.specialInstructions || "",
+            });
+        }
+    }
+    return Array.from(map.values());
+}
 
 function escapeHtml(s) {
     if (!s) return "";
@@ -22,19 +43,55 @@ function escapeHtml(s) {
         .replace(/"/g, "&quot;");
 }
 
-function buildBillPrintHtml(table, paymentMethod) {
-    const rows = (table.orders || []).flatMap((order) =>
-        (order.items || []).map((it) => {
-            const qty = Number(it.quantity) || 1;
-            const price = (Number(it.price) || 0) * qty;
-            return {
-                name: escapeHtml(it.name),
-                qty,
-                price,
-                note: it.specialInstructions ? escapeHtml(it.specialInstructions) : "",
-            };
-        })
-    );
+const STATUS_LABELS = {
+    PENDING: { label: "In cart", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
+    SUBMITTED: { label: "Submitted", color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+    PREPARING: { label: "Preparing", color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+    SERVED: { label: "Served", color: "bg-green-500/10 text-green-600 border-green-500/20" },
+};
+
+/** Group orders by customer (phone + name) */
+function getCustomersFromTable(table) {
+    const byPhone = new Map();
+    for (const order of table.orders || []) {
+        const phone = String(order.customerPhone || "").trim();
+        const key = phone || `_${order._id}`;
+        if (!byPhone.has(key)) {
+            byPhone.set(key, {
+                phone,
+                name: order.customerName || "—",
+                orders: [],
+                amount: 0,
+            });
+        }
+        const row = byPhone.get(key);
+        const orderTotal = (order.items || []).reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.quantity) || 1), 0);
+        row.amount += orderTotal;
+        row.orders.push(order);
+    }
+    return Array.from(byPhone.values());
+}
+
+function buildBillPrintHtml(table, paymentMethod, selectedPhones = null, discountPercent = 0) {
+    const orders = table.orders || [];
+    const filteredOrders = selectedPhones && selectedPhones.length > 0
+        ? orders.filter((o) => selectedPhones.includes(String(o.customerPhone || "").trim()))
+        : orders;
+    const allItems = filteredOrders.flatMap((order) => order.items || []);
+    const merged = mergeDuplicateItems(allItems);
+    const rows = merged.map((it) => {
+        const qty = it.quantity;
+        const price = it.price * qty;
+        return {
+            name: escapeHtml(it.name),
+            qty,
+            price,
+            note: it.specialInstructions ? escapeHtml(it.specialInstructions) : "",
+        };
+    });
+    const subtotal = rows.reduce((s, r) => s + r.price, 0);
+    const discountAmount = discountPercent > 0 ? Math.round(subtotal * (discountPercent / 100)) : 0;
+    const total = subtotal - discountAmount;
     const paymentLabel = paymentMethod === "cash" ? "Cash" : "Online (Card/UPI)";
     const html = `
 <!DOCTYPE html>
@@ -67,7 +124,8 @@ function buildBillPrintHtml(table, paymentMethod) {
     <thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead>
     <tbody>
       ${rows.map((r) => `<tr><td>${r.name}${r.note ? `<br><span class="note">${r.note}</span>` : ""}</td><td>${r.qty}</td><td>${escapeHtml(inrFormatter.format(r.price))}</td></tr>`).join("")}
-      <tr><td colspan="2" class="total-row">TOTAL</td><td class="total-row">${escapeHtml(inrFormatter.format(table.amount))}</td></tr>
+      ${discountAmount > 0 ? `<tr><td colspan="2">Discount (${discountPercent}%)</td><td>-${escapeHtml(inrFormatter.format(discountAmount))}</td></tr>` : ""}
+      <tr><td colspan="2" class="total-row">TOTAL</td><td class="total-row">${escapeHtml(inrFormatter.format(total))}</td></tr>
     </tbody>
   </table>
   <div class="payment"><strong>Payment:</strong> ${paymentLabel}</div>
@@ -82,8 +140,11 @@ const BillingPOS = ({ locationId }) => {
     const [loading, setLoading] = useState(true);
     const [tables, setTables] = useState([]);
     const [selectedTable, setSelectedTable] = useState(null);
+    const [selectedCustomers, setSelectedCustomers] = useState(new Set());
+    const [discountPercent, setDiscountPercent] = useState(0);
     const [billStep, setBillStep] = useState("items"); // "items" | "payment" | "billReady"
     const [selectedPayment, setSelectedPayment] = useState(null);
+    const [completingPayment, setCompletingPayment] = useState(false);
 
     const fetchOrders = useCallback(async () => {
         if (!locationId) return;
@@ -124,12 +185,53 @@ const BillingPOS = ({ locationId }) => {
         setSelectedTable(table);
         setBillStep("items");
         setSelectedPayment(null);
+        setDiscountPercent(0);
+        const customers = getCustomersFromTable(table);
+        setSelectedCustomers(new Set(customers.map((c) => c.phone).filter(Boolean)));
     };
 
     const closeBill = () => {
         setSelectedTable(null);
+        setSelectedCustomers(new Set());
+        setDiscountPercent(0);
         setBillStep("items");
         setSelectedPayment(null);
+    };
+
+    const toggleCustomer = (phone) => {
+        setSelectedCustomers((prev) => {
+            const next = new Set(prev);
+            if (next.has(phone)) next.delete(phone);
+            else next.add(phone);
+            return next;
+        });
+    };
+
+    const handlePaymentDone = async () => {
+        if (!selectedTable || !locationId) return;
+        const phones = Array.from(selectedCustomers).filter(Boolean);
+        if (phones.length === 0) {
+            toast.error("Select at least one customer to bill");
+            return;
+        }
+        setCompletingPayment(true);
+        try {
+            await markTablePaid(locationId, String(selectedTable.tableNumber), {
+                customerPhones: phones,
+            });
+            const customerCount = getCustomersFromTable(selectedTable).length;
+            const msg = phones.length >= customerCount
+                ? "Payment recorded. Table cleared."
+                : `Payment recorded for ${phones.length} customer(s).`;
+            toast.success(msg);
+            closeBill();
+            await fetchOrders();
+        } catch (err) {
+            console.error("Failed to mark table paid", err);
+            toast.error(err.response?.data?.message || "Failed to complete payment");
+        } finally {
+            setCompletingPayment(false);
+        }
     };
 
     const showPaymentOptions = () => setBillStep("payment");
@@ -141,9 +243,27 @@ const BillingPOS = ({ locationId }) => {
         toast.success(`Payment: ${method === "cash" ? "Cash" : "Online"} selected`);
     };
 
+    const getSelectedSubtotal = () =>
+        getCustomersFromTable(selectedTable || { orders: [] })
+            .filter((c) => selectedCustomers.has(c.phone))
+            .reduce((s, c) => s + c.amount, 0);
+
+    const getDiscountAmount = () => {
+        const sub = getSelectedSubtotal();
+        return discountPercent > 0 ? Math.round(sub * (discountPercent / 100)) : 0;
+    };
+
+    const getFinalTotal = () => getSelectedSubtotal() - getDiscountAmount();
+
     const handlePrintBill = () => {
         if (!selectedTable) return;
-        const html = buildBillPrintHtml(selectedTable, selectedPayment);
+        const phones = Array.from(selectedCustomers).filter(Boolean);
+        const html = buildBillPrintHtml(
+            selectedTable,
+            selectedPayment,
+            phones.length > 0 ? phones : null,
+            discountPercent
+        );
         const w = window.open("", "_blank");
         if (!w) {
             toast.error("Allow popups to print bill");
@@ -202,6 +322,18 @@ const BillingPOS = ({ locationId }) => {
                                         <p className="text-2xl font-bold text-primary mt-0.5">
                                             {inrFormatter.format(table.amount)}
                                         </p>
+                                        {(() => {
+                                            const orders = table.orders || [];
+                                            const served = orders.filter((o) => o.status === "SERVED").length;
+                                            const allServed = orders.length > 0 && served === orders.length;
+                                            return (
+                                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border mt-1 inline-block ${
+                                                    allServed ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                                }`}>
+                                                    {allServed ? "All served" : `${served}/${orders.length} served`}
+                                                </span>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                                 <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary shrink-0 mt-1" />
@@ -264,9 +396,32 @@ const BillingPOS = ({ locationId }) => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <p className="text-sm text-muted-foreground mt-3">
-                                            Total: <span className="font-bold text-foreground">{inrFormatter.format(selectedTable.amount)}</span>
-                                        </p>
+                                        <div className="text-sm text-muted-foreground mt-3 space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Percent className="w-4 h-4" />
+                                                <input
+                                                    type="number"
+                                                    min={0}
+                                                    max={100}
+                                                    value={discountPercent || ""}
+                                                    onChange={(e) => {
+                                                        const v = e.target.value === "" ? 0 : Math.min(100, Math.max(0, Number(e.target.value)));
+                                                        setDiscountPercent(v);
+                                                    }}
+                                                    placeholder="0"
+                                                    className="w-14 px-2 py-1 rounded border border-border bg-background text-foreground text-sm"
+                                                />
+                                                <span className="text-xs">% discount</span>
+                                            </div>
+                                            {discountPercent > 0 && (
+                                                <p>
+                                                    Subtotal: {inrFormatter.format(getSelectedSubtotal())} • Discount: -{inrFormatter.format(getDiscountAmount())}
+                                                </p>
+                                            )}
+                                            <p>
+                                                Total: <span className="font-bold text-foreground">{inrFormatter.format(getFinalTotal())}</span>
+                                            </p>
+                                        </div>
                                     </div>
                                     <div className="p-4 space-y-3">
                                         <p className="text-sm font-medium text-foreground">Bill actions</p>
@@ -289,71 +444,151 @@ const BillingPOS = ({ locationId }) => {
                                         <button
                                             type="button"
                                             onClick={() => setBillStep("payment")}
-                                            className="flex-1 py-2.5 rounded-xl border border-border text-foreground font-medium hover:bg-muted transition-colors"
+                                            disabled={completingPayment}
+                                            className="flex-1 py-2.5 rounded-xl border border-border text-foreground font-medium hover:bg-muted transition-colors disabled:opacity-50"
                                         >
                                             Change payment
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={closeBill}
-                                            className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+                                            onClick={handlePaymentDone}
+                                            disabled={completingPayment}
+                                            className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                         >
-                                            Done
+                                            {completingPayment ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Processing…
+                                                </>
+                                            ) : (
+                                                "Done"
+                                            )}
                                         </button>
                                     </div>
                                 </>
                             ) : billStep === "items" ? (
                                 <>
                                     <div className="p-4 space-y-4">
-                                        {selectedTable.orders.map((order, idx) => (
-                                            <div key={order._id || idx} className="space-y-2">
-                                                {selectedTable.orders.length > 1 && (
-                                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                                        {order.customerName} — {order.status}
-                                                    </p>
-                                                )}
-                                                <ul className="space-y-2">
-                                                    {(order.items || []).map((it, i) => (
-                                                        <li
-                                                            key={i}
-                                                            className="flex justify-between gap-3 text-sm py-1.5 border-b border-border/50 last:border-0"
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                            Select customers to include in bill (merge or bill separately)
+                                        </p>
+                                        {getCustomersFromTable(selectedTable).map((customer) => {
+                                            const isSelected = selectedCustomers.has(customer.phone);
+                                            const items = mergeDuplicateItems(customer.orders.flatMap((o) => o.items || []));
+                                            return (
+                                                <div
+                                                    key={customer.phone || customer.name}
+                                                    className={`rounded-xl border-2 transition-all ${
+                                                        isSelected
+                                                            ? "border-primary bg-primary/5"
+                                                            : "border-border bg-muted/20"
+                                                    }`}
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleCustomer(customer.phone)}
+                                                        className="w-full p-4 text-left flex items-start gap-3"
+                                                    >
+                                                        <div
+                                                            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                                                                isSelected
+                                                                    ? "bg-primary border-primary text-primary-foreground"
+                                                                    : "border-muted-foreground"
+                                                            }`}
                                                         >
-                                                            <span className="text-foreground flex-1 min-w-0">
-                                                                <span className="font-medium">{it.name}</span>
-                                                                <span className="text-muted-foreground"> × {it.quantity || 1}</span>
-                                                                {it.specialInstructions && (
-                                                                    <span className="block text-xs text-muted-foreground italic mt-0.5">
-                                                                        {it.specialInstructions}
-                                                                    </span>
-                                                                )}
-                                                            </span>
-                                                            <span className="font-semibold text-foreground whitespace-nowrap">
-                                                                {inrFormatter.format(
-                                                                    (Number(it.price) || 0) * (Number(it.quantity) || 1)
-                                                                )}
-                                                            </span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                                {selectedTable.orders.length > 1 && (
-                                                    <p className="text-xs font-semibold text-foreground text-right pt-1">
-                                                        Subtotal: {inrFormatter.format(order.total || 0)}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ))}
+                                                            {isSelected && <Check className="w-3.5 h-3.5" />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-semibold text-foreground flex items-center gap-1">
+                                                                    <User className="w-3.5 h-3.5" />
+                                                                    {customer.name}
+                                                                </span>
+                                                                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                                                    <Phone className="w-3 h-3" />
+                                                                    {customer.phone || "—"}
+                                                                </span>
+                                                                {customer.orders.map((ord) => {
+                                                                    const cfg = STATUS_LABELS[ord.status] || STATUS_LABELS.PENDING;
+                                                                    return (
+                                                                        <span
+                                                                            key={ord._id}
+                                                                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${cfg.color}`}
+                                                                        >
+                                                                            {cfg.label}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                            <ul className="mt-2 space-y-1">
+                                                                {items.map((it, i) => (
+                                                                    <li key={i} className="flex justify-between text-sm">
+                                                                        <span className="text-foreground">
+                                                                            {it.name} × {it.quantity}
+                                                                            {it.specialInstructions && (
+                                                                                <span className="text-muted-foreground italic ml-1">
+                                                                                    ({it.specialInstructions})
+                                                                                </span>
+                                                                            )}
+                                                                        </span>
+                                                                        <span className="font-medium text-foreground">
+                                                                            {inrFormatter.format(it.price * it.quantity)}
+                                                                        </span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                            <p className="text-sm font-bold text-primary mt-2">
+                                                                Subtotal: {inrFormatter.format(customer.amount)}
+                                                            </p>
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                    <div className="p-4 border-t border-border bg-muted/20">
-                                        <div className="flex justify-between items-center text-lg font-bold mb-4">
-                                            <span className="text-foreground">Total</span>
-                                            <span className="text-primary text-xl">
-                                                {inrFormatter.format(selectedTable.amount)}
-                                            </span>
+                                    <div className="p-4 border-t border-border bg-muted/20 space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Percent className="w-4 h-4 text-muted-foreground" />
+                                            <label className="text-sm font-medium text-foreground">Discount %</label>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                value={discountPercent || ""}
+                                                onChange={(e) => {
+                                                    const v = e.target.value === "" ? 0 : Math.min(100, Math.max(0, Number(e.target.value)));
+                                                    setDiscountPercent(v);
+                                                }}
+                                                placeholder="0"
+                                                className="w-20 px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                                            />
+                                            <span className="text-sm text-muted-foreground">%</span>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Subtotal</span>
+                                                <span className="font-medium">{inrFormatter.format(getSelectedSubtotal())}</span>
+                                            </div>
+                                            {discountPercent > 0 && (
+                                                <div className="flex justify-between text-sm text-green-600">
+                                                    <span>Discount ({discountPercent}%)</span>
+                                                    <span>-{inrFormatter.format(getDiscountAmount())}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between items-center text-lg font-bold pt-2">
+                                                <span className="text-foreground">
+                                                    Total ({selectedCustomers.size} selected)
+                                                </span>
+                                                <span className="text-primary text-xl">
+                                                    {inrFormatter.format(getFinalTotal())}
+                                                </span>
+                                            </div>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={showPaymentOptions}
-                                            className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold shadow-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                                            disabled={selectedCustomers.size === 0}
+                                            className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold shadow-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Proceed to pay
                                             <ChevronRight className="w-5 h-5" />
@@ -362,11 +597,34 @@ const BillingPOS = ({ locationId }) => {
                                 </>
                             ) : (
                                 <>
-                                    <div className="p-4 border-b border-border">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-muted-foreground">Bill total</span>
+                                    <div className="p-4 border-b border-border space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <Percent className="w-4 h-4 text-muted-foreground" />
+                                            <span className="text-sm text-muted-foreground">Discount</span>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                value={discountPercent || ""}
+                                                onChange={(e) => {
+                                                    const v = e.target.value === "" ? 0 : Math.min(100, Math.max(0, Number(e.target.value)));
+                                                    setDiscountPercent(v);
+                                                }}
+                                                placeholder="0"
+                                                className="w-16 px-2 py-1.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                            />
+                                            <span className="text-sm text-muted-foreground">%</span>
+                                        </div>
+                                        {discountPercent > 0 && (
+                                            <div className="flex justify-between text-sm text-green-600">
+                                                <span>Discount ({discountPercent}%)</span>
+                                                <span>-{inrFormatter.format(getDiscountAmount())}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between items-center pt-1">
+                                            <span className="text-muted-foreground font-medium">Bill total</span>
                                             <span className="text-xl font-bold text-primary">
-                                                {inrFormatter.format(selectedTable.amount)}
+                                                {inrFormatter.format(getFinalTotal())}
                                             </span>
                                         </div>
                                     </div>

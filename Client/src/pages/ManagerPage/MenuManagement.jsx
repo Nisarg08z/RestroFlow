@@ -19,9 +19,13 @@ import {
     Sparkles,
     ChevronDown,
     ChevronUp,
-    RotateCw
+    RotateCw,
+    Utensils,
+    IndianRupee,
+    FileText,
+    Globe
 } from "lucide-react";
-import { ManagerHeader } from "../../components/ManagerPageComponents";
+import { ManagerHeader, TypewriterText } from "../../components/ManagerPageComponents";
 import {
     getCurrentRestaurant,
     getMenu,
@@ -37,6 +41,53 @@ import {
     deleteLocationMenuItem,
 } from "../../utils/api";
 import { toast } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
+
+const backdropVariants = {
+    hidden: { opacity: 0, backdropFilter: "blur(0px)" },
+    visible: { opacity: 1, backdropFilter: "blur(8px)" },
+};
+
+const modalVariants = {
+    hidden: { opacity: 0, scale: 0.95, y: 20 },
+    visible: {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        transition: { type: "spring", stiffness: 300, damping: 25 }
+    },
+    exit: {
+        opacity: 0,
+        scale: 0.95,
+        y: -20,
+        transition: { duration: 0.2 }
+    }
+};
+
+const InputField = ({ icon: Icon, label, name, type = "text", placeholder, colSpan = false, min, step, value, onChange, disabled }) => (
+    <div className={`space-y-1.5 ${colSpan ? 'sm:col-span-2' : ''}`}>
+        <label className="text-sm font-semibold text-foreground/90 ml-1">
+            {label} <span className="text-red-500">*</span>
+        </label>
+        <div className="relative group">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                {Icon && <Icon className="w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />}
+            </div>
+            <input
+                name={name}
+                type={type}
+                min={min}
+                step={step}
+                value={value}
+                onChange={onChange}
+                required
+                placeholder={placeholder}
+                disabled={disabled}
+                className={`w-full ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-2 bg-background border border-border/60 hover:border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground placeholder-muted-foreground transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm`}
+            />
+        </div>
+    </div>
+);
 
 const MenuManagement = () => {
     const [restaurant, setRestaurant] = useState(null);
@@ -370,9 +421,9 @@ const MenuManagement = () => {
                     const itemId = itemObj._id?.toString() || itemObj._id;
                     const isHidden = isItemHidden(itemId);
                     const locationData = restaurant?.locations?.find(loc => loc._id.toString() === selectedLocation);
-                    return { 
-                        ...itemObj, 
-                        isGlobal: false, 
+                    return {
+                        ...itemObj,
+                        isGlobal: false,
                         isHidden,
                         locationId: selectedLocation,
                         locationName: locationData?.locationName || 'Unknown Location'
@@ -386,7 +437,7 @@ const MenuManagement = () => {
                     const locationId = locationMenuObj.locationId;
                     const locationData = restaurant.locations.find(loc => loc._id.toString() === locationId);
                     const customItems = locationMenuObj.customItems || [];
-                    
+
                     if (locationData && customItems.length > 0) {
                         const locationItems = customItems.map(item => {
                             const itemObj = typeof item.toObject === 'function' ? item.toObject() : item;
@@ -503,15 +554,24 @@ const MenuManagement = () => {
 
     return (
         <div className="min-h-screen bg-background pb-20">
-            <ManagerHeader restaurant={restaurant} />
             <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
 
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
-                            Menu Management
-                        </h1>
-                        <p className="text-muted-foreground mt-2 text-base">
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, type: 'spring', stiffness: 300, damping: 30 }}
+                    className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+                >
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 sm:p-3 bg-primary/10 rounded-xl">
+                                <ChefHat className="w-6 h-6 sm:w-8 sm:h-8 text-primary/80" />
+                            </div>
+                            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground flex items-center">
+                                <TypewriterText text="Menu Management" />
+                            </h1>
+                        </div>
+                        <p className="text-muted-foreground mt-1 text-base ml-1">
                             Customize and organize your culinary offerings with ease.
                         </p>
                     </div>
@@ -531,9 +591,14 @@ const MenuManagement = () => {
                             New Item
                         </button>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1, type: 'spring', stiffness: 300, damping: 30 }}
+                    className="grid grid-cols-1 md:grid-cols-4 gap-6"
+                >
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:col-span-3">
                         <div className="relative overflow-hidden bg-card border border-border p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all group">
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -612,9 +677,14 @@ const MenuManagement = () => {
                             </p>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-4">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2, type: 'spring', stiffness: 300, damping: 30 }}
+                    className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-4"
+                >
                     <div className="flex flex-col md:flex-row gap-4 justify-between">
                         <div className="relative flex-1 max-w-lg">
                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -665,10 +735,15 @@ const MenuManagement = () => {
                             </div>
                         </div>
                     )}
-                </div>
+                </motion.div>
 
                 {Object.keys(itemsByCategory).length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-20 bg-card border border-dashed border-border rounded-3xl text-center shadow-sm">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, delay: 0.3, type: 'spring' }}
+                        className="flex flex-col items-center justify-center p-20 bg-card border border-dashed border-border rounded-3xl text-center shadow-sm"
+                    >
                         <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
                             <Sparkles className="w-10 h-10 text-primary" />
                         </div>
@@ -686,16 +761,34 @@ const MenuManagement = () => {
                                 Clear all filters
                             </button>
                         )}
-                    </div>
+                    </motion.div>
                 ) : (
-                    <div className="space-y-4">
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                            hidden: { opacity: 0 },
+                            visible: {
+                                opacity: 1,
+                                transition: { staggerChildren: 0.1, delayChildren: 0.3 }
+                            }
+                        }}
+                        className="space-y-4"
+                    >
                         {Object.keys(itemsByCategory).map((categoryName) => {
                             const items = itemsByCategory[categoryName];
                             const isExpanded = expandedCategories.has(categoryName);
                             const categoryObj = sortedCategories.find((c) => c.name === categoryName);
 
                             return (
-                                <div key={categoryName} className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border">
+                                <motion.div
+                                    variants={{
+                                        hidden: { opacity: 0, y: 20 },
+                                        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+                                    }}
+                                    key={categoryName}
+                                    className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border"
+                                >
                                     <div
                                         role="button"
                                         tabIndex={0}
@@ -745,30 +838,33 @@ const MenuManagement = () => {
                                                     <p className="text-xs mt-1">Add items to this category or delete it if not needed</p>
                                                 </div>
                                             ) : (
-                                                items.map((item) => {
+                                                items.map((item, index) => {
                                                     const hidden = item.isHidden || isItemHidden(item._id);
 
                                                     return (
-                                                        <div
+                                                        <motion.div
+                                                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                            transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
                                                             key={item._id}
-                                                        className={`group relative border-b border-border last:border-b-0 transition-all duration-300 hover:bg-muted ${hidden && selectedLocation
-                                                            ? "opacity-80"
-                                                            : ""
-                                                            }`}
+                                                            className={`group relative border-b border-border last:border-b-0 transition-all duration-300 hover:bg-muted ${hidden && selectedLocation
+                                                                ? "opacity-80"
+                                                                : ""
+                                                                }`}
                                                         >
                                                             <div className="flex items-center p-4 gap-5">
                                                                 <div className="w-20 h-20 rounded-xl bg-muted overflow-hidden flex-shrink-0 relative group-hover:ring-2 ring-primary/20 transition-all">
-                                                                {item.image?.url ? (
-                                                                    <img src={item.image.url} alt={item.name} className={`w-full h-full object-cover ${hidden && selectedLocation ? 'grayscale' : ''}`} />
-                                                                ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground"><ChefHat className="w-8 h-8" /></div>
-                                                                )}
+                                                                    {item.image?.url ? (
+                                                                        <img src={item.image.url} alt={item.name} className={`w-full h-full object-cover ${hidden && selectedLocation ? 'grayscale' : ''}`} />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground"><ChefHat className="w-8 h-8" /></div>
+                                                                    )}
 
-                                                                {hidden && selectedLocation && (
-                                                                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center" style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)' }}>
-                                                                        <EyeOff className="w-6 h-6 text-white" />
-                                                                    </div>
-                                                                )}
+                                                                    {hidden && selectedLocation && (
+                                                                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center" style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)' }}>
+                                                                            <EyeOff className="w-6 h-6 text-white" />
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                                 <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-3">
                                                                     <div className="min-w-0 flex-1">
@@ -791,24 +887,24 @@ const MenuManagement = () => {
                                                                             {inrFormatter.format(Number(item.price) || 0)}
                                                                         </span>
 
-                                                                    {selectedLocation && (
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                hidden ? handleShowItem(item._id) : handleHideItem(item._id);
-                                                                            }}
-                                                                            className={`p-2 rounded-lg transition-colors ${hidden
-                                                                                ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                                                                                : "bg-amber-500 text-white hover:bg-amber-600"
-                                                                                }`}
-                                                                            title={hidden ? "Unhide" : "Hide"}
-                                                                        >
-                                                                            {hidden ? (
-                                                                                <Eye className="w-4 h-4" />
-                                                                            ) : (
-                                                                                <EyeOff className="w-4 h-4" />
-                                                                            )}
-                                                                        </button>
-                                                                    )}
+                                                                        {selectedLocation && (
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    hidden ? handleShowItem(item._id) : handleHideItem(item._id);
+                                                                                }}
+                                                                                className={`p-2 rounded-lg transition-colors ${hidden
+                                                                                    ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                                                                                    : "bg-amber-500 text-white hover:bg-amber-600"
+                                                                                    }`}
+                                                                                title={hidden ? "Unhide" : "Hide"}
+                                                                            >
+                                                                                {hidden ? (
+                                                                                    <Eye className="w-4 h-4" />
+                                                                                ) : (
+                                                                                    <EyeOff className="w-4 h-4" />
+                                                                                )}
+                                                                            </button>
+                                                                        )}
 
                                                                         <div className="flex items-center gap-1">
                                                                             <button onClick={() => openEditItem(item)} className="p-2 hover:bg-muted rounded-lg text-primary hover:text-primary/80 transition-colors"><Edit className="w-4 h-4" /></button>
@@ -817,274 +913,366 @@ const MenuManagement = () => {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
+                                                        </motion.div>
                                                     );
                                                 })
                                             )}
                                         </div>
                                     )}
-                                </div>
+                                </motion.div>
                             );
                         })}
-                    </div>
+                    </motion.div>
                 )}
             </div>
 
-            {showAddCategory && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-                    <div className="bg-card w-full max-w-md rounded-2xl shadow-2xl border border-border overflow-hidden transform transition-all scale-100">
-                        <div className="p-5 border-b border-border flex justify-between items-center bg-muted/50">
-                            <div>
-                                <h3 className="font-bold text-lg text-foreground">Add Category</h3>
-                                <p className="text-xs text-muted-foreground font-medium">Create a new section for your menu</p>
+            <AnimatePresence>
+                {showAddCategory && (
+                    <div className="fixed inset-0 z-[110] grid place-items-center p-4">
+                        <motion.div
+                            variants={backdropVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                            onClick={() => setShowAddCategory(false)}
+                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            variants={modalVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            onClick={(e) => e.stopPropagation()}
+                            className="relative bg-card w-full max-w-md rounded-3xl shadow-2xl border border-border overflow-hidden"
+                        >
+                            <div className="p-5 border-b border-border flex justify-between items-center bg-muted/50">
+                                <div>
+                                    <h3 className="font-bold text-lg text-foreground">Add Category</h3>
+                                    <p className="text-xs text-muted-foreground font-medium">Create a new section for your menu</p>
+                                </div>
+                                <button onClick={() => setShowAddCategory(false)} className="text-muted-foreground hover:text-foreground p-2 hover:bg-muted rounded-full transition-colors"><X className="w-5 h-5" /></button>
                             </div>
-                            <button onClick={() => setShowAddCategory(false)} className="text-muted-foreground hover:text-foreground p-2 hover:bg-muted rounded-full transition-colors"><X className="w-5 h-5" /></button>
-                        </div>
-                        <div className="p-6 space-y-5">
-                            <div>
-                                <label className="text-xs font-bold text-foreground uppercase mb-2 block tracking-wider">Category Name</label>
-                                <input
-                                    autoFocus
-                                    type="text"
-                                    value={newCategoryName}
-                                    onChange={(e) => setNewCategoryName(e.target.value)}
-                                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-muted-foreground font-semibold"
-                                    placeholder="e.g. Signature Cocktails"
-                                    onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
-                                />
+                            <div className="p-6 space-y-5">
+                                <div>
+                                    <label className="text-xs font-bold text-foreground uppercase mb-2 block tracking-wider">Category Name</label>
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={newCategoryName}
+                                        onChange={(e) => setNewCategoryName(e.target.value)}
+                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-muted-foreground font-semibold"
+                                        placeholder="e.g. Signature Cocktails"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+                                    />
+                                </div>
+                                <div className="flex gap-3">
+                                    <button onClick={() => setShowAddCategory(false)} className="flex-1 py-3 rounded-xl font-semibold text-foreground bg-muted hover:bg-muted/80 transition-colors">Cancel</button>
+                                    <button
+                                        onClick={handleAddCategory}
+                                        className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-xl font-bold shadow-lg transition-all transform active:scale-95"
+                                    >
+                                        Create Category
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex gap-3">
-                                <button onClick={() => setShowAddCategory(false)} className="flex-1 py-3 rounded-xl font-semibold text-foreground bg-muted hover:bg-muted/80 transition-colors">Cancel</button>
-                                <button
-                                    onClick={handleAddCategory}
-                                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-xl font-bold shadow-lg transition-all transform active:scale-95"
-                                >
-                                    Create Category
-                                </button>
-                            </div>
-                        </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
 
-            {deleteDialog && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-                    <div className="bg-card w-full max-w-md rounded-2xl shadow-2xl border border-border overflow-hidden">
-                        <div className="p-5 border-b border-border flex justify-between items-center bg-muted/50">
-                            <div>
-                                <h3 className="font-bold text-lg text-foreground">Delete Item</h3>
-                                <p className="text-xs text-muted-foreground font-medium">This action can’t be undone.</p>
-                            </div>
-                            <button
-                                onClick={() => !isDeleting && setDeleteDialog(null)}
-                                className="text-muted-foreground hover:text-foreground p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50"
-                                disabled={isDeleting}
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <p className="text-sm text-foreground">
-                                Are you sure you want to delete{" "}
-                                <span className="font-semibold">{deleteDialog.name}</span>?
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                {deleteDialog.isGlobal
-                                    ? "This will remove it from your global menu."
-                                    : deleteDialog.locationId
-                                    ? `This will remove it from the location only.`
-                                    : "This will remove it from the selected location only."}
-                            </p>
-                            <div className="flex gap-3 pt-2">
+            <AnimatePresence>
+                {deleteDialog && (
+                    <div className="fixed inset-0 z-[110] grid place-items-center p-4">
+                        <motion.div
+                            variants={backdropVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                            onClick={() => !isDeleting && setDeleteDialog(null)}
+                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            variants={modalVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            onClick={(e) => e.stopPropagation()}
+                            className="relative bg-card w-full max-w-md rounded-3xl shadow-2xl border border-border overflow-hidden"
+                        >
+                            <div className="p-5 border-b border-border flex justify-between items-center bg-muted/50">
+                                <div>
+                                    <h3 className="font-bold text-lg text-foreground">Delete Item</h3>
+                                    <p className="text-xs text-muted-foreground font-medium">This action can’t be undone.</p>
+                                </div>
                                 <button
-                                    onClick={() => setDeleteDialog(null)}
-                                    className="flex-1 py-3 rounded-xl font-semibold text-foreground bg-muted hover:bg-muted/80 transition-colors disabled:opacity-50"
+                                    onClick={() => !isDeleting && setDeleteDialog(null)}
+                                    className="text-muted-foreground hover:text-foreground p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50"
                                     disabled={isDeleting}
                                 >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmDelete}
-                                    className="flex-1 py-3 rounded-xl font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-colors disabled:opacity-50"
-                                    disabled={isDeleting}
-                                >
-                                    {isDeleting ? "Deleting..." : "Delete"}
+                                    <X className="w-5 h-5" />
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {deleteCategoryDialog && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-                    <div className="bg-card w-full max-w-md rounded-2xl shadow-2xl border border-border overflow-hidden">
-                        <div className="p-5 border-b border-border flex justify-between items-center bg-muted/50">
-                            <div>
-                                <h3 className="font-bold text-lg text-foreground">Delete Category</h3>
-                                <p className="text-xs text-muted-foreground font-medium">This action can’t be undone.</p>
-                            </div>
-                            <button
-                                onClick={() => !isDeletingCategory && setDeleteCategoryDialog(null)}
-                                className="text-muted-foreground hover:text-foreground p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50"
-                                disabled={isDeletingCategory}
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <p className="text-sm text-foreground">
-                                Are you sure you want to delete{" "}
-                                <span className="font-semibold">{deleteCategoryDialog.name}</span>?
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                Items inside this category will also be deleted.
-                            </p>
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    onClick={() => setDeleteCategoryDialog(null)}
-                                    className="flex-1 py-3 rounded-xl font-semibold text-foreground bg-muted hover:bg-muted/80 transition-colors disabled:opacity-50"
-                                    disabled={isDeletingCategory}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmDeleteCategory}
-                                    className="flex-1 py-3 rounded-xl font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-colors disabled:opacity-50"
-                                    disabled={isDeletingCategory}
-                                >
-                                    {isDeletingCategory ? "Deleting..." : "Delete"}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {(showAddItem || showEditItem) && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-                    <div className="bg-card w-full max-w-2xl rounded-3xl shadow-2xl border border-border flex flex-col max-h-[90vh] overflow-hidden">
-                        <div className="p-6 border-b border-border flex justify-between items-center bg-muted/50">
-                            <div>
-                                <h3 className="text-xl font-bold text-foreground">{showEditItem ? "Edit Item" : "New Menu Item"}</h3>
-                                <p className="text-xs text-muted-foreground mt-1 font-medium">
-                                    {selectedLocation && !showEditItem ? `Adding exclusive item to ${selectedLocationData?.locationName}` : "Adding to Global Base Menu"}
+                            <div className="p-6 space-y-4">
+                                <p className="text-sm text-foreground">
+                                    Are you sure you want to delete{" "}
+                                    <span className="font-semibold">{deleteDialog.name}</span>?
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {deleteDialog.isGlobal
+                                        ? "This will remove it from your global menu."
+                                        : deleteDialog.locationId
+                                            ? `This will remove it from the location only.`
+                                            : "This will remove it from the selected location only."}
+                                </p>
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => setDeleteDialog(null)}
+                                        className="flex-1 py-3 rounded-xl font-semibold text-foreground bg-muted hover:bg-muted/80 transition-colors disabled:opacity-50"
+                                        disabled={isDeleting}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmDelete}
+                                        className="flex-1 py-3 rounded-xl font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-colors disabled:opacity-50"
+                                        disabled={isDeleting}
+                                    >
+                                        {isDeleting ? "Deleting..." : "Delete"}
+                                    </button>
+                                </div>
                             </div>
-                            <button onClick={() => { setShowAddItem(false); setShowEditItem(null); resetItemForm(); }} className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"><X className="w-5 h-5" /></button>
-                        </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
-                        <div className="p-8 overflow-y-auto space-y-8 scrollbar-hide">
-                            <div className="flex justify-center">
-                                <div className="relative group w-full max-w-xs">
-                                    <div className={`aspect-video rounded-2xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted transition-colors ${!itemForm.imagePreview && 'hover:bg-muted/80 hover:border-primary cursor-pointer'}`}>
-                                        {itemForm.imagePreview ? (
-                                            <img src={itemForm.imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="text-center text-muted-foreground group-hover:text-primary transition-colors">
-                                                <ImageIcon className="w-10 h-10 mx-auto mb-3 opacity-60" />
-                                                <span className="text-sm font-semibold">Click to upload image</span>
-                                                <p className="text-[10px] mt-1 opacity-70 font-medium">JPG, PNG up to 5MB</p>
-                                            </div>
+            <AnimatePresence>
+                {deleteCategoryDialog && (
+                    <div className="fixed inset-0 z-[110] grid place-items-center p-4">
+                        <motion.div
+                            variants={backdropVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                            onClick={() => !isDeletingCategory && setDeleteCategoryDialog(null)}
+                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            variants={modalVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            onClick={(e) => e.stopPropagation()}
+                            className="relative bg-card w-full max-w-md rounded-3xl shadow-2xl border border-border overflow-hidden"
+                        >
+                            <div className="p-5 border-b border-border flex justify-between items-center bg-muted/50">
+                                <div>
+                                    <h3 className="font-bold text-lg text-foreground">Delete Category</h3>
+                                    <p className="text-xs text-muted-foreground font-medium">This action can’t be undone.</p>
+                                </div>
+                                <button
+                                    onClick={() => !isDeletingCategory && setDeleteCategoryDialog(null)}
+                                    className="text-muted-foreground hover:text-foreground p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50"
+                                    disabled={isDeletingCategory}
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <p className="text-sm text-foreground">
+                                    Are you sure you want to delete{" "}
+                                    <span className="font-semibold">{deleteCategoryDialog.name}</span>?
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Items inside this category will also be deleted.
+                                </p>
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => setDeleteCategoryDialog(null)}
+                                        className="flex-1 py-3 rounded-xl font-semibold text-foreground bg-muted hover:bg-muted/80 transition-colors disabled:opacity-50"
+                                        disabled={isDeletingCategory}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmDeleteCategory}
+                                        className="flex-1 py-3 rounded-xl font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-colors disabled:opacity-50"
+                                        disabled={isDeletingCategory}
+                                    >
+                                        {isDeletingCategory ? "Deleting..." : "Delete"}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {(showAddItem || showEditItem) && (
+                    <div className="fixed inset-0 z-[100] grid place-items-center p-4">
+                        <motion.div
+                            variants={backdropVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                            onClick={() => { setShowAddItem(false); setShowEditItem(null); resetItemForm(); }}
+                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            variants={modalVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            className="relative w-full max-w-2xl bg-card rounded-3xl border border-border/50 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="px-6 py-5 border-b border-border/50 flex justify-between items-center bg-muted/20 backdrop-blur-md z-10">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-primary/10 rounded-2xl hidden sm:block">
+                                        <ChefHat className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-black text-foreground tracking-tight">
+                                            {showEditItem ? "Edit Menu Item" : "New Menu Item"}
+                                        </h2>
+                                        <p className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                                            {selectedLocation && !showEditItem ? (
+                                                <>
+                                                    <MapPin className="w-3.5 h-3.5 text-primary" /> Adding exclusive item to <span className="text-primary font-bold">{selectedLocationData?.locationName}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Globe className="w-3.5 h-3.5 text-primary" /> Adding to Global Base Menu
+                                                </>
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowAddItem(false); setShowEditItem(null); resetItemForm(); }}
+                                    className="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-full transition-all hover:rotate-90 background-blur-sm"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Modal Content */}
+                            <div className="p-6 sm:p-8 overflow-y-auto space-y-8 scrollbar-hide flex-1">
+                                {/* Image Upload Component */}
+                                <div className="flex flex-col items-center justify-center">
+                                    <label className="w-full max-w-xs text-xs font-bold uppercase text-foreground tracking-wider mb-3 block text-center">Item Image</label>
+                                    <div className="relative group w-full max-w-xs">
+                                        <div className={`aspect-video rounded-3xl border-2 border-dashed flex items-center justify-center overflow-hidden transition-all duration-300 shadow-sm ${!itemForm.imagePreview ? 'bg-muted/30 border-primary/20 hover:bg-primary/5 hover:border-primary/50 cursor-pointer' : 'border-transparent bg-muted'}`}>
+                                            {itemForm.imagePreview ? (
+                                                <img src={itemForm.imagePreview} alt="Preview" className="w-full h-full object-cover rounded-3xl" />
+                                            ) : (
+                                                <div className="text-center text-muted-foreground transition-all group-hover:scale-105 flex flex-col items-center">
+                                                    <div className="w-12 h-12 bg-card rounded-full shadow-sm flex items-center justify-center mb-3">
+                                                        <ImageIcon className="w-6 h-6 group-hover:text-primary transition-colors" />
+                                                    </div>
+                                                    <span className="text-sm font-bold text-foreground group-hover:text-primary">Click to upload</span>
+                                                    <p className="text-[10px] mt-1 opacity-70 font-semibold uppercase tracking-wider text-muted-foreground">JPG, PNG up to 5MB</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <input type="file" accept="image/*" onChange={handleImageChange} disabled={isSavingItem} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                                        {itemForm.imagePreview && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.preventDefault(); setItemForm({ ...itemForm, image: null, imagePreview: null }) }}
+                                                className="absolute -top-3 -right-3 bg-destructive hover:bg-destructive/90 text-white p-2 rounded-full shadow-xl transition-all hover:scale-110 z-10"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
                                         )}
                                     </div>
-                                    <input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                    {itemForm.imagePreview && (
-                                        <button
-                                            onClick={(e) => { e.preventDefault(); setItemForm({ ...itemForm, image: null, imagePreview: null }) }}
-                                            className="absolute -top-3 -right-3 bg-card text-destructive p-1.5 rounded-full shadow-lg border border-border hover:scale-110 transition-transform"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    )}
+                                </div>
+
+                                {/* Form Grid */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-6">
+                                    <InputField icon={Utensils} label="Item Name" name="name" placeholder="e.g. Spicy Chicken Wings" value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} disabled={isSavingItem} />
+                                    <InputField icon={IndianRupee} label="Price (₹)" name="price" type="number" min="0" step="0.01" placeholder="0.00" value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} disabled={isSavingItem} />
+
+                                    <div className={`space-y-1.5 sm:col-span-2`}>
+                                        <label className="text-sm font-semibold text-foreground/90 ml-1">
+                                            Category <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative group">
+                                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                <LayoutGrid className="w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                            </div>
+                                            <select
+                                                disabled={isSavingItem}
+                                                value={itemForm.category}
+                                                onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })}
+                                                className="w-full pl-11 pr-10 py-2.5 bg-background border border-border/60 hover:border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none font-semibold cursor-pointer text-foreground transition-all shadow-sm disabled:opacity-50"
+                                            >
+                                                <option value="" disabled hidden className="text-muted-foreground">Select a Category...</option>
+                                                {sortedCategories.map((cat) => (
+                                                    <option key={cat._id} value={cat.name} className="bg-background text-foreground font-semibold">{cat.name}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
+                                                <ChevronDown className="w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className={`space-y-1.5 sm:col-span-2`}>
+                                        <label className="text-sm font-semibold text-foreground/90 ml-1">
+                                            Description
+                                        </label>
+                                        <div className="relative group">
+                                            <div className="absolute top-3 left-0 pl-3.5 flex items-start pointer-events-none">
+                                                <FileText className="w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                            </div>
+                                            <textarea
+                                                rows="3"
+                                                disabled={isSavingItem}
+                                                value={itemForm.description}
+                                                onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
+                                                className="w-full pl-11 pr-4 py-2.5 bg-background border border-border/60 hover:border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none font-medium placeholder:text-muted-foreground transition-all shadow-sm disabled:opacity-50"
+                                                placeholder="Describe the dish, ingredients, allergens, etc."
+                                            />
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase text-foreground tracking-wider">Item Name <span className="text-destructive">*</span></label>
-                                    <input
-                                        type="text"
-                                        value={itemForm.name}
-                                        onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
-                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none font-semibold placeholder:text-muted-foreground"
-                                        placeholder="e.g. Spicy Chicken Wings"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase text-foreground tracking-wider">Price (₹) <span className="text-destructive">*</span></label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={itemForm.price}
-                                        onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
-                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none font-semibold placeholder:text-muted-foreground"
-                                        placeholder="0.00"
-                                    />
-                                </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className="text-xs font-bold uppercase text-foreground tracking-wider">Category <span className="text-destructive">*</span></label>
-                                    <select
-                                        value={itemForm.category}
-                                        onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })}
-                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none font-semibold cursor-pointer"
-                                    >
-                                        <option value="" className="bg-background text-foreground">Select a Category...</option>
-                                        {sortedCategories.map((cat) => (
-                                            <option key={cat._id} value={cat.name} className="bg-background text-foreground">{cat.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className="text-xs font-bold uppercase text-foreground tracking-wider">Description</label>
-                                    <textarea
-                                        rows="3"
-                                        value={itemForm.description}
-                                        onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
-                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none font-semibold placeholder:text-muted-foreground"
-                                        placeholder="Describe the dish, ingredients, allergens, etc."
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-6 border-t border-border bg-muted/50 flex flex-col gap-3 z-10">
-                            <div className="flex justify-end gap-3">
+                            {/* Modal Footer / Actions */}
+                            <div className="px-6 py-5 border-t border-border/50 bg-muted/20 backdrop-blur-md z-10">
                                 <button
-                                    onClick={() => { setShowAddItem(false); setShowEditItem(null); resetItemForm(); }}
+                                    type="button"
                                     disabled={isSavingItem}
-                                    className="px-6 py-3 rounded-xl border border-border bg-card text-foreground hover:bg-muted transition-colors font-semibold text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Cancel
-                                </button>
-                                <button
                                     onClick={() => {
                                         if (showEditItem) handleUpdateItem(showEditItem);
                                         else if (selectedLocation) handleAddLocationItem();
                                         else handleAddItem();
                                     }}
-                                    disabled={isSavingItem}
-                                    className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all transform active:scale-95 font-bold text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                    className="w-full px-6 py-3.5 bg-primary text-primary-foreground font-bold rounded-2xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
                                 >
                                     {isSavingItem ? (
                                         <>
-                                            <RotateCw className="w-4 h-4 animate-spin" />
-                                            {showEditItem ? "Saving..." : "Creating..."}
+                                            <RotateCw className="w-5 h-5 animate-spin" />
+                                            {showEditItem ? "Saving Changes..." : "Creating Item..."}
                                         </>
                                     ) : (
                                         <>
-                                            <Save className="w-4 h-4" />
-                                            {showEditItem ? "Save Changes" : "Create Item"}
+                                            <Save className="w-5 h-5" />
+                                            {showEditItem ? "Save Changes" : "Confirm & Create Item"}
                                         </>
                                     )}
                                 </button>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
-        </div>
+                )}
+            </AnimatePresence>
+        </div >
     );
 };
 

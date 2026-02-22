@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCurrentRestaurant } from "../../utils/api";
-import { ChefView } from "../../components/ChefPageComponents";
+import { ChefView, ChefHeader, ChefLocationMenu, ChefOrderHistory } from "../../components/ChefPageComponents";
 import { Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -11,6 +11,7 @@ const ChefDashboardPage = () => {
     const [restaurant, setRestaurant] = useState(null);
     const [location, setLocation] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState("kitchen");
 
     useEffect(() => {
         fetchData();
@@ -29,16 +30,16 @@ const ChefDashboardPage = () => {
                     setLocation(loc);
                 } else {
                     toast.error("Location not found");
-                    navigate("/chef");
+                    navigate("/restaurant/welcome");
                 }
             } else {
                 toast.error("Could not load locations");
-                navigate("/chef");
+                navigate("/restaurant/welcome");
             }
         } catch (error) {
             console.error("Failed to fetch data", error);
             toast.error("Failed to load location data");
-            navigate("/chef");
+            navigate("/restaurant/welcome");
         } finally {
             setLoading(false);
         }
@@ -55,17 +56,25 @@ const ChefDashboardPage = () => {
 
     if (!location) return null;
 
+    const locationName = location.locationName || "Kitchen";
+    const locationAddress = [location.address, location.city].filter(Boolean).join(", ") || "—";
+    const isOpen = location.isActive === true;
+
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-lg font-semibold text-foreground">
-                    {location.locationName || "Kitchen"}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                    {location.address}, {location.city}
-                </p>
+        <div className="min-h-screen flex flex-col pb-8">
+            <ChefHeader
+                locationId={locationId}
+                locationName={locationName}
+                locationAddress={locationAddress}
+                isOpen={isOpen}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+            />
+            <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-6">
+                {activeTab === "kitchen" && <ChefView locationId={locationId} />}
+                {activeTab === "menu" && <ChefLocationMenu locationId={locationId} />}
+                {activeTab === "history" && <ChefOrderHistory locationId={locationId} />}
             </div>
-            <ChefView locationId={locationId} />
         </div>
     );
 };

@@ -73,7 +73,7 @@ export function groupAndAggregateOrders(orders) {
                 total: Array.from(group.items.values()).reduce((s, it) => s + it.totalPrice, 0),
                 statuses: Array.from(group.statuses),
                 latestStatus: Array.from(group.statuses).sort((a, b) => {
-                    const order = { PENDING: 0, SUBMITTED: 1, PREPARING: 2, SERVED: 3, CANCELLED: 4 };
+                    const order = { PENDING: 0, SUBMITTED: 1, PREPARING: 2, SERVED: 3, PAID: 4, CANCELLED: 5 };
                     return (order[b] || 0) - (order[a] || 0);
                 })[0],
             };

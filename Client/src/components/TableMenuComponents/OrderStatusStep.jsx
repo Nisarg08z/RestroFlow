@@ -6,24 +6,29 @@ const STATUS_CONFIG = {
     SUBMITTED: { label: "Sent to kitchen", icon: Clock, className: "bg-amber-500/15 text-amber-700" },
     PREPARING: { label: "Preparing", icon: ChefHat, className: "bg-blue-500/15 text-blue-700" },
     SERVED: { label: "Served", icon: CheckCircle, className: "bg-green-500/15 text-green-700" },
+    PAID: { label: "Paid", icon: CheckCircle, className: "bg-emerald-500/15 text-emerald-700" },
     CANCELLED: { label: "Cancelled", icon: Receipt, className: "bg-red-500/15 text-red-700" },
 };
 
-const OrderStatusStep = ({ data, tableNumber, customerName, previousOrders, inrFormatter, onGoToMenu }) => {
-    const todayOrders = useMemo(() => {
+const OrderStatusStep = ({ data, tableNumber, customerName, previousOrders, sessionStartTime, inrFormatter, onGoToMenu }) => {
+    const trackOrders = useMemo(() => {
         if (!previousOrders || previousOrders.length === 0) return [];
         const today = new Date();
-        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const sessionStart = sessionStartTime
+            ? new Date(sessionStartTime)
+            : new Date(today.getFullYear(), today.getMonth(), today.getDate());
         return previousOrders
             .filter((order) => {
                 if (!order.createdAt) return false;
+                if (order.status === "PENDING") return false;
+                if (order.status === "PAID") return false;
                 const orderDate = new Date(order.createdAt);
-                return orderDate >= todayStart;
+                return orderDate >= sessionStart;
             })
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }, [previousOrders]);
+    }, [previousOrders, sessionStartTime]);
 
-    const hasOrders = todayOrders.length > 0;
+    const hasOrders = trackOrders.length > 0;
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
@@ -54,7 +59,7 @@ const OrderStatusStep = ({ data, tableNumber, customerName, previousOrders, inrF
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {todayOrders.map((order) => {
+                        {trackOrders.map((order) => {
                             const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
                             const Icon = config.icon;
                             const orderDate = new Date(order.createdAt);

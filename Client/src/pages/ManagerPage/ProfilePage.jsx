@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentRestaurant, updateRestaurantProfile, updateLocation } from "../../utils/api";
-import { ManagerHeader, LoadingScreen } from "../../components/ManagerPageComponents";
+import { ManagerHeader, LoadingScreen, TypewriterText } from "../../components/ManagerPageComponents";
 import RestaurantSubscription from "../../components/ManagerPageComponents/RestaurantSubscription";
 import {
     User, Mail, Phone, Building2, Calendar,
@@ -9,6 +9,20 @@ import {
     Edit2, Save, X, MapPin, Loader2, Store, ArrowLeft
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, scale: 0.95, y: 20 },
+    show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
 
 const ProfilePage = () => {
     const navigate = useNavigate();
@@ -176,27 +190,26 @@ const ProfilePage = () => {
 
     return (
         <div className="min-h-screen bg-background pb-20">
-            <ManagerHeader restaurant={restaurant} />
 
             <div className="relative bg-primary/5 pb-24 pt-10 px-4 md:px-8">
                 <div className="max-w-7xl mx-auto space-y-4">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, type: 'spring', stiffness: 300, damping: 30 }}
+                        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+                    >
                         <div className="space-y-2">
-                            <button
-                                onClick={() => navigate(-1)}
-                                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-2 group"
-                            >
-                                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                                Back
-                            </button>
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                                    <Store className="w-7 h-7 text-primary-foreground" />
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 sm:p-2.5 bg-primary/10 rounded-xl">
+                                    <Store className="w-6 h-6 sm:w-8 sm:h-8 text-primary/80" />
                                 </div>
-                                <h1 className="text-3xl font-bold text-foreground">Restaurant Profile</h1>
+                                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground flex items-center">
+                                    <TypewriterText text="Restaurant Profile" />
+                                </h1>
                             </div>
 
-                            <p className="text-muted-foreground text-lg max-w-2xl pl-1">
+                            <p className="text-muted-foreground text-lg max-w-2xl ml-1">
                                 Manage your restaurant details and location information.
                             </p>
                         </div>
@@ -204,15 +217,20 @@ const ProfilePage = () => {
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                             System Active
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 -mt-16 space-y-8 pb-10">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="show"
+                    className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+                >
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-card border border-border rounded-xl shadow-lg shadow-black/5 overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-700">
-                            <div className="p-6 border-b border-border bg-gradient-to-r from-muted/50 to-muted/10 flex items-center justify-between">
+                        <motion.div variants={itemVariants} className="bg-card border border-border/50 rounded-3xl shadow-lg shadow-black/5 overflow-hidden">
+                            <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-muted/20 backdrop-blur-sm flex items-center justify-between">
                                 <h2 className="text-xl font-semibold flex items-center gap-2">
                                     <Building2 className="w-5 h-5 text-primary" />
                                     Restaurant Details
@@ -346,7 +364,7 @@ const ProfilePage = () => {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </motion.div>
 
                         <div className="space-y-4">
                             <div className="flex items-center justify-between px-2">
@@ -540,8 +558,8 @@ const ProfilePage = () => {
                     </div>
 
                     <div className="space-y-6">
-                        <div className="bg-card border border-border rounded-xl shadow-lg shadow-black/5 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-700">
-                            <div className="p-6 border-b border-border bg-gradient-to-r from-muted/50 to-muted/10">
+                        <motion.div variants={itemVariants} className="bg-card border border-border/50 rounded-3xl shadow-lg shadow-black/5 overflow-hidden">
+                            <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-muted/20 backdrop-blur-sm">
                                 <h2 className="text-lg font-semibold flex items-center gap-2">
                                     <CheckCircle2 className="w-5 h-5 text-primary" />
                                     Account Status
@@ -558,10 +576,10 @@ const ProfilePage = () => {
                                     </span>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        <div className="bg-card border border-border rounded-xl shadow-lg shadow-black/5 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-700">
-                            <div className="p-6 border-b border-border bg-gradient-to-r from-muted/50 to-muted/10">
+                        <motion.div variants={itemVariants} className="bg-card border border-border/50 rounded-3xl shadow-lg shadow-black/5 overflow-hidden">
+                            <div className="p-4 sm:p-5 md:p-6 border-b border-border/50 bg-muted/20 backdrop-blur-sm">
                                 <h2 className="text-lg font-semibold flex items-center gap-2">
                                     <CreditCard className="w-5 h-5 text-primary" />
                                     Subscription & Payment
@@ -573,11 +591,11 @@ const ProfilePage = () => {
                                     onUpdate={fetchData}
                                 />
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        </motion.div>
+                    </div >
+                </motion.div >
+            </div >
+        </div >
     );
 };
 

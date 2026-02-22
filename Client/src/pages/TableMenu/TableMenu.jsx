@@ -54,6 +54,21 @@ const setStoredSession = (data) => {
     } catch (_) { }
 };
 
+const clearStoredSession = (restaurantId, locationId, tableNumber) => {
+    try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (
+            parsed.restaurantId === restaurantId &&
+            parsed.locationId === locationId &&
+            parsed.tableNumber === tableNumber
+        ) {
+            localStorage.removeItem(SESSION_KEY);
+        }
+    } catch (_) { }
+};
+
 const TableMenu = () => {
     const { restaurantId, locationId, tableNumber } = useParams();
     const [loading, setLoading] = useState(true);
@@ -185,6 +200,7 @@ const TableMenu = () => {
                     restaurantId,
                     locationId,
                     tableNumber,
+                    sessionStartTime: new Date().toISOString(),
                 });
                 toast.success("Phone verified!");
                 fetchOrdersAndGoToMenu(res.data.data.phone, res.data.data.name);
@@ -198,28 +214,39 @@ const TableMenu = () => {
 
     const fetchOrdersAndGoToMenu = async (phone, name) => {
         try {
-            const [currentTableRes, allOrdersRes] = await Promise.all([
-                getCustomerOrders(restaurantId, locationId, tableNumber, phone),
-                getAllCustomerOrdersInRestaurant(restaurantId, phone).catch(() => ({ data: { success: false, data: { orders: [] } } })),
-            ]);
-            const orders = currentTableRes.data?.success ? currentTableRes.data.data?.orders : null;
+            const currentTableRes = await getCustomerOrders(restaurantId, locationId, tableNumber, phone);
+            const customerNameFromApi = currentTableRes.data?.success ? currentTableRes.data.data?.customerName : null;
+
+            if (customerNameFromApi == null) {
+                clearStoredSession(restaurantId, locationId, tableNumber);
+                setCustomerName("");
+                setCustomerPhone("");
+                setStep("name");
+                return;
+            }
+
+            const orders = currentTableRes.data?.data?.orders ?? null;
+            const allOrdersRes = await getAllCustomerOrdersInRestaurant(restaurantId, phone).catch(() => ({ data: { success: false, data: { orders: [] } } }));
             const allOrders = allOrdersRes.data?.success ? allOrdersRes.data.data?.orders || [] : [];
-            setCustomerName(orders ? currentTableRes.data.data.customerName || name : name);
+            setCustomerName(customerNameFromApi || name);
             setCustomerPhone(phone);
             setAllOrdersInRestaurant(allOrders);
-            if (orders && orders.length > 0) {
-                setPreviousOrders(orders);
+            setPreviousOrders(orders || []);
+            const activeOrders = (orders || []).filter((o) =>
+                o.status && ["SUBMITTED", "PREPARING", "SERVED"].includes(o.status)
+            );
+            if (activeOrders.length > 0) {
                 setStep("orderStatus");
             } else {
-                setPreviousOrders([]);
                 setStep("menu");
             }
         } catch (_) {
-            setCustomerName(name);
-            setCustomerPhone(phone);
+            clearStoredSession(restaurantId, locationId, tableNumber);
+            setCustomerName("");
+            setCustomerPhone("");
             setPreviousOrders([]);
             setAllOrdersInRestaurant([]);
-            setStep("menu");
+            setStep("name");
         }
     };
 
@@ -472,6 +499,12 @@ const TableMenu = () => {
         );
     }
 
+    const handleChangeNumber = () => {
+        setOtp("");
+        setOtpSent(false);
+        setStep("phone");
+    };
+
     if (step === "otp") {
         return (
             <OtpStep
@@ -479,6 +512,7 @@ const TableMenu = () => {
                 setOtp={setOtp}
                 onSubmit={handleOTPVerify}
                 onResend={handlePhoneSubmit}
+                onChangeNumber={handleChangeNumber}
                 phone={customerPhone}
                 loading={verifyLoading}
                 resendLoading={otpLoading}
@@ -488,14 +522,15 @@ const TableMenu = () => {
 
     if (step === "orderStatus") {
         return (
-            <OrderStatusStep
-                data={data}
-                tableNumber={tableNumber}
-                customerName={customerName}
-                previousOrders={previousOrders}
-                inrFormatter={inrFormatter}
-                onGoToMenu={() => setStep("menu")}
-            />
+                    <OrderStatusStep
+                        data={data}
+                        tableNumber={tableNumber}
+                        customerName={customerName}
+                        previousOrders={previousOrders}
+                        sessionStartTime={getStoredSession(restaurantId, locationId, tableNumber)?.sessionStartTime}
+                        inrFormatter={inrFormatter}
+                        onGoToMenu={() => setStep("menu")}
+                    />
         );
     }
 

@@ -8,12 +8,18 @@ const STATUS_CONFIG = {
     SUBMITTED: { label: "Sent to kitchen", className: "bg-amber-500/15 text-amber-700" },
     PREPARING: { label: "Preparing", className: "bg-blue-500/15 text-blue-700" },
     SERVED: { label: "Served", className: "bg-green-500/15 text-green-700" },
+    PAID: { label: "Paid", className: "bg-emerald-500/15 text-emerald-700" },
     CANCELLED: { label: "Cancelled", className: "bg-red-500/15 text-red-700" },
 };
 
 const HistoryDrawer = ({ isOpen, onClose, previousOrders, inrFormatter }) => {
     const groupedOrders = useMemo(() => {
-        return groupAndAggregateOrders(previousOrders || []);
+        const orders = (previousOrders || []).filter(
+            (o) => o.status && o.status !== "PENDING"
+        );
+        return groupAndAggregateOrders(orders).sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
     }, [previousOrders]);
 
     const hasOrders = groupedOrders.length > 0;

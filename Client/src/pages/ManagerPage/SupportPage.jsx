@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { ManagerHeader, CreateTicket, TicketList } from "../../components/ManagerPageComponents";
+import { ManagerHeader, CreateTicket, TicketList, TypewriterText } from "../../components/ManagerPageComponents";
 import { getCurrentRestaurant } from "../../utils/api";
+import { motion } from "framer-motion";
+import { Headset } from "lucide-react";
 
 const SupportPage = () => {
-    const navigate = useNavigate();
     const [restaurant, setRestaurant] = useState(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -19,33 +18,51 @@ const SupportPage = () => {
         setRefreshTrigger(prev => prev + 1);
     };
 
-    return (
-        <div className="min-h-screen bg-background pb-20">
-            <ManagerHeader restaurant={restaurant} />
+    const titleText = "Support Center";
 
-            <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-4 sm:space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div className="space-y-2">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-2 group text-sm sm:text-base"
-                    >
-                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                        Back
-                    </button>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Support Center</h1>
+    return (
+        <div className="min-h-screen bg-background">
+
+            <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, type: 'spring', stiffness: 300, damping: 30 }}
+                    className="space-y-2 mb-4 sm:mb-6 md:mb-8"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 sm:p-2.5 bg-primary/10 rounded-xl">
+                            <Headset className="w-6 h-6 sm:w-8 sm:h-8 text-primary/80" />
+                        </div>
+                        <h1
+                            className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center"
+                        >
+                            <TypewriterText text={titleText} />
+                        </h1>
+                    </div>
                     <p className="text-muted-foreground text-base sm:text-lg">
                         Send messages to admin and track your support tokens.
                     </p>
-                </div>
+                </motion.div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-                    <div className="space-y-4 sm:space-y-6 lg:sticky lg:top-24 h-fit">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.1, type: 'spring', stiffness: 300, damping: 30 }}
+                        className="space-y-4 sm:space-y-6 lg:sticky lg:top-24 h-fit"
+                    >
                         <CreateTicket onSuccess={handleTicketCreated} />
-                    </div>
+                    </motion.div>
 
-                    <div className="space-y-4 sm:space-y-6">
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.2, type: 'spring', stiffness: 300, damping: 30 }}
+                        className="space-y-4 sm:space-y-6"
+                    >
                         <TicketList refreshTrigger={refreshTrigger} restaurant={restaurant} />
-                    </div>
+                    </motion.div>
                 </div>
             </div>
         </div>

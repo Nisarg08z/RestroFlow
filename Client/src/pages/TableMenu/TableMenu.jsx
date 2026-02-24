@@ -172,7 +172,6 @@ const TableMenu = () => {
                 setOtpSent(true);
                 setStep("otp");
                 setOtp("");
-                toast.success("OTP sent to your phone!");
             }
         } catch (err) {
             toast.error(err.response?.data?.message || "Failed to send OTP");
@@ -202,7 +201,6 @@ const TableMenu = () => {
                     tableNumber,
                     sessionStartTime: new Date().toISOString(),
                 });
-                toast.success("Phone verified!");
                 fetchOrdersAndGoToMenu(res.data.data.phone, res.data.data.name);
             }
         } catch (err) {
@@ -279,7 +277,6 @@ const TableMenu = () => {
                     const rest = prev.filter((o) => o._id !== updated._id);
                     return [updated, ...rest];
                 });
-                toast.success("Added to order!");
                 setSelectedItem(null);
             }
         } catch (err) {
@@ -320,7 +317,6 @@ const TableMenu = () => {
                     }
                     return [updated, ...prev];
                 });
-                toast.success("Order sent to kitchen!");
                 setCartDrawerOpen(false);
                 setStep("orderStatus");
             }
@@ -356,7 +352,6 @@ const TableMenu = () => {
                     }
                     return [updated, ...prev];
                 });
-                toast.success("Item removed from cart");
             }
         } catch (err) {
             toast.error(err.response?.data?.message || "Failed to remove item");
@@ -391,8 +386,6 @@ const TableMenu = () => {
                     }
                     return [updated, ...prev];
                 });
-                if (newQuantity < 1) toast.success("Item removed from cart");
-                else toast.success("Quantity updated");
             }
         } catch (err) {
             toast.error(err.response?.data?.message || "Failed to update quantity");
@@ -522,15 +515,15 @@ const TableMenu = () => {
 
     if (step === "orderStatus") {
         return (
-                    <OrderStatusStep
-                        data={data}
-                        tableNumber={tableNumber}
-                        customerName={customerName}
-                        previousOrders={previousOrders}
-                        sessionStartTime={getStoredSession(restaurantId, locationId, tableNumber)?.sessionStartTime}
-                        inrFormatter={inrFormatter}
-                        onGoToMenu={() => setStep("menu")}
-                    />
+            <OrderStatusStep
+                data={data}
+                tableNumber={tableNumber}
+                customerName={customerName}
+                previousOrders={previousOrders}
+                sessionStartTime={getStoredSession(restaurantId, locationId, tableNumber)?.sessionStartTime}
+                inrFormatter={inrFormatter}
+                onGoToMenu={() => setStep("menu")}
+            />
         );
     }
 

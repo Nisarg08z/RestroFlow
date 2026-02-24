@@ -25,7 +25,7 @@ import {
     FileText,
     Globe
 } from "lucide-react";
-import { ManagerHeader, TypewriterText } from "../../components/ManagerPageComponents";
+import { ManagerHeader, TypewriterText, LoadingScreen } from "../../components/ManagerPageComponents";
 import {
     getCurrentRestaurant,
     getMenu,
@@ -546,11 +546,7 @@ const MenuManagement = () => {
         []
     );
 
-    if (loading) return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-    );
+    if (loading) return <LoadingScreen restaurant={restaurant} />;
 
     return (
         <div className="min-h-screen bg-background pb-20">

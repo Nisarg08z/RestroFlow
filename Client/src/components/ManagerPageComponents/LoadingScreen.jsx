@@ -3,7 +3,7 @@ import Logo from "../../assets/logo.png";
 
 const LoadingScreen = ({ restaurant }) => {
     return (
-        <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center animate-in fade-in duration-500">
+        <div className="absolute inset-0 bg-background z-50 flex flex-col items-center justify-center animate-in fade-in duration-500">
             <div className="flex flex-col items-center space-y-6">
                 <div className="relative">
                     <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />

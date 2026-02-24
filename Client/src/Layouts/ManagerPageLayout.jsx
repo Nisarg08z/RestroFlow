@@ -24,15 +24,15 @@ const ManagerPageLayout = () => {
         fetchRestaurant();
     }, []);
 
-    if (loading) {
-        return <LoadingScreen restaurant={null} />;
-    }
-
     return (
         <div className="min-h-screen flex flex-col bg-background text-foreground relative">
             <ManagerHeader restaurant={restaurant} />
             <main className="flex-1 w-full relative">
-                <Outlet context={{ restaurant }} />
+                {loading ? (
+                    <LoadingScreen restaurant={null} />
+                ) : (
+                    <Outlet context={{ restaurant }} />
+                )}
             </main>
         </div>
     );

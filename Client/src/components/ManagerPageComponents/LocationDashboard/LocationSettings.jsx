@@ -9,6 +9,20 @@ import {
 import { jsPDF } from "jspdf";
 import { useNavigate } from "react-router-dom";
 import { generateLocationQRCodes } from "../../../utils/api";
+import { motion, AnimatePresence } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
 
 const LocationSettings = ({ location, restaurantId, locationId }) => {
   const navigate = useNavigate();
@@ -130,36 +144,38 @@ const LocationSettings = ({ location, restaurantId, locationId }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-4xl mx-auto space-y-8 pb-10">
+      <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Location Settings</h2>
-          <p className="text-muted-foreground">Manage settings for {location.locationName}</p>
+          <h2 className="text-3xl font-black text-foreground tracking-tight">Location Settings</h2>
+          <p className="text-sm font-medium text-muted-foreground mt-1">Manage settings for <span className="text-primary">{location.locationName}</span></p>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-border bg-muted/20">
+      <motion.div variants={itemVariants} className="bg-card border border-border/60 rounded-[2rem] overflow-hidden shadow-xl shadow-black/5 relative hover:border-primary/30 transition-colors duration-500">
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
+        <div className="p-8 border-b border-border/50 bg-muted/10 relative overflow-hidden">
+          <div className="absolute -right-10 -top-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl" />
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <QrCode className="w-6 h-6 text-primary" />
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 shadow-inner border border-primary/20">
+              <QrCode className="w-7 h-7 text-primary" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">QR Code Management</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Generate and manage QR codes for your tables. Customers can scan these to view the menu and place orders.
+            <div className="z-10 relative">
+              <h3 className="text-xl font-bold text-foreground tracking-tight">QR Code Management</h3>
+              <p className="text-sm font-medium text-muted-foreground mt-1.5 max-w-lg leading-relaxed">
+                Generate and manage QR codes for your tables. Customers can scan these to view the menu and place orders directly from their phones.
               </p>
               {error && (
-                <p className="mt-2 text-xs text-red-500">
+                <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3 text-sm font-semibold text-destructive bg-destructive/10 px-3 py-1.5 rounded-lg border border-destructive/20 inline-block">
                   {error}
-                </p>
+                </motion.p>
               )}
             </div>
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-muted rounded-lg border border-border">
+        <div className="p-8 space-y-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 bg-background rounded-2xl border border-border/60 shadow-sm">
             <div className="space-y-1">
               <p className="text-sm font-medium text-foreground">QR Configuration</p>
               <p className="text-xs text-muted-foreground">
@@ -169,8 +185,8 @@ const LocationSettings = ({ location, restaurantId, locationId }) => {
             </div>
             <div className="flex items-center gap-2">
               <span
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border ${qrCodesReady
-                  ? "bg-green-500/10 text-green-600 border-green-500/20"
+                className={`px-3 py-1.5 rounded-full text-xs font-bold border tracking-wide uppercase ${qrCodesReady
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                   : "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
                   }`}
               >
@@ -179,154 +195,197 @@ const LocationSettings = ({ location, restaurantId, locationId }) => {
             </div>
           </div>
 
-          {!qrCodesReady ? (
-            <div className="text-center py-8">
-              <div className="max-w-md mx-auto space-y-4">
-                <QrCode className="w-16 h-16 text-muted-foreground mx-auto opacity-50" />
-                <h4 className="text-lg font-medium text-foreground">No QR Codes Generated Yet</h4>
-                <p className="text-sm text-muted-foreground">
-                  Generate unique QR codes for all {location.totalTables} tables in this location.
-                  Each table will have exactly one QR code stored in Cloudinary.
-                </p>
-                <button
-                  onClick={handleGenerate}
-                  disabled={generating}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 font-medium transition-all shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {generating ? (
-                    <>
-                      <RefreshCw className="w-5 h-5 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <QrCode className="w-5 h-5" />
-                      Generate {totalTables} QR Codes
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                <button
-                  type="button"
-                  onClick={handleDownloadAll}
-                  disabled={downloading || !tableQRCodes.length}
-                  className="flex items-center justify-center gap-3 p-4 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 w-full sm:w-auto self-start disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <Download className="w-5 h-5" />
-                  <div className="text-left">
-                    <p className="text-sm font-semibold">
-                      {downloading ? "Preparing PDF..." : "Download All QR Codes"}
-                    </p>
-                    <p className="text-[10px] opacity-80">
-                      PDF • One page per table
-                    </p>
-                  </div>
-                </button>
-              </div>
-
-              <div className="border-t border-border pt-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground">QR Preview</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Sample QR code preview • All tables have their own unique code.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/restaurant/location/${locationId}/qr-codes`)}
-                    className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-border text-xs font-medium text-foreground hover:bg-muted"
+          <AnimatePresence mode="wait">
+            {!qrCodesReady ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1, transition: { type: "spring", stiffness: 300, damping: 25 } }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="text-center py-12 px-4 border-2 border-dashed border-border/60 rounded-[2rem] bg-muted/10 relative overflow-hidden group hover:border-primary/40 hover:bg-muted/30 transition-colors duration-500"
+              >
+                <div className="max-w-md mx-auto space-y-5 relative z-10">
+                  <motion.div
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, delay: 0.1 }}
+                    className="w-24 h-24 mx-auto bg-primary/10 rounded-full flex items-center justify-center border border-primary/20 shadow-inner group-hover:scale-105 transition-transform duration-500"
                   >
-                    View All Codes
-                  </button>
+                    <QrCode className="w-10 h-10 text-primary opacity-80" />
+                  </motion.div>
+
+                  <div>
+                    <h4 className="text-xl font-bold text-foreground tracking-tight">No QR Codes Generated Yet</h4>
+                    <p className="text-sm font-medium text-muted-foreground mt-2 leading-relaxed">
+                      Generate unique QR codes for all <span className="text-primary font-bold">{location.totalTables}</span> tables in this location.
+                      Each table will have exactly one QR code securely generated and stored.
+                    </p>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(var(--primary), 0.3)" }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleGenerate}
+                    disabled={generating}
+                    className="mt-4 inline-flex items-center gap-2.5 px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-bold transition-all shadow-lg hover:bg-primary/90 disabled:opacity-70 disabled:cursor-not-allowed group/btn"
+                  >
+                    {generating ? (
+                      <>
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                        Generating secure codes...
+                      </>
+                    ) : (
+                      <>
+                        <QrCode className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+                        Generate {totalTables} QR Codes
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="content"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 25 } }}
+                className="space-y-8"
+              >
+                <div className="flex justify-start">
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    onClick={handleDownloadAll}
+                    disabled={downloading || !tableQRCodes.length}
+                    className="flex items-center justify-center gap-4 px-6 py-4 bg-primary text-primary-foreground rounded-2xl font-bold transition-all shadow-xl shadow-primary/20 disabled:opacity-60 disabled:cursor-not-allowed group/btn"
+                  >
+                    <div className="bg-primary-foreground/20 p-2 rounded-xl group-hover/btn:scale-110 transition-transform">
+                      <Download className="w-5 h-5" />
+                    </div>
+                    <div className="text-left leading-tight pr-4">
+                      <p className="text-sm font-black tracking-wide">
+                        {downloading ? "Preparing PDF..." : "Download All QR Codes"}
+                      </p>
+                      <p className="text-[11px] font-semibold opacity-80 tracking-wider uppercase mt-0.5">
+                        High Quality PDF
+                      </p>
+                    </div>
+                  </motion.button>
                 </div>
 
-                {tableQRCodes.length > 0 && (
-                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-                    {(() => {
-                      const sample = tableQRCodes[0];
-                      const tableNum = sample.tableNumber;
-                      const tableUrl = getTableUrl(tableNum);
-                      return (
-                        <div className="group relative p-3 bg-white border border-border rounded-xl shadow-sm text-center space-y-3 w-full sm:max-w-xs transition-all hover:border-primary/50 hover:shadow-md">
-                          <div className="aspect-square bg-white rounded-lg flex items-center justify-center text-white text-xs relative overflow-hidden border border-border">
-                            {sample.qrImageUrl ? (
-                              <img
-                                src={sample.qrImageUrl}
-                                alt={`Table ${tableNum} QR`}
-                                className="w-full h-full object-contain"
-                              />
-                            ) : (
-                              <QRCode
-                                value={tableUrl}
-                                size={128}
-                                style={{ width: "100%", height: "100%" }}
-                                viewBox="0 0 256 256"
-                              />
-                            )}
-                          </div>
-                          <p className="text-xs font-bold text-neutral-900">
-                            Table {tableNum} (Preview)
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            Use the buttons below to download all codes or manage individual ones.
-                          </p>
-                        </div>
-                      );
-                    })()}
-
-                    <div className="flex-1 flex flex-col gap-2 text-xs text-muted-foreground">
-                      <p>
-                        You have <span className="font-semibold text-foreground">{tableQRCodes.length}</span>{" "}
-                        QR codes generated for this location. Each table has a unique QR that links
-                        directly to its digital menu.
+                <div className="border-t border-border/50 pt-8 space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-lg font-bold text-foreground tracking-tight">QR Previews</h4>
+                      <p className="text-sm font-medium text-muted-foreground mt-1">
+                        A sample of your generated codes.
                       </p>
-                      <p>
-                        Use <span className="font-semibold text-foreground">Download All</span> to get a
-                        printable PDF, or{" "}
-                        <span className="font-semibold text-foreground">View All Codes</span> to manage
-                        individual QR codes (download, open, or regenerate).
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/restaurant/location/${locationId}/qr-codes`)}
-                        className="inline-flex sm:hidden items-center justify-center mt-2 px-3 py-1.5 rounded-md border border-border text-xs font-medium text-foreground hover:bg-muted"
-                      >
-                        View All Codes
-                      </button>
                     </div>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={() => navigate(`/restaurant/location/${locationId}/qr-codes`)}
+                      className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/50 border border-border/60 text-sm font-bold text-foreground hover:bg-muted transition-colors shadow-sm"
+                    >
+                      View All Codes
+                    </motion.button>
                   </div>
-                )}
-              </div>
 
-              <div className="flex justify-end pt-2">
-                <button
-                  onClick={handleGenerate}
-                  className="text-xs text-red-500 hover:text-red-600 hover:underline flex items-center gap-1 disabled:opacity-60"
-                  disabled={generating}
-                >
-                  <AlertCircle className="w-3 h-3" />
-                  Regenerate Missing Codes
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+                  {tableQRCodes.length > 0 && (
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-6 bg-muted/20 p-6 rounded-2xl border border-border/40">
+                      {(() => {
+                        const sample = tableQRCodes[0];
+                        const tableNum = sample.tableNumber;
+                        const tableUrl = getTableUrl(tableNum);
+                        return (
+                          <motion.div
+                            whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+                            className="group relative p-4 bg-card border border-border/60 rounded-2xl shadow-md text-center space-y-3 w-full sm:max-w-xs transition-all hover:border-primary/40"
+                          >
+                            <div className="aspect-square bg-white rounded-xl flex items-center justify-center p-2 relative overflow-hidden border border-border/40 group-hover:bg-primary/[0.02] transition-colors">
+                              {sample.qrImageUrl ? (
+                                <img
+                                  src={sample.qrImageUrl}
+                                  alt={`Table ${tableNum} QR`}
+                                  className="w-full h-full object-contain mix-blend-multiply"
+                                />
+                              ) : (
+                                <QRCode
+                                  value={tableUrl}
+                                  size={128}
+                                  style={{ width: "100%", height: "100%" }}
+                                  viewBox="0 0 256 256"
+                                />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-foreground tracking-tight">
+                                Table {tableNum}
+                              </p>
+                              <p className="text-[10px] font-bold text-primary uppercase tracking-wider mt-0.5">
+                                Sample Preview
+                              </p>
+                            </div>
+                          </motion.div>
+                        );
+                      })()}
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm opacity-50 pointer-events-none grayscale">
-        <div className="p-6 border-b border-border bg-muted/20">
-          <h3 className="text-lg font-semibold text-foreground">General Settings</h3>
+                      <div className="flex-1 flex flex-col gap-3 text-sm font-medium text-muted-foreground pt-2">
+                        <p className="leading-relaxed">
+                          You have <span className="font-bold text-foreground bg-primary/10 text-primary px-2 py-0.5 rounded-md mx-1">{tableQRCodes.length}</span>{" "}
+                          QR codes securely generated for this location. Each table has a unique QR that links
+                          directly to its specific digital menu.
+                        </p>
+                        <p className="leading-relaxed border-l-2 border-primary/30 pl-3">
+                          Use the <span className="font-bold text-foreground">Download All</span> button to get a high-quality printable PDF, or{" "}
+                          click <span className="font-bold text-foreground">View All Codes</span> to manage and verify
+                          individual table codes.
+                        </p>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          type="button"
+                          onClick={() => navigate(`/restaurant/location/${locationId}/qr-codes`)}
+                          className="inline-flex md:hidden items-center justify-center mt-3 px-4 py-2.5 rounded-xl bg-muted border border-border/60 text-sm font-bold text-foreground shadow-sm"
+                        >
+                          View All Codes
+                        </motion.button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    onClick={handleGenerate}
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60 bg-muted/50 px-3 py-1.5 rounded-lg"
+                    disabled={generating}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${generating ? 'animate-spin text-primary' : ''}`} />
+                    {generating ? "Regenerating..." : "Regenerate Missing Codes"}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-        <div className="p-6">
-          <p className="text-sm text-muted-foreground">Additional location settings coming soon...</p>
+      </motion.div>
+
+      <motion.div variants={itemVariants} className="bg-card border border-border/60 rounded-[2rem] overflow-hidden shadow-xl shadow-black/5 relative pointer-events-none opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+        <div className="p-8 border-b border-border/50 bg-muted/10">
+          <h3 className="text-xl font-bold text-foreground tracking-tight flex items-center gap-3">
+            <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center border border-border/60">
+              <AlertCircle className="w-4 h-4 text-muted-foreground" />
+            </span>
+            General Settings
+          </h3>
         </div>
-      </div>
-    </div>
+        <div className="p-8 bg-muted/5">
+          <p className="text-sm font-semibold text-muted-foreground text-center py-6 border-2 border-dashed border-border/60 rounded-xl">Additional location settings coming soon in future updates...</p>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

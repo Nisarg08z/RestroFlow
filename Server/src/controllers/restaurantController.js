@@ -428,7 +428,7 @@ const generateLocationQRCodes = asyncHandler(async (req, res) => {
     }, message)
   )
 })
-  
+
 const regenerateTableQRCode = asyncHandler(async (req, res) => {
   const { locationId, tableNumber } = req.params
   const tableNum = Number(tableNumber)
@@ -517,7 +517,7 @@ const regenerateTableQRCode = asyncHandler(async (req, res) => {
 
 const getMySubscription = asyncHandler(async (req, res) => {
   const restaurant = await Restaurant.findById(req.user._id).select("-password -refreshToken");
-  
+
   if (!restaurant) {
     throw new ApiError(404, "Restaurant not found");
   }
@@ -600,7 +600,7 @@ const getMyInvoices = asyncHandler(async (req, res) => {
   const { status, type } = req.query;
 
   const query = { restaurantId: req.user._id };
-  
+
   if (status) {
     query.status = status.toUpperCase();
   }
@@ -681,16 +681,34 @@ const getLocationOrders = asyncHandler(async (req, res) => {
 
 const getLocationPaidOrders = asyncHandler(async (req, res) => {
   const { locationId } = req.params;
+  const { startDate, endDate } = req.query;
+
   const restaurant = await Restaurant.findById(req.user._id);
   if (!restaurant) throw new ApiError(404, "Restaurant not found");
   const location = restaurant.locations.id(locationId);
   if (!location) throw new ApiError(404, "Location not found");
 
-  const orders = await CustomerOrder.find({
+  const query = {
     restaurantId: req.user._id,
     locationId: String(locationId),
     status: "PAID",
-  })
+  };
+
+  if (startDate || endDate) {
+    query.updatedAt = {};
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      query.updatedAt.$gte = start;
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      query.updatedAt.$lte = end;
+    }
+  }
+
+  const orders = await CustomerOrder.find(query)
     .sort({ updatedAt: -1 })
     .lean();
 

@@ -56,8 +56,8 @@ export const updateLocation = (locationId, data) =>
 export const getLocationOrders = (locationId) =>
   api.get(`/restaurant/locations/${locationId}/orders`)
 
-export const getLocationPaidOrders = (locationId) =>
-  api.get(`/restaurant/locations/${locationId}/orders/paid`)
+export const getLocationPaidOrders = (locationId, params = {}) =>
+  api.get(`/restaurant/locations/${locationId}/orders/paid`, { params })
 
 export const updateLocationOrderStatus = (locationId, orderId, status) =>
   api.patch(`/restaurant/locations/${locationId}/orders/${orderId}/status`, { status })

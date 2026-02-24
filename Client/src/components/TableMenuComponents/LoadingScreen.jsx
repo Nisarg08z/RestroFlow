@@ -1,13 +1,27 @@
 import React from 'react';
+import Logo from "../../assets/logo.png";
 
 const LoadingScreen = () => {
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <p className="text-muted-foreground animate-pulse font-medium">
-                    Loading Menu...
-                </p>
+        <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center animate-in fade-in duration-500">
+            <div className="flex flex-col items-center space-y-6">
+                <div className="relative">
+                    <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+                    <img
+                        src={Logo}
+                        alt="RestroFlow"
+                        className="w-24 h-24 md:w-32 md:h-32 object-contain relative z-10 animate-bounce"
+                    />
+                </div>
+
+                <div className="text-center space-y-2">
+                    <h1 className="text-3xl md:text-4xl font-bold text-foreground animate-pulse">
+                        Welcome to RestroFlow
+                    </h1>
+                    <p className="text-xl text-muted-foreground font-medium mt-2">
+                        Preparing your menu...
+                    </p>
+                </div>
             </div>
         </div>
     );

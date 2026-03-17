@@ -8,13 +8,27 @@ import {
   ArrowRight,
   Loader2,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { useAdminData } from "../../context/AdminDataContext";
+import { motion } from "framer-motion";
+import { TypewriterText } from "../ManagerPageComponents";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { restaurants, requests, tickets, loading } = useAdminData();
+  const motionEase = [0.22, 1, 0.36, 1];
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 14 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: motionEase } },
+  };
+
+  const stagger = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.08, delayChildren: 0.06 } },
+  };
 
   const { stats, recentRequests, recentTickets } = useMemo(() => {
     const totalRestaurants = restaurants.length;
@@ -66,43 +80,114 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-
-      {/* Welcome Section */}
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-            Dashboard Overview
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Snapshot of platform performance and activities
-          </p>
+    <div className="min-h-screen bg-background pb-20">
+      {/* Hero / Header (Manager-style) */}
+      <div className="relative bg-primary/5 pb-24 pt-10 px-4 md:px-8 overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-28 left-1/2 h-72 w-[46rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+          <div className="absolute -bottom-24 right-[-10rem] h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
         </div>
-        <div className="hidden md:flex items-center gap-2 text-xs font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full border border-border/50">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          System Operational
+
+        <div className="max-w-7xl mx-auto space-y-4 relative z-10">
+          <motion.div
+            initial="hidden"
+            animate="show"
+            variants={fadeUp}
+            className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 sm:p-2.5 bg-primary/10 rounded-xl border border-primary/10">
+                  <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary/80" />
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground flex items-center">
+                  <TypewriterText text="Admin Overview" />
+                </h1>
+              </div>
+
+              <p className="text-muted-foreground text-lg max-w-2xl ml-1">
+                Platform snapshot: requests, subscriptions, and support activity.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 px-4 py-2 bg-background/50 backdrop-blur border border-border rounded-full text-sm font-medium text-muted-foreground shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              System Operational
+            </div>
+          </motion.div>
+
         </div>
       </div>
 
+      <motion.div
+        className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 -mt-16 space-y-8 animate-in fade-in duration-500"
+        initial="hidden"
+        animate="show"
+        variants={stagger}
+      >
+        <style>{`
+          @keyframes rf-gradient-pan {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+          }
+        `}</style>
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <motion.div
+        variants={fadeUp}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+      >
         {/* Total Restaurants */}
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-primary/10 to-purple-600/5 border border-primary/20 shadow-lg hover:shadow-primary/10 transition-all duration-300">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{
+              backgroundImage:
+                "linear-gradient(120deg, rgba(99,102,241,0.18), rgba(168,85,247,0.12), rgba(59,130,246,0.12))",
+              backgroundSize: "200% 200%",
+              animation: "rf-gradient-pan 4.5s ease-in-out infinite alternate",
+            }}
+          />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <Building2 className="w-24 h-24 text-primary" />
           </div>
           <div className="relative z-10">
-            <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center shadow-lg shadow-primary/30">
+            <div className="w-12 h-12 mb-4 rounded-2xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center shadow-lg shadow-primary/25">
               <Building2 className="w-6 h-6 text-white" />
             </div>
             <p className="text-sm font-medium text-primary/80 uppercase tracking-widest">Total Restaurants</p>
             <h3 className="text-4xl font-bold text-foreground mt-1">{stats.totalRestaurants}</h3>
             <p className="text-sm text-muted-foreground mt-2">Registered partners</p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Pending Requests */}
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-amber-500/10 to-orange-600/5 border border-amber-500/20 shadow-lg hover:shadow-amber-500/10 transition-all duration-300 cursor-pointer" onClick={() => navigate("/admin/dashboard/requests")}>
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+          onClick={() => navigate("/admin/dashboard/requests")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/admin/dashboard/requests");
+          }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{
+              backgroundImage:
+                "linear-gradient(120deg, rgba(245,158,11,0.16), rgba(249,115,22,0.12), rgba(234,179,8,0.10))",
+              backgroundSize: "200% 200%",
+              animation: "rf-gradient-pan 4.5s ease-in-out infinite alternate",
+            }}
+          />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <Inbox className="w-24 h-24 text-amber-500" />
           </div>
@@ -116,10 +201,30 @@ const AdminDashboard = () => {
               Awaiting approval <ArrowRight className="w-3 h-3" />
             </p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Active Subscriptions */}
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-emerald-500/10 to-teal-600/5 border border-emerald-500/20 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+          onClick={() => navigate("/admin/dashboard/subscriptions")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/admin/dashboard/subscriptions");
+          }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{
+              backgroundImage:
+                "linear-gradient(120deg, rgba(16,185,129,0.14), rgba(20,184,166,0.10), rgba(34,197,94,0.10))",
+              backgroundSize: "200% 200%",
+              animation: "rf-gradient-pan 4.5s ease-in-out infinite alternate",
+            }}
+          />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <CreditCard className="w-24 h-24 text-emerald-500" />
           </div>
@@ -131,10 +236,30 @@ const AdminDashboard = () => {
             <h3 className="text-4xl font-bold text-foreground mt-1">{stats.activeSubscriptions}</h3>
             <p className="text-sm text-muted-foreground mt-2">Recurring revenue</p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Open Tickets */}
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-blue-500/10 to-indigo-600/5 border border-blue-500/20 shadow-lg hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer" onClick={() => navigate("/admin/dashboard/support")}>
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+          onClick={() => navigate("/admin/dashboard/support")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/admin/dashboard/support");
+          }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{
+              backgroundImage:
+                "linear-gradient(120deg, rgba(59,130,246,0.14), rgba(99,102,241,0.12), rgba(37,99,235,0.10))",
+              backgroundSize: "200% 200%",
+              animation: "rf-gradient-pan 4.5s ease-in-out infinite alternate",
+            }}
+          />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <HeadphonesIcon className="w-24 h-24 text-blue-500" />
           </div>
@@ -148,12 +273,15 @@ const AdminDashboard = () => {
               Needs attention <ArrowRight className="w-3 h-3" />
             </p>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         {/* Recent Requests */}
-        <div className="bg-card border border-border/50 rounded-3xl shadow-sm overflow-hidden flex flex-col h-full backdrop-blur-sm">
+        <motion.div
+          variants={fadeUp}
+          className="bg-card/80 backdrop-blur border border-border/50 rounded-3xl shadow-sm overflow-hidden flex flex-col h-full"
+        >
           <div className="p-6 border-b border-border/50 flex justify-between items-center bg-muted/20">
             <div>
               <h3 className="text-lg font-bold text-foreground">Recent Requests</h3>
@@ -168,15 +296,35 @@ const AdminDashboard = () => {
           </div>
           <div className="flex-1 p-2">
             {recentRequests.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
-                <Inbox className="w-10 h-10 mb-2 opacity-20" />
-                <p className="text-sm">No recent requests</p>
+              <div className="flex flex-col items-center justify-center h-52 text-muted-foreground">
+                <div className="w-16 h-16 rounded-3xl bg-primary/5 flex items-center justify-center border border-primary/10">
+                  <Inbox className="w-8 h-8 opacity-40 text-primary" />
+                </div>
+                <p className="text-sm font-medium mt-3">No recent requests</p>
+                <p className="text-xs text-muted-foreground/80 mt-1">You’re all caught up.</p>
               </div>
             ) : (
-              <div className="space-y-1">
+              <motion.div
+                variants={stagger}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "-80px" }}
+                className="space-y-1"
+              >
                 {recentRequests.map((req) => (
-                  <div key={req._id} className="group flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/4 flex items-center justify-center text-orange-600 shadow-sm">
+                  <motion.button
+                    type="button"
+                    key={req._id}
+                    variants={{
+                      hidden: { opacity: 0, y: 10 },
+                      show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: motionEase } },
+                    }}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => navigate("/admin/dashboard/requests")}
+                    className="w-full text-left group flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/4 flex items-center justify-center text-orange-600 shadow-sm border border-border/40">
                       <Building2 className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -185,8 +333,8 @@ const AdminDashboard = () => {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize border ${req.status === 'pending' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
-                          req.status === 'approved' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
-                            'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                        req.status === 'approved' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                          'bg-rose-500/10 text-rose-600 border-rose-500/20'
                         }`}>
                         {req.status}
                       </span>
@@ -194,15 +342,18 @@ const AdminDashboard = () => {
                         <Clock className="w-3 h-3" /> {formatTimeAgo(req.createdAt)}
                       </span>
                     </div>
-                  </div>
+                  </motion.button>
                 ))}
-              </div>
+              </motion.div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Recent Tickets */}
-        <div className="bg-card border border-border/50 rounded-3xl shadow-sm overflow-hidden flex flex-col h-full backdrop-blur-sm">
+        <motion.div
+          variants={fadeUp}
+          className="bg-card/80 backdrop-blur border border-border/50 rounded-3xl shadow-sm overflow-hidden flex flex-col h-full"
+        >
           <div className="p-6 border-b border-border/50 flex justify-between items-center bg-muted/20">
             <div>
               <h3 className="text-lg font-bold text-foreground">Recent Tickets</h3>
@@ -217,15 +368,35 @@ const AdminDashboard = () => {
           </div>
           <div className="flex-1 p-2">
             {recentTickets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
-                <HeadphonesIcon className="w-10 h-10 mb-2 opacity-20" />
-                <p className="text-sm">No recent tickets</p>
+              <div className="flex flex-col items-center justify-center h-52 text-muted-foreground">
+                <div className="w-16 h-16 rounded-3xl bg-primary/5 flex items-center justify-center border border-primary/10">
+                  <HeadphonesIcon className="w-8 h-8 opacity-40 text-primary" />
+                </div>
+                <p className="text-sm font-medium mt-3">No recent tickets</p>
+                <p className="text-xs text-muted-foreground/80 mt-1">Nothing needs attention right now.</p>
               </div>
             ) : (
-              <div className="space-y-1">
+              <motion.div
+                variants={stagger}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "-80px" }}
+                className="space-y-1"
+              >
                 {recentTickets.map((ticket) => (
-                  <div key={ticket._id} className="group flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/20 dark:to-blue-900/4 flex items-center justify-center text-indigo-600 shadow-sm">
+                  <motion.button
+                    type="button"
+                    key={ticket._id}
+                    variants={{
+                      hidden: { opacity: 0, y: 10 },
+                      show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: motionEase } },
+                    }}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => navigate("/admin/dashboard/support")}
+                    className="w-full text-left group flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/20 dark:to-blue-900/4 flex items-center justify-center text-indigo-600 shadow-sm border border-border/40">
                       <HeadphonesIcon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -237,8 +408,8 @@ const AdminDashboard = () => {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize border ${ticket.status === 'OPEN' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
-                          ticket.status === 'IN_PROGRESS' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
-                            'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                        ticket.status === 'IN_PROGRESS' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                          'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                         }`}>
                         {ticket.status.replace('_', ' ')}
                       </span>
@@ -246,13 +417,14 @@ const AdminDashboard = () => {
                         <Clock className="w-3 h-3" /> {formatTimeAgo(ticket.createdAt)}
                       </span>
                     </div>
-                  </div>
+                  </motion.button>
                 ))}
-              </div>
+              </motion.div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
+      </motion.div>
     </div>
   );
 };

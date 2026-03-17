@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { updateTicketStatus } from "../../utils/api";
+import { AnimatePresence, motion } from "framer-motion";
 import {
     Search, ExternalLink, MessageSquare,
     CheckCircle2, Clock, RefreshCw, Send, X, AlertCircle, AlertTriangle, Archive
@@ -13,6 +14,39 @@ const AdminSupportTickets = () => {
     const { tickets, setTickets, loading } = useAdminData();
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
+    const motionEase = [0.22, 1, 0.36, 1];
+
+    const fadeUp = {
+        hidden: { opacity: 0, y: 14 },
+        show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: motionEase } },
+    };
+
+    const stagger = {
+        hidden: {},
+        show: { transition: { staggerChildren: 0.08, delayChildren: 0.06 } },
+    };
+
+    const sheen = (colors) => ({
+        backgroundImage: colors,
+        backgroundSize: "200% 200%",
+        animation: "rf-gradient-pan 4.5s ease-in-out infinite alternate",
+    });
+
+    const backdropVariants = {
+        hidden: { opacity: 0, backdropFilter: "blur(0px)" },
+        visible: { opacity: 1, backdropFilter: "blur(10px)" },
+    };
+
+    const modalVariants = {
+        hidden: { opacity: 0, scale: 0.96, y: 12 },
+        visible: {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            transition: { type: "spring", stiffness: 320, damping: 26 },
+        },
+        exit: { opacity: 0, scale: 0.96, y: 12, transition: { duration: 0.18 } },
+    };
 
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [adminResponse, setAdminResponse] = useState("");
@@ -112,10 +146,26 @@ const AdminSupportTickets = () => {
     const closedCount = tickets.filter((t) => t.status === "CLOSED").length;
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+        <motion.div
+            className="space-y-6 animate-in fade-in duration-500 pb-20"
+            initial="hidden"
+            animate="show"
+            variants={stagger}
+        >
+            <style>{`
+              @keyframes rf-gradient-pan {
+                0% { background-position: 0% 50%; }
+                100% { background-position: 100% 50%; }
+              }
+            `}</style>
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-blue-500/10 to-indigo-600/5 border border-blue-500/20 shadow-lg hover:shadow-blue-500/10 transition-all duration-300">
+            <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <motion.div
+                    whileHover={{ y: -6 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                    className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+                >
+                    <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(59,130,246,0.14), rgba(99,102,241,0.12), rgba(37,99,235,0.10))")} />
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <MessageSquare className="w-20 h-20 text-blue-500" />
                     </div>
@@ -127,9 +177,14 @@ const AdminSupportTickets = () => {
                         <h3 className="text-4xl font-bold text-foreground mt-1">{openCount}</h3>
                         <p className="text-sm text-muted-foreground mt-2">Require attention</p>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-amber-500/10 to-orange-600/5 border border-amber-500/20 shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
+                <motion.div
+                    whileHover={{ y: -6 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                    className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+                >
+                    <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(245,158,11,0.16), rgba(249,115,22,0.12), rgba(234,179,8,0.10))")} />
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <Clock className="w-20 h-20 text-amber-500" />
                     </div>
@@ -141,9 +196,14 @@ const AdminSupportTickets = () => {
                         <h3 className="text-4xl font-bold text-foreground mt-1">{inProgressCount}</h3>
                         <p className="text-sm text-muted-foreground mt-2">Being handled</p>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-emerald-500/10 to-teal-600/5 border border-emerald-500/20 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+                <motion.div
+                    whileHover={{ y: -6 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                    className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+                >
+                    <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(16,185,129,0.14), rgba(20,184,166,0.10), rgba(34,197,94,0.10))")} />
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <CheckCircle2 className="w-20 h-20 text-emerald-500" />
                     </div>
@@ -155,9 +215,14 @@ const AdminSupportTickets = () => {
                         <h3 className="text-4xl font-bold text-foreground mt-1">{resolvedCount}</h3>
                         <p className="text-sm text-muted-foreground mt-2">Successfully closed</p>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-slate-500/10 to-gray-600/5 border border-slate-500/20 shadow-lg hover:shadow-slate-500/10 transition-all duration-300">
+                <motion.div
+                    whileHover={{ y: -6 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                    className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+                >
+                    <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(100,116,139,0.12), rgba(148,163,184,0.10), rgba(71,85,105,0.10))")} />
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <Archive className="w-20 h-20 text-slate-500" />
                     </div>
@@ -169,11 +234,11 @@ const AdminSupportTickets = () => {
                         <h3 className="text-4xl font-bold text-foreground mt-1">{closedCount}</h3>
                         <p className="text-sm text-muted-foreground mt-2">Past history</p>
                     </div>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
 
             {/* Control Bar */}
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-2 bg-muted/30 rounded-2xl backdrop-blur-sm border border-border/50">
+            <motion.div variants={fadeUp} className="flex flex-col md:flex-row gap-4 items-center justify-between p-2 bg-muted/30 rounded-2xl backdrop-blur-sm border border-border/50">
                 <div className="relative w-full md:w-96 group">
                     <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                         <Search className="w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -189,7 +254,8 @@ const AdminSupportTickets = () => {
 
                 <div className="flex flex-wrap gap-2 p-2 bg-card/50 rounded-xl border border-border/50 shadow-sm">
                         {["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"].map((status) => (
-                            <button
+                            <motion.button
+                                whileTap={{ scale: 0.98 }}
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
                                 className={`px-4 py-2.5 rounded-xl text-sm font-medium capitalize transition-all duration-300 border whitespace-nowrap ${statusFilter === status
@@ -198,13 +264,13 @@ const AdminSupportTickets = () => {
                                     }`}
                             >
                                 {status.toLowerCase().replace('_', ' ')}
-                            </button>
+                            </motion.button>
                         ))}
                 </div>
-            </div>
+            </motion.div>
 
             {/* Tickets List */}
-            <div className="space-y-4">
+            <motion.div variants={fadeUp} className="space-y-4">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <RefreshCw className="w-10 h-10 text-primary animate-spin mb-4" />
@@ -216,12 +282,19 @@ const AdminSupportTickets = () => {
                         <p className="text-muted-foreground font-medium">No tickets found</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-4">
+                    <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 gap-4">
                         {filteredTickets.map((ticket) => (
-                            <div
+                            <motion.div
                                 key={ticket._id}
-                                className="group relative bg-card border border-border/50 rounded-3xl p-5 hover:shadow-xl hover:border-primary/20 transition-all duration-300"
+                                variants={{
+                                    hidden: { opacity: 0, y: 12 },
+                                    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: motionEase } },
+                                }}
+                                whileHover={{ y: -4 }}
+                                transition={{ type: "spring", stiffness: 280, damping: 24 }}
+                                className="group relative bg-card/80 backdrop-blur border border-border/50 rounded-3xl p-5 hover:shadow-xl hover:border-primary/20 transition-all duration-300 overflow-hidden"
                             >
+                                <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(99,102,241,0.10), rgba(99,102,241,0.06), rgba(59,130,246,0.08))")} />
                                 <div className="absolute top-5 right-5">
                                     <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${getStatusBadge(ticket.status)}`}>
                                         <span className={`w-1.5 h-1.5 rounded-full ${ticket.status === 'OPEN' ? 'bg-blue-600' :
@@ -269,7 +342,8 @@ const AdminSupportTickets = () => {
                                             <span className="truncate">{ticket.restaurantId?.email}</span>
                                         </div>
 
-                                        <button
+                                        <motion.button
+                                            whileTap={{ scale: 0.98 }}
                                             onClick={() => {
                                                 setSelectedTicket(ticket);
                                                 setAdminResponse(ticket.adminResponse || "");
@@ -277,25 +351,35 @@ const AdminSupportTickets = () => {
                                             className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition-all hover:bg-primary/10 px-3 py-1.5 rounded-lg -ml-3"
                                         >
                                             View Details & Reply <ExternalLink className="w-3.5 h-3.5" />
-                                        </button>
+                                        </motion.button>
                                     </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
                 )}
-            </div>
+            </motion.div>
 
             {/* Ticket Management Modal */}
-            {selectedTicket && createPortal(
-                <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
-                    onClick={() => setSelectedTicket(null)}
-                >
-                    <div
-                        className="bg-background border border-border/50 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+            {createPortal(
+                <AnimatePresence>
+                    {selectedTicket && (
+                        <motion.div
+                            variants={backdropVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="hidden"
+                            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60"
+                            onClick={() => setSelectedTicket(null)}
+                        >
+                            <motion.div
+                                variants={modalVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                className="bg-background border border-border/50 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                         {/* Header */}
                         <div className="p-6 border-b border-border/50 bg-background/95 backdrop-blur flex justify-between items-start gap-4 sticky top-0 z-10">
                             <div>
@@ -398,11 +482,13 @@ const AdminSupportTickets = () => {
                                 </button>
                             </div>
                         </div>
-                    </div>
-                </div>,
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
                 document.body
             )}
-        </div>
+        </motion.div>
     );
 };
 

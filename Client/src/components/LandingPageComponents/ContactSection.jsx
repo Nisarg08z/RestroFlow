@@ -2,10 +2,12 @@ import { useState } from "react"
 import { Mail, Phone, MapPin, Send, CheckCircle, Loader2 } from "lucide-react"
 import { submitRestaurantRequest } from "../../utils/api"
 import toast from "react-hot-toast"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 
 const ContactSection = () => {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const reduceMotion = useReducedMotion()
   const [formData, setFormData] = useState({
     ownerName: "",
     restaurantName: "",
@@ -76,13 +78,25 @@ const ContactSection = () => {
   return (
     <section
       id="contact"
-      className="py-24 px-4 sm:px-6 lg:px-8 bg-background"
+      className="relative py-24 px-4 sm:px-6 lg:px-8 bg-background overflow-hidden"
     >
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-24 right-[-8rem] h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-24 left-[-8rem] h-72 w-72 rounded-full bg-secondary/70 blur-3xl" />
+      </div>
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16">
 
 
-          <div>
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={{
+              hidden: { opacity: 0, y: reduceMotion ? 0 : 12 },
+              show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+            }}
+          >
             <p className="text-primary font-medium mb-4">
               Get In Touch
             </p>
@@ -134,24 +148,47 @@ const ContactSection = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
 
-          <div className="bg-card border border-border rounded-2xl p-8">
-            {isSubmitted ? (
-              <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                  <CheckCircle className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">
-                  Message Sent!
-                </h3>
-                <p className="text-muted-foreground">
-                  We&apos;ll get back to you within 24 hours.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={{
+              hidden: { opacity: 0, y: reduceMotion ? 0 : 12 },
+              show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.05 } },
+            }}
+            className="bg-card/80 backdrop-blur border border-border/70 rounded-2xl p-8 shadow-sm"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {isSubmitted ? (
+                <motion.div
+                  key="submitted"
+                  className="h-full flex flex-col items-center justify-center text-center py-12"
+                  initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+                  animate={{ opacity: 1, y: 0, transition: { duration: 0.35 } }}
+                  exit={{ opacity: 0, y: reduceMotion ? 0 : -8, transition: { duration: 0.2 } }}
+                >
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 ring-1 ring-border/40">
+                    <CheckCircle className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                    Message Sent!
+                  </h3>
+                  <p className="text-muted-foreground">
+                    We&apos;ll get back to you within 24 hours.
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="form"
+                  onSubmit={handleSubmit}
+                  className="space-y-6"
+                  initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+                  animate={{ opacity: 1, y: 0, transition: { duration: 0.35 } }}
+                  exit={{ opacity: 0, y: reduceMotion ? 0 : -8, transition: { duration: 0.2 } }}
+                >
 
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -162,7 +199,7 @@ const ContactSection = () => {
                         setFormData({ ...formData, ownerName: e.target.value })
                       }
                       placeholder="Owner Name"
-                      className={`w-full px-4 py-3 rounded-lg bg-input border ${errors.ownerName ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
+                      className={`w-full px-4 py-3 rounded-lg bg-input/80 border ${errors.ownerName ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 transition`}
                     />
                     {errors.ownerName && <p className="text-red-500 text-xs mt-1">{errors.ownerName}</p>}
                   </div>
@@ -174,7 +211,7 @@ const ContactSection = () => {
                         setFormData({ ...formData, restaurantName: e.target.value })
                       }
                       placeholder="Restaurant Name"
-                      className={`w-full px-4 py-3 rounded-lg bg-input border ${errors.restaurantName ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
+                      className={`w-full px-4 py-3 rounded-lg bg-input/80 border ${errors.restaurantName ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 transition`}
                     />
                     {errors.restaurantName && <p className="text-red-500 text-xs mt-1">{errors.restaurantName}</p>}
                   </div>
@@ -189,7 +226,7 @@ const ContactSection = () => {
                       setFormData({ ...formData, email: e.target.value })
                     }
                     placeholder="Email Address"
-                    className={`w-full px-4 py-3 rounded-lg bg-input border ${errors.email ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
+                    className={`w-full px-4 py-3 rounded-lg bg-input/80 border ${errors.email ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 transition`}
                   />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                 </div>
@@ -202,7 +239,7 @@ const ContactSection = () => {
                       setFormData({ ...formData, phone: e.target.value })
                     }
                     placeholder="Phone Number"
-                    className={`w-full px-4 py-3 rounded-lg bg-input border ${errors.phone ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
+                    className={`w-full px-4 py-3 rounded-lg bg-input/80 border ${errors.phone ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 transition`}
                   />
                   {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                 </div>
@@ -216,7 +253,7 @@ const ContactSection = () => {
                       setFormData({ ...formData, message: e.target.value })
                     }
                     placeholder="Tell us about your restaurant..."
-                    className={`w-full px-4 py-3 rounded-lg bg-input border ${errors.message ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary`}
+                    className={`w-full px-4 py-3 rounded-lg bg-input/80 border ${errors.message ? 'border-red-500' : 'border-border'} text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 transition`}
                   />
                   {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
                 </div>
@@ -224,7 +261,7 @@ const ContactSection = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium bg-primary text-primary-foreground hover:opacity-90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium bg-primary text-primary-foreground hover:opacity-90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
                 >
                   {isLoading ? (
                     <>
@@ -238,9 +275,10 @@ const ContactSection = () => {
                     </>
                   )}
                 </button>
-              </form>
-            )}
-          </div>
+                </motion.form>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </div>
     </section>

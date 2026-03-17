@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Search,
   Building2,
@@ -27,6 +28,39 @@ import { useAdminData } from "../../context/AdminDataContext";
 
 const RestaurantStatus = () => {
   const { restaurants, loading, refreshRestaurants } = useAdminData();
+  const motionEase = [0.22, 1, 0.36, 1];
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 14 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: motionEase } },
+  };
+
+  const stagger = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.08, delayChildren: 0.06 } },
+  };
+
+  const sheen = (colors) => ({
+    backgroundImage: colors,
+    backgroundSize: "200% 200%",
+    animation: "rf-gradient-pan 4.5s ease-in-out infinite alternate",
+  });
+
+  const backdropVariants = {
+    hidden: { opacity: 0, backdropFilter: "blur(0px)" },
+    visible: { opacity: 1, backdropFilter: "blur(10px)" },
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.96, y: 12 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 320, damping: 26 },
+    },
+    exit: { opacity: 0, scale: 0.96, y: 12, transition: { duration: 0.18 } },
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showDropdown, setShowDropdown] = useState(null);
@@ -121,7 +155,9 @@ const RestaurantStatus = () => {
   const toggleDropdown = (restaurantId, event) => {
     event.stopPropagation();
 
-    if (showDropdown === restaurantId) {
+    const normalizedId = String(restaurantId ?? "");
+
+    if (showDropdown === normalizedId) {
       setShowDropdown(null);
       return;
     }
@@ -146,7 +182,7 @@ const RestaurantStatus = () => {
       left: left
     });
 
-    setShowDropdown(restaurantId);
+    setShowDropdown(normalizedId);
   };
 
   const filteredRestaurants = restaurants.filter((rest) => {
@@ -179,11 +215,27 @@ const RestaurantStatus = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+    <motion.div
+      className="space-y-8 animate-in fade-in duration-500 pb-20"
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+    >
+      <style>{`
+        @keyframes rf-gradient-pan {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
+        }
+      `}</style>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-emerald-500/10 to-green-600/5 border border-emerald-500/20 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+      <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(16,185,129,0.14), rgba(20,184,166,0.10), rgba(34,197,94,0.10))")} />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <CheckCircle2 className="w-24 h-24 text-emerald-500" />
           </div>
@@ -195,9 +247,14 @@ const RestaurantStatus = () => {
             <h3 className="text-4xl font-bold text-foreground mt-1">{activeCount}</h3>
             <p className="text-sm text-muted-foreground mt-2">Currently online</p>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-slate-500/10 to-gray-600/5 border border-slate-500/20 shadow-lg hover:shadow-slate-500/10 transition-all duration-300">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(100,116,139,0.12), rgba(148,163,184,0.10), rgba(71,85,105,0.10))")} />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <Clock className="w-24 h-24 text-slate-500" />
           </div>
@@ -209,9 +266,14 @@ const RestaurantStatus = () => {
             <h3 className="text-4xl font-bold text-foreground mt-1">{inactiveCount}</h3>
             <p className="text-sm text-muted-foreground mt-2">Offline or idle</p>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-rose-500/10 to-red-600/5 border border-rose-500/20 shadow-lg hover:shadow-rose-500/10 transition-all duration-300">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(244,63,94,0.14), rgba(239,68,68,0.10), rgba(248,113,113,0.10))")} />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <XCircle className="w-24 h-24 text-rose-500" />
           </div>
@@ -223,11 +285,11 @@ const RestaurantStatus = () => {
             <h3 className="text-4xl font-bold text-foreground mt-1">{suspendedCount}</h3>
             <p className="text-sm text-muted-foreground mt-2">Blocked access</p>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Control Bar */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-2 bg-muted/30 rounded-2xl backdrop-blur-sm border border-border/50">
+      <motion.div variants={fadeUp} className="flex flex-col md:flex-row gap-4 items-center justify-between p-2 bg-muted/30 rounded-2xl backdrop-blur-sm border border-border/50">
         <div className="relative w-full md:w-96 group">
           <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
             <Search className="w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -243,7 +305,8 @@ const RestaurantStatus = () => {
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <div className="flex flex-wrap gap-2 p-2 bg-card/50 rounded-xl border border-border/50 shadow-sm">
             {["all", "active", "inactive", "suspended"].map((status) => (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.98 }}
                 key={status}
                 onClick={() => setStatusFilter(status)}
                 className={`px-4 py-2.5 rounded-xl text-sm font-medium capitalize transition-all duration-300 border whitespace-nowrap ${statusFilter === status
@@ -252,14 +315,14 @@ const RestaurantStatus = () => {
                   }`}
               >
                 {status}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Restaurants List */}
-      <div className="space-y-4">
+      <motion.div variants={fadeUp} className="space-y-4">
         <div className="flex items-center gap-2 px-2">
           <h2 className="text-lg font-semibold text-foreground">Restaurants Listing</h2>
           <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold">
@@ -296,11 +359,17 @@ const RestaurantStatus = () => {
                     No restaurants found matching your criteria
                   </td>
                 </tr>
-              ) : filteredRestaurants.map((restaurant) => {
+              ) : filteredRestaurants.map((restaurant, idx) => {
                 const status = getRestaurantStatus(restaurant);
                 const totalTables = getTotalTables(restaurant);
                 return (
-                  <tr key={restaurant._id} className="group hover:bg-muted/30 transition-colors">
+                  <motion.tr
+                    key={restaurant._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: Math.min(idx * 0.03, 0.25), ease: motionEase }}
+                    className="group hover:bg-muted/30 transition-colors"
+                  >
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${status === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
@@ -349,7 +418,7 @@ const RestaurantStatus = () => {
                         </button>
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 );
               })}
             </tbody>
@@ -357,7 +426,7 @@ const RestaurantStatus = () => {
         </div>
 
         {/* Mobile List Style */}
-        <div className="block md:hidden space-y-4">
+        <motion.div variants={stagger} initial="hidden" animate="show" className="block md:hidden space-y-4">
           {loading ? (
             <div className="py-12 text-center text-muted-foreground">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-primary" />
@@ -370,7 +439,16 @@ const RestaurantStatus = () => {
           ) : filteredRestaurants.map((restaurant) => {
             const status = getRestaurantStatus(restaurant);
             return (
-              <div key={restaurant._id} className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+              <motion.div
+                key={restaurant._id}
+                variants={{
+                  hidden: { opacity: 0, y: 12 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: motionEase } },
+                }}
+                whileHover={{ y: -3 }}
+                transition={{ type: "spring", stiffness: 280, damping: 24 }}
+                className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm relative overflow-hidden"
+              >
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${status === 'active' ? 'bg-emerald-500' :
                     status === 'suspended' ? 'bg-rose-500' :
                       'bg-slate-500'
@@ -408,27 +486,41 @@ const RestaurantStatus = () => {
                     <Calendar className="w-3.5 h-3.5" /> {restaurant.createdAt ? new Date(restaurant.createdAt).toLocaleDateString() : "N/A"}
                   </span>
                 </div>
-              </div>
+              </motion.div>
             )
           })}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Dropdown Menu */}
-      {showDropdown && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(null)}></div>
-          <div
-            className="fixed z-50 w-44 bg-popover/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-            style={{
-              top: dropdownCoords.top,
-              left: dropdownCoords.left
-            }}
-          >
+      <AnimatePresence>
+        {showDropdown && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40"
+              onClick={() => setShowDropdown(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 420, damping: 28 }}
+              className="fixed z-50 w-44 bg-popover/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl overflow-hidden"
+              style={{
+                top: dropdownCoords.top,
+                left: dropdownCoords.left
+              }}
+            >
             <div className="p-1 space-y-0.5">
               <button
                 onClick={() => {
-                  handleViewDetails(restaurants.find(r => (r._id || r.id) === showDropdown));
+                  const target = restaurants.find(
+                    (r) => String(r._id ?? r.id ?? "") === String(showDropdown)
+                  );
+                  if (target) handleViewDetails(target);
                   setShowDropdown(null);
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
@@ -438,7 +530,9 @@ const RestaurantStatus = () => {
               </button>
 
               {(() => {
-                const restaurant = restaurants.find(r => (r._id || r.id) === showDropdown);
+                const restaurant = restaurants.find(
+                  (r) => String(r._id ?? r.id ?? "") === String(showDropdown)
+                );
                 if (!restaurant) return null;
                 const status = getRestaurantStatus(restaurant);
                 return (
@@ -460,7 +554,10 @@ const RestaurantStatus = () => {
               <div className="my-1 border-t border-border/50"></div>
               <button
                 onClick={() => {
-                  setSelectedRestaurant(restaurants.find(r => (r._id || r.id) === showDropdown));
+                  const target = restaurants.find(
+                    (r) => String(r._id ?? r.id ?? "") === String(showDropdown)
+                  );
+                  setSelectedRestaurant(target || null);
                   setShowDeleteModal(true);
                   setShowDropdown(null);
                 }}
@@ -470,180 +567,205 @@ const RestaurantStatus = () => {
                 Delete
               </button>
             </div>
-          </div>
-        </>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
-      {/* Details Modal */}
-      {showDetailsModal && selectedRestaurant && createPortal(
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300"
-          onClick={() => setShowDetailsModal(false)}
-        >
-          <div
-            className="bg-background border border-border/50 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-6 py-4 border-b border-border/50 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-foreground">{selectedRestaurant.restaurantName}</h2>
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    ID: {selectedRestaurant._id}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="p-2 rounded-full hover:bg-muted transition-colors"
+      {/* Details Modal (portal-safe AnimatePresence) */}
+      {createPortal(
+        <AnimatePresence>
+          {showDetailsModal && selectedRestaurant && (
+            <motion.div
+              variants={backdropVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4"
+              onClick={() => setShowDetailsModal(false)}
+            >
+              <motion.div
+                variants={modalVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="bg-background border border-border/50 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
               >
-                <X className="w-6 h-6 text-muted-foreground" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 md:p-8">
-              {detailsLoading ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                  <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                  <p className="mt-4 text-muted-foreground">Loading details...</p>
-                </div>
-              ) : restaurantDetails ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                    <div className="bg-muted/30 p-5 rounded-2xl border border-border/50">
-                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <Building2 className="w-5 h-5 text-primary" />
-                        Basic Info
-                      </h3>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Owner</p>
-                            <p className="font-medium mt-0.5">{restaurantDetails.ownerName}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Joined</p>
-                            <p className="font-medium mt-0.5">{formatDate(restaurantDetails.createdAt)}</p>
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Email</p>
-                          <p className="font-medium mt-0.5 flex items-center gap-2">
-                            <Mail className="w-3.5 h-3.5" />
-                            {restaurantDetails.email}
-                          </p>
-                        </div>
-                        <div className="flex gap-4">
-                          <div className="flex-1">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Phone</p>
-                            <p className="font-medium mt-0.5">{restaurantDetails.phone || "N/A"}</p>
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">GST</p>
-                            <p className="font-medium mt-0.5">{restaurantDetails.gstNumber || "N/A"}</p>
-                          </div>
-                        </div>
-                      </div>
+                {/* Modal Header */}
+                <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-6 py-4 border-b border-border/50 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                      <Building2 className="w-6 h-6 text-primary" />
                     </div>
-
-                    {restaurantDetails.subscription && (
-                      <div className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 p-5 rounded-2xl border border-indigo-500/10">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
-                          <DollarSign className="w-5 h-5" />
-                          Subscription
-                        </h3>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium text-muted-foreground">Price/Month</span>
-                            <span className="text-lg font-bold">₹{restaurantDetails.subscription.pricePerMonth}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium text-muted-foreground">Status</span>
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${restaurantDetails.subscription.isActive
-                                ? "bg-green-500/10 text-green-600"
-                                : "bg-gray-500/10 text-gray-600"
-                              }`}>
-                              {restaurantDetails.subscription.isActive ? "ACTIVE" : "INACTIVE"}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="bg-background/50 p-2 rounded-lg">
-                              <p className="text-xs text-muted-foreground">Start Date</p>
-                              <p className="font-medium">{formatDate(restaurantDetails.subscription.startDate)}</p>
-                            </div>
-                            <div className="bg-background/50 p-2 rounded-lg">
-                              <p className="text-xs text-muted-foreground">End Date</p>
-                              <p className="font-medium">{formatDate(restaurantDetails.subscription.endDate)}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    <div>
+                      <h2 className="text-xl font-bold text-foreground">{selectedRestaurant.restaurantName}</h2>
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        ID: {selectedRestaurant._id ?? selectedRestaurant.id ?? "N/A"}
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => setShowDetailsModal(false)}
+                    className="p-2 rounded-full hover:bg-muted transition-colors"
+                  >
+                    <X className="w-6 h-6 text-muted-foreground" />
+                  </button>
+                </div>
 
-                  <div className="space-y-6">
-                    <div className="bg-muted/30 p-5 rounded-2xl border border-border/50 h-full">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                          <MapPin className="w-5 h-5 text-primary" />
-                          Locations
-                        </h3>
-                        <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded-lg">
-                          {getTotalTables(restaurantDetails)} Tables Total
-                        </span>
-                      </div>
-
-                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        {restaurantDetails.locations?.length > 0 ? (
-                          restaurantDetails.locations.map((loc, idx) => (
-                            <div key={idx} className="bg-card p-4 rounded-xl border border-border shadow-sm">
-                              <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-semibold">{loc.locationName}</h4>
-                                <span className="text-xs bg-muted px-2 py-1 rounded-md font-medium">
-                                  {loc.totalTables} tables
-                                </span>
+                {/* Modal Body */}
+                <div className="p-6 md:p-8">
+                  {detailsLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                      <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                      <p className="mt-4 text-muted-foreground">Loading details...</p>
+                    </div>
+                  ) : restaurantDetails ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-6">
+                        <div className="bg-muted/30 p-5 rounded-2xl border border-border/50">
+                          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-primary" />
+                            Basic Info
+                          </h3>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Owner</p>
+                                <p className="font-medium mt-0.5">{restaurantDetails.ownerName}</p>
                               </div>
-                              <p className="text-sm text-muted-foreground flex items-start gap-1.5">
-                                <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                                {loc.address}, {loc.city}, {loc.state} - {loc.zipCode}
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Joined</p>
+                                <p className="font-medium mt-0.5">{formatDate(restaurantDetails.createdAt)}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Email</p>
+                              <p className="font-medium mt-0.5 flex items-center gap-2">
+                                <Mail className="w-3.5 h-3.5" />
+                                {restaurantDetails.email}
                               </p>
                             </div>
-                          ))
-                        ) : (
-                          <div className="text-center py-10 text-muted-foreground">
-                            No locations found
+                            <div className="flex gap-4">
+                              <div className="flex-1">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Phone</p>
+                                <p className="font-medium mt-0.5">{restaurantDetails.phone || "N/A"}</p>
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">GST</p>
+                                <p className="font-medium mt-0.5">{restaurantDetails.gstNumber || "N/A"}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {restaurantDetails.subscription && (
+                          <div className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 p-5 rounded-2xl border border-indigo-500/10">
+                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
+                              <DollarSign className="w-5 h-5" />
+                              Subscription
+                            </h3>
+                            <div className="space-y-4">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium text-muted-foreground">Price/Month</span>
+                                <span className="text-lg font-bold">₹{restaurantDetails.subscription.pricePerMonth}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium text-muted-foreground">Status</span>
+                                <span
+                                  className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${restaurantDetails.subscription.isActive
+                                    ? "bg-green-500/10 text-green-600"
+                                    : "bg-gray-500/10 text-gray-600"
+                                    }`}
+                                >
+                                  {restaurantDetails.subscription.isActive ? "ACTIVE" : "INACTIVE"}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div className="bg-background/50 p-2 rounded-lg">
+                                  <p className="text-xs text-muted-foreground">Start Date</p>
+                                  <p className="font-medium">{formatDate(restaurantDetails.subscription.startDate)}</p>
+                                </div>
+                                <div className="bg-background/50 p-2 rounded-lg">
+                                  <p className="text-xs text-muted-foreground">End Date</p>
+                                  <p className="font-medium">{formatDate(restaurantDetails.subscription.endDate)}</p>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
+
+                      <div className="space-y-6">
+                        <div className="bg-muted/30 p-5 rounded-2xl border border-border/50 h-full">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                              <MapPin className="w-5 h-5 text-primary" />
+                              Locations
+                            </h3>
+                            <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded-lg">
+                              {getTotalTables(restaurantDetails)} Tables Total
+                            </span>
+                          </div>
+
+                          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                            {restaurantDetails.locations?.length > 0 ? (
+                              restaurantDetails.locations.map((loc, idx) => (
+                                <div key={idx} className="bg-card p-4 rounded-xl border border-border shadow-sm">
+                                  <div className="flex justify-between items-start mb-2">
+                                    <h4 className="font-semibold">{loc.locationName}</h4>
+                                    <span className="text-xs bg-muted px-2 py-1 rounded-md font-medium">
+                                      {loc.totalTables} tables
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground flex items-start gap-1.5">
+                                    <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                                    {loc.address}, {loc.city}, {loc.state} - {loc.zipCode}
+                                  </p>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-center py-10 text-muted-foreground">
+                                No locations found
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="text-center text-rose-500">
+                      Failed to load details.
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-center text-rose-500">
-                  Failed to load details.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>,
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
         document.body
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedRestaurant && createPortal(
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300"
-          onClick={() => setShowDeleteModal(false)}
-        >
-          <div
-            className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+      {/* Delete Confirmation Modal (portal-safe AnimatePresence) */}
+      {createPortal(
+        <AnimatePresence>
+          {showDeleteModal && selectedRestaurant && (
+            <motion.div
+              variants={backdropVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="fixed inset-0 bg-black/60 flex items-center justify-center z-[200] p-4"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              <motion.div
+                variants={modalVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
             <div className="p-6 text-center">
               <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Trash2 className="w-8 h-8" />
@@ -671,11 +793,13 @@ const RestaurantStatus = () => {
                 </button>
               </div>
             </div>
-          </div>
-        </div>,
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
         document.body
       )}
-    </div>
+    </motion.div>
   );
 };
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { io } from "socket.io-client";
+import { motion } from "framer-motion";
 import {
   Search,
   Building2,
@@ -24,9 +25,28 @@ import { useAdminData } from "../../context/AdminDataContext";
 
 const RestaurantRequests = () => {
   const { requests, setRequests, loading: contextLoading } = useAdminData();
+  const motionEase = [0.22, 1, 0.36, 1];
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 14 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: motionEase } },
+  };
+
+  const stagger = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.08, delayChildren: 0.06 } },
+  };
+
+  const sheen = (colors) => ({
+    backgroundImage: colors,
+    backgroundSize: "200% 200%",
+    animation: "rf-gradient-pan 4.5s ease-in-out infinite alternate",
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showReply, setShowReply] = useState(false);
@@ -108,11 +128,41 @@ const RestaurantRequests = () => {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
+  // Ensure requests are available even if context didn't prefetch.
+  useEffect(() => {
+    if (contextLoading) return;
+    if (searchQuery.trim()) return;
+    if (requests.length > 0) return;
+
+    let cancelled = false;
+    setInitialLoading(true);
+    getAllRestaurantRequests({})
+      .then((response) => {
+        if (cancelled) return;
+        setRequests(response.data?.data || []);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        toast.error("Failed to load requests");
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setInitialLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [contextLoading, requests.length, searchQuery, setRequests]);
+
   const displayRequests = searchQuery.trim() ? (searchResults ?? requests) : requests;
   const filteredRequests = displayRequests.filter(
     (req) => filter === "all" || req.status === filter
   );
-  const isLoading = contextLoading || (searchQuery.trim() ? searchLoading : false);
+  const isLoading =
+    contextLoading ||
+    initialLoading ||
+    (searchQuery.trim() ? searchLoading : false);
 
   const handleApprove = async (id) => {
     setProcessingRequestId(id);
@@ -186,11 +236,27 @@ const RestaurantRequests = () => {
   const pendingCount = requests.filter((r) => r.status === "pending").length;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <motion.div
+      className="space-y-8 animate-in fade-in duration-500"
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+    >
+      <style>{`
+        @keyframes rf-gradient-pan {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
+        }
+      `}</style>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-amber-500/10 to-orange-600/5 border border-amber-500/20 shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
+      <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(245,158,11,0.16), rgba(249,115,22,0.12), rgba(234,179,8,0.10))")} />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <Building2 className="w-24 h-24 text-amber-500" />
           </div>
@@ -201,9 +267,14 @@ const RestaurantRequests = () => {
             <p className="text-sm font-medium text-amber-600/80 uppercase tracking-widest">Pending</p>
             <h3 className="text-4xl font-bold text-foreground mt-1">{pendingCount}</h3>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-emerald-500/10 to-green-600/5 border border-emerald-500/20 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(16,185,129,0.14), rgba(20,184,166,0.10), rgba(34,197,94,0.10))")} />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <Check className="w-24 h-24 text-emerald-500" />
           </div>
@@ -214,9 +285,14 @@ const RestaurantRequests = () => {
             <p className="text-sm font-medium text-emerald-600/80 uppercase tracking-widest">Approved</p>
             <h3 className="text-4xl font-bold text-foreground mt-1">{requests.filter((r) => r.status === "approved").length}</h3>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-rose-500/10 to-red-600/5 border border-rose-500/20 shadow-lg hover:shadow-rose-500/10 transition-all duration-300">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(244,63,94,0.14), rgba(239,68,68,0.10), rgba(248,113,113,0.10))")} />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <X className="w-24 h-24 text-rose-500" />
           </div>
@@ -227,11 +303,14 @@ const RestaurantRequests = () => {
             <p className="text-sm font-medium text-rose-600/80 uppercase tracking-widest">Rejected</p>
             <h3 className="text-4xl font-bold text-foreground mt-1">{requests.filter((r) => r.status === "rejected").length}</h3>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Control Bar */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-2 bg-muted/30 rounded-2xl backdrop-blur-sm border border-border/50">
+      <motion.div
+        variants={fadeUp}
+        className="flex flex-col md:flex-row gap-4 items-center justify-between p-2 bg-muted/30 rounded-2xl backdrop-blur-sm border border-border/50"
+      >
         <div className="relative w-full md:w-96 group">
           <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
             <Search className="w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -246,7 +325,8 @@ const RestaurantRequests = () => {
 
         <div className="flex flex-wrap gap-2 p-2 bg-card/50 rounded-xl border border-border/50 shadow-sm">
           {["all", "pending", "approved", "rejected", "completed"].map((status) => (
-            <button
+            <motion.button
+              whileTap={{ scale: 0.98 }}
               key={status}
               onClick={() => setFilter(status)}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium capitalize transition-all duration-300 border whitespace-nowrap ${filter === status
@@ -255,13 +335,13 @@ const RestaurantRequests = () => {
                 }`}
             >
               {status}
-            </button>
+            </motion.button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Requests Grid */}
-      <div className="space-y-4">
+      <motion.div variants={fadeUp} className="space-y-4">
         <div className="flex items-center gap-2 px-2">
           <h2 className="text-lg font-semibold text-foreground">All Requests</h2>
           <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold">
@@ -283,15 +363,27 @@ const RestaurantRequests = () => {
             <p className="text-muted-foreground">Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 gap-4"
+          >
             {filteredRequests.map((request) => (
-              <div
+              <motion.div
                 key={request._id}
+                variants={{
+                  hidden: { opacity: 0, y: 12 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: motionEase } },
+                }}
+                whileHover={{ y: -4 }}
+                transition={{ type: "spring", stiffness: 280, damping: 24 }}
                 className={`group relative overflow-hidden bg-card/80 backdrop-blur-sm border rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${processingRequestId === request._id
                   ? "border-blue-500/50 bg-blue-500/5 ring-1 ring-blue-500/20"
                   : "border-border/50 hover:border-primary/30"
                   }`}
               >
+                <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(99,102,241,0.10), rgba(99,102,241,0.06), rgba(59,130,246,0.08))")} />
                 <div className="p-5 md:p-6 flex flex-col md:flex-row gap-6 items-start md:items-center">
                   {/* Status Indicator Bar */}
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${request.status === 'pending' ? 'bg-amber-500' :
@@ -352,40 +444,43 @@ const RestaurantRequests = () => {
                   </div>
 
                   <div className="flex items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => { setSelectedRequest(request); setShowDetails(true); }}
                       disabled={processingRequestId === request._id}
                       className="flex-1 md:flex-none px-4 py-2.5 rounded-xl border border-border/50 bg-background hover:bg-muted text-sm font-medium transition-all shadow-sm hover:shadow active:scale-95 flex items-center justify-center gap-2"
                     >
                       <Eye className="w-4 h-4" />
                       View
-                    </button>
+                    </motion.button>
 
                     {request.status === "pending" && processingRequestId !== request._id && (
                       <div className="flex gap-2">
-                        <button
+                        <motion.button
+                          whileTap={{ scale: 0.98 }}
                           onClick={() => handleApprove(request._id)}
                           className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white border border-emerald-100 transition-all shadow-sm hover:shadow-emerald-500/25 active:scale-95"
                           title="Approve"
                         >
                           <Check className="w-4 h-4" />
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                          whileTap={{ scale: 0.98 }}
                           onClick={() => handleReject(request._id)}
                           className="p-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-100 transition-all shadow-sm hover:shadow-rose-500/25 active:scale-95"
                           title="Reject"
                         >
                           <X className="w-4 h-4" />
-                        </button>
+                        </motion.button>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       {/* Details Modal */}
       {showDetails && selectedRequest && createPortal(
@@ -554,7 +649,7 @@ const RestaurantRequests = () => {
         </div>,
         document.body
       )}
-    </div>
+    </motion.div>
   );
 };
 

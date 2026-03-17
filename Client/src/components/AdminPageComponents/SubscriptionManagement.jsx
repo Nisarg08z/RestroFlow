@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Search,
   CreditCard,
@@ -52,6 +53,39 @@ const SubscriptionManagement = () => {
     loading,
     refreshSubscriptions,
   } = useAdminData();
+  const motionEase = [0.22, 1, 0.36, 1];
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 14 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: motionEase } },
+  };
+
+  const stagger = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.08, delayChildren: 0.06 } },
+  };
+
+  const sheen = (colors) => ({
+    backgroundImage: colors,
+    backgroundSize: "200% 200%",
+    animation: "rf-gradient-pan 4.5s ease-in-out infinite alternate",
+  });
+
+  const backdropVariants = {
+    hidden: { opacity: 0, backdropFilter: "blur(0px)" },
+    visible: { opacity: 1, backdropFilter: "blur(10px)" },
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.96, y: 12 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 320, damping: 26 },
+    },
+    exit: { opacity: 0, scale: 0.96, y: 12, transition: { duration: 0.18 } },
+  };
   const [updating, setUpdating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSub, setSelectedSub] = useState(null);
@@ -309,52 +343,76 @@ const SubscriptionManagement = () => {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+    <motion.div
+      className="space-y-6 animate-in fade-in duration-500 pb-20"
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+    >
+      <style>{`
+        @keyframes rf-gradient-pan {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
+        }
+        @keyframes shrink {
+          from { transform: scaleX(1); }
+          to { transform: scaleX(0); }
+        }
+      `}</style>
 
       {/* Toast Notification */}
-      {emailNotification && createPortal(
-        <div className="fixed bottom-6 right-4 sm:right-6 z-[120] w-full max-w-sm animate-in slide-in-from-right-10 duration-500 fade-in">
-          <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-background/80 p-5 shadow-2xl backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-            {/* Glow Effect */}
-            <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl"></div>
-            <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-purple-500/20 blur-3xl"></div>
+      {createPortal(
+        <AnimatePresence>
+          {emailNotification && (
+            <motion.div
+              initial={{ opacity: 0, x: 18, y: 6, scale: 0.98 }}
+              animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 18, y: 6, scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 320, damping: 26 }}
+              className="fixed bottom-6 right-4 sm:right-6 z-[200] w-full max-w-sm"
+            >
+              <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-background/80 p-5 shadow-2xl backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+                <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl" />
+                <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-purple-500/20 blur-3xl" />
 
-            <div className="relative flex items-start gap-4">
-              <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
-                <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 transition-opacity hover:opacity-100"></div>
-                <CreditCard className="h-6 w-6" />
-              </div>
+                <div className="relative flex items-start gap-4">
+                  <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                    <CreditCard className="h-6 w-6" />
+                  </div>
 
-              <div className="flex-1 pt-0.5">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-base font-bold text-foreground">Invoice Sent! 🚀</h4>
-                  <button
-                    onClick={() => setEmailNotification(null)}
-                    className="ml-2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                  <div className="flex-1 pt-0.5">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-base font-bold text-foreground">Invoice sent</h4>
+                      <button
+                        onClick={() => setEmailNotification(null)}
+                        className="ml-2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        aria-label="Dismiss"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                      Payment link ({emailNotification.amount}) sent to{" "}
+                      <span className="font-semibold text-foreground">{emailNotification.restaurantName}</span>.
+                    </p>
+
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-500/10 px-2 py-1 text-xs font-bold text-blue-600">
+                        <CheckCircle2 className="h-3 w-3" /> Sent
+                      </span>
+                      <span className="text-xs text-muted-foreground">Just now</span>
+                    </div>
+                  </div>
                 </div>
 
-                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                  Payment link ({emailNotification.amount}) has been sent to <span className="font-semibold text-foreground">{emailNotification.restaurantName}</span>.
-                </p>
-
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-500/10 px-2 py-1 text-xs font-bold text-blue-600">
-                    <CheckCircle2 className="h-3 w-3" /> Sent Details
-                  </span>
-                  <span className="text-xs text-muted-foreground">Just now</span>
+                <div className="absolute bottom-0 left-0 h-1 w-full bg-muted/50">
+                  <div className="h-full w-full origin-left animate-[shrink_5s_linear_forwards] bg-gradient-to-r from-blue-500 to-indigo-600" />
                 </div>
               </div>
-            </div>
-
-            {/* Progress Bar (Optional visual) */}
-            <div className="absolute bottom-0 left-0 h-1 w-full bg-muted/50">
-              <div className="h-full w-full origin-left animate-[shrink_5s_linear_forwards] bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-            </div>
-          </div>
-        </div>,
+            </motion.div>
+          )}
+        </AnimatePresence>,
         document.body
       )}
 
@@ -366,8 +424,13 @@ const SubscriptionManagement = () => {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-emerald-500/10 to-teal-600/5 border border-emerald-500/20 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
+      <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(16,185,129,0.14), rgba(20,184,166,0.10), rgba(34,197,94,0.10))")} />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <DollarSign className="w-20 h-20 text-emerald-500" />
           </div>
@@ -379,9 +442,14 @@ const SubscriptionManagement = () => {
               <span>Current MRR</span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-blue-500/10 to-indigo-600/5 border border-blue-500/20 shadow-lg hover:shadow-blue-500/10 transition-all duration-300">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(59,130,246,0.14), rgba(99,102,241,0.12), rgba(37,99,235,0.10))")} />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <CreditCard className="w-20 h-20 text-blue-500" />
           </div>
@@ -393,9 +461,14 @@ const SubscriptionManagement = () => {
               <span>Live Restaurants</span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-amber-500/10 to-orange-600/5 border border-amber-500/20 shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(245,158,11,0.16), rgba(249,115,22,0.12), rgba(234,179,8,0.10))")} />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <AlertCircle className="w-20 h-20 text-amber-500" />
           </div>
@@ -407,9 +480,14 @@ const SubscriptionManagement = () => {
               <span>Need Renewal</span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative overflow-hidden group rounded-3xl p-6 bg-gradient-to-br from-rose-500/10 to-red-600/5 border border-rose-500/20 shadow-lg hover:shadow-rose-500/10 transition-all duration-300">
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+          className="relative overflow-hidden group rounded-3xl p-6 bg-card/70 backdrop-blur border border-border/60 shadow-sm hover:shadow-lg transition-all duration-300"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={sheen("linear-gradient(120deg, rgba(244,63,94,0.14), rgba(239,68,68,0.10), rgba(248,113,113,0.10))")} />
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <X className="w-20 h-20 text-rose-500" />
           </div>
@@ -421,11 +499,11 @@ const SubscriptionManagement = () => {
               <span>Inactive</span>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Features Overview */}
-      <div className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 md:p-8 relative overflow-hidden">
+      <motion.div variants={fadeUp} className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 md:p-8 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/50 to-transparent"></div>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
@@ -444,10 +522,10 @@ const SubscriptionManagement = () => {
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Search Bar */}
-      <div className="flex items-center gap-4 bg-muted/30 p-2 rounded-2xl border border-border/50 backdrop-blur-sm">
+      <motion.div variants={fadeUp} className="flex items-center gap-4 bg-muted/30 p-2 rounded-2xl border border-border/50 backdrop-blur-sm">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
@@ -457,10 +535,10 @@ const SubscriptionManagement = () => {
             className="w-full pl-12 pr-4 py-3 bg-card/60 border border-border/30 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all outline-none"
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* Subscriptions Table - Desktop View */}
-      <div className="hidden md:block bg-card/80 backdrop-blur-sm border border-border/50 rounded-3xl overflow-hidden shadow-xl">
+      <motion.div variants={fadeUp} className="hidden md:block bg-card/80 backdrop-blur-sm border border-border/50 rounded-3xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -484,8 +562,14 @@ const SubscriptionManagement = () => {
                   </td>
                 </tr>
               ) : (
-                filteredSubs.map(sub => (
-                  <tr key={sub.id} className="group hover:bg-muted/30 transition-colors">
+                filteredSubs.map((sub, idx) => (
+                  <motion.tr
+                    key={sub.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: Math.min(idx * 0.03, 0.25), ease: motionEase }}
+                    className="group hover:bg-muted/30 transition-colors"
+                  >
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -554,16 +638,16 @@ const SubscriptionManagement = () => {
                         )}
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </motion.div>
 
       {/* Mobile Card View */}
-      <div className="grid grid-cols-1 gap-4 md:hidden">
+      <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 gap-4 md:hidden">
         {filteredSubs.length === 0 ? (
           <div className="py-12 text-center text-muted-foreground bg-card/50 rounded-3xl border border-dashed border-border">
             <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -573,7 +657,16 @@ const SubscriptionManagement = () => {
           </div>
         ) : (
           filteredSubs.map(sub => (
-            <div key={sub.id} className="bg-card border border-border/50 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all">
+            <motion.div
+              key={sub.id}
+              variants={{
+                hidden: { opacity: 0, y: 12 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: motionEase } },
+              }}
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 280, damping: 24 }}
+              className="bg-card border border-border/50 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all"
+            >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm">
@@ -625,19 +718,31 @@ const SubscriptionManagement = () => {
                   </button>
                 )}
               </div>
-            </div>
+            </motion.div>
           ))
         )}
-      </div>
+      </motion.div>
 
       {/* Edit Modal */}
-      {showEdit && createPortal(
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300"
-          onClick={() => { setShowEdit(false); setError(null); }}
-        >
-          <div className="bg-background border border-border rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
+      {createPortal(
+        <AnimatePresence>
+          {showEdit && (
+            <motion.div
+              variants={backdropVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="fixed inset-0 bg-black/60 flex items-center justify-center z-[200] p-4"
+              onClick={() => { setShowEdit(false); setError(null); }}
+            >
+              <motion.div
+                variants={modalVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="bg-background border border-border rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
             <div className="px-6 py-4 border-b border-border/50 flex justify-between items-center sticky top-0 bg-background/95 backdrop-blur z-10">
               <div>
                 <h2 className="text-xl font-bold text-foreground">Manage Subscription</h2>
@@ -795,11 +900,13 @@ const SubscriptionManagement = () => {
                 Save Changes
               </button>
             </div>
-          </div>
-        </div>,
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
         document.body
       )}
-    </div>
+    </motion.div>
   );
 };
 

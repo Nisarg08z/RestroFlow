@@ -9,8 +9,11 @@ import {
   Shield,
   Zap,
 } from "lucide-react"
+import { motion, useReducedMotion } from "framer-motion"
 
 const FeaturesSection = () => {
+  const reduceMotion = useReducedMotion()
+
   const features = [
     {
       icon: QrCode,
@@ -71,10 +74,23 @@ const FeaturesSection = () => {
   return (
     <section
       id="features"
-      className="py-24 px-4 sm:px-6 lg:px-8 bg-secondary"
+      className="relative py-24 px-4 sm:px-6 lg:px-8 bg-secondary overflow-hidden"
     >
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-24 left-[-6rem] h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-24 right-[-6rem] h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+      </div>
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
+        <motion.div
+          className="text-center mb-16"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={{
+            hidden: { opacity: 0, y: reduceMotion ? 0 : 12 },
+            show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+          }}
+        >
           <p className="text-primary font-medium mb-4">
             Features
           </p>
@@ -86,22 +102,38 @@ const FeaturesSection = () => {
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Powerful features designed specifically for modern restaurants
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div
+          className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={{
+            hidden: {},
+            show: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
+          }}
+        >
           {features.map((feature, index) => (
-            <div
+            <motion.div
               key={index}
+              variants={{
+                hidden: { opacity: 0, y: reduceMotion ? 0 : 12 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+              }}
+              whileHover={reduceMotion ? undefined : { y: -6 }}
               className="
-                  bg-card
-                  border border-border
+                  group
+                  bg-card/80
+                  backdrop-blur
+                  border border-border/70
                   rounded-2xl p-6
-                  transition-all
-                  hover:-translate-y-1
-                  hover:border-primary/50
+                  transition-colors
+                  hover:border-primary/40
+                  shadow-sm
                 "
             >
-              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 ring-1 ring-border/40 group-hover:ring-primary/25 transition">
                 <feature.icon className="w-6 h-6 text-primary" />
               </div>
 
@@ -112,9 +144,9 @@ const FeaturesSection = () => {
               <p className="text-muted-foreground text-sm">
                 {feature.description}
               </p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   )

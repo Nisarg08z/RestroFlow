@@ -39,6 +39,13 @@ import {
   getPublicMenu,
 } from "../controllers/menuController.js"
 import { verifyRestaurantJWT } from "../middlewares/authMiddleware.js"
+import {
+  listStaffByLocation,
+  createStaff,
+  getStaffById,
+  updateStaff,
+  deleteStaff,
+} from "../controllers/staffController.js"
 
 const router = Router()
 
@@ -60,6 +67,13 @@ router.patch("/locations/:locationId/orders/:orderId/seen", verifyRestaurantJWT,
 router.post("/locations/:locationId/tables/:tableNumber/paid", verifyRestaurantJWT, markTablePaid)
 router.post("/locations/:locationId/generate-qr", verifyRestaurantJWT, generateLocationQRCodes)
 router.post("/locations/:locationId/qr/:tableNumber/regenerate", verifyRestaurantJWT, regenerateTableQRCode)
+
+// Staff management (per location)
+router.get("/locations/:locationId/staff", verifyRestaurantJWT, listStaffByLocation)
+router.post("/locations/:locationId/staff", verifyRestaurantJWT, createStaff)
+router.get("/locations/:locationId/staff/:staffId", verifyRestaurantJWT, getStaffById)
+router.patch("/locations/:locationId/staff/:staffId", verifyRestaurantJWT, updateStaff)
+router.delete("/locations/:locationId/staff/:staffId", verifyRestaurantJWT, deleteStaff)
 router.get("/subscription", verifyRestaurantJWT, getMySubscription)
 router.post("/subscription/renew", verifyRestaurantJWT, renewMySubscription)
 router.get("/invoices", verifyRestaurantJWT, getMyInvoices)

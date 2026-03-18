@@ -8,6 +8,7 @@ import {
     OrdersView,
     PlaceholderView,
     LocationSettings,
+    StaffManagement,
 } from "../../components/ManagerPageComponents/LocationDashboard";
 import { BarChart3, Package, Users } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -82,7 +83,10 @@ const ManagerDashboardPage = () => {
                         <PlaceholderView title="Analytics & Reports" icon={BarChart3} />
                     )}
                     {activeTab === "staff" && (
-                        <PlaceholderView title="Staff Management" icon={Users} />
+                        <StaffManagement
+                            restaurantId={restaurant?._id || restaurant?.id}
+                            locationId={locationId}
+                        />
                     )}
                     {activeTab === "inventory" && (
                         <PlaceholderView title="Inventory Management" icon={Package} />

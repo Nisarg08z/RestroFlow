@@ -6,6 +6,7 @@ import { ChefView } from '../../ChefPageComponents';
 import SectionCards from './SectionCards';
 import PlaceholderView from './PlaceholderView';
 import LocationSettings from './LocationSettings';
+import StaffManagement from './StaffManagement';
 
 export {
     LocationHeader,
@@ -15,5 +16,6 @@ export {
     ChefView,
     SectionCards,
     PlaceholderView,
-    LocationSettings
+    LocationSettings,
+    StaffManagement
 };

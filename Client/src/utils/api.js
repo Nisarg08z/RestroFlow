@@ -74,6 +74,20 @@ export const generateLocationQRCodes = (locationId) =>
 export const regenerateTableQRCode = (locationId, tableNumber) =>
   api.post(`/restaurant/locations/${locationId}/qr/${tableNumber}/regenerate`)
 
+/* ================= STAFF (Restaurant / Location) ================= */
+
+export const getLocationStaff = (locationId) =>
+  api.get(`/restaurant/locations/${locationId}/staff`)
+
+export const createLocationStaff = (locationId, data) =>
+  api.post(`/restaurant/locations/${locationId}/staff`, data)
+
+export const updateLocationStaff = (locationId, staffId, data) =>
+  api.patch(`/restaurant/locations/${locationId}/staff/${staffId}`, data)
+
+export const deleteLocationStaff = (locationId, staffId) =>
+  api.delete(`/restaurant/locations/${locationId}/staff/${staffId}`)
+
 export const getMySubscription = () =>
   api.get("/restaurant/subscription")
 

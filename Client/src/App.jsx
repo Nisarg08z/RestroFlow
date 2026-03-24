@@ -27,6 +27,7 @@ import ProfilePage from './pages/ManagerPage/ProfilePage';
 import SupportPage from './pages/ManagerPage/SupportPage';
 import LocationDashboard from './pages/ManagerPage/LocationDashboard';
 import ManagerDashboardPage from './pages/ManagerPage/ManagerDashboardPage';
+import LocationStatusPage from './pages/ManagerPage/LocationStatusPage';
 import AllQRCodesPage from './pages/ManagerPage/AllQRCodesPage';
 import MenuManagement from './pages/ManagerPage/MenuManagement';
 import TableMenu from './pages/TableMenu/TableMenu';
@@ -126,6 +127,14 @@ const App = () => {
             element={
               <ProtectedRoute requiredRole="RESTAURANT">
                 <LocationDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/restaurant/location/:locationId/status"
+            element={
+              <ProtectedRoute requiredRole="RESTAURANT">
+                <LocationStatusPage />
               </ProtectedRoute>
             }
           />

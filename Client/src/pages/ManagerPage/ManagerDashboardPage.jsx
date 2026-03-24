@@ -3,14 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getCurrentRestaurant } from "../../utils/api";
 import { LoadingScreen } from "../../components/ManagerPageComponents";
 import {
-    LocationHeader,
+    ManagerHeader,
     BillingPOS,
     OrdersView,
-    PlaceholderView,
     LocationSettings,
     StaffManagement,
 } from "../../components/ManagerPageComponents/LocationDashboard";
-import { BarChart3, Package, Users } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const ManagerDashboardPage = () => {
@@ -64,12 +62,10 @@ const ManagerDashboardPage = () => {
 
     return (
         <div className="min-h-screen bg-background pb-8 flex flex-col">
-            <LocationHeader
+            <ManagerHeader
                 locationName={location.locationName}
                 locationAddress={`${location.address}, ${location.city}`}
                 isOpen={isOpen}
-                currentView="manager"
-                onBackToCards={handleBack}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 onBack={handleBack}
@@ -79,17 +75,11 @@ const ManagerDashboardPage = () => {
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     {activeTab === "billing" && <BillingPOS locationId={locationId} />}
                     {activeTab === "orders" && <OrdersView locationId={locationId} />}
-                    {activeTab === "reports" && (
-                        <PlaceholderView title="Analytics & Reports" icon={BarChart3} />
-                    )}
                     {activeTab === "staff" && (
                         <StaffManagement
                             restaurantId={restaurant?._id || restaurant?.id}
                             locationId={locationId}
                         />
-                    )}
-                    {activeTab === "inventory" && (
-                        <PlaceholderView title="Inventory Management" icon={Package} />
                     )}
                     {activeTab === "settings" && (
                         <LocationSettings

@@ -7,7 +7,7 @@ import { toast } from "react-hot-toast";
 import { isSubscriptionExpired } from "../../utils/subscriptionUtils";
 
 import {
-    LocationHeader,
+    SectionCardsHeader,
     RestaurantOpener,
     SectionCards,
 } from "../../components/ManagerPageComponents/LocationDashboard";
@@ -104,18 +104,22 @@ const LocationDashboard = () => {
         navigate("/restaurant/welcome");
     };
 
+    const handleOpenLocationStatus = () => {
+        navigate(`/restaurant/location/${locationId}/status`);
+    };
+
     if (loading) return <LoadingScreen restaurant={restaurant} />;
     if (!location) return null;
 
     return (
         <div className="min-h-screen bg-background pb-8 flex flex-col">
             {isOpen && (
-                <LocationHeader
+                <SectionCardsHeader
                     locationName={location.locationName}
                     locationAddress={`${location.address}, ${location.city}`}
                     isOpen={isOpen}
-                    currentView="cards"
                     onBack={handleRequestBack}
+                    onOpenLocationStatus={handleOpenLocationStatus}
                 />
             )}
 
